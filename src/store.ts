@@ -26,6 +26,7 @@ interface AppState {
   // Modal actions
   openPickModal: (pickId: string) => void;
   closePickModal: () => void;
+  resetState: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -81,9 +82,11 @@ export const useAppStore = create<AppState>((set) => ({
   },
 
   fetchUserData: async (userId: string) => {
+    console.log('fetchUserData called with userId:', userId);
     set({ userLoading: true });
     try {
       // Use a single query with joins instead of multiple queries for better performance
+      console.log('Fetching user profile and picks data...');
       const { data, error } = await supabase
         .from('profiles')
         .select(`
@@ -93,7 +96,12 @@ export const useAppStore = create<AppState>((set) => ({
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error in fetchUserData:', error);
+        throw error;
+      }
+      
+      console.log('Data received from profiles query:', data ? 'Profile found' : 'No profile found');
       
       if (data === null) {
         console.log('No profile found for user ID in fetchUserData:', userId);
@@ -103,6 +111,8 @@ export const useAppStore = create<AppState>((set) => ({
       
       // Extract picks from the joined data and sort them
       const picks = data.picks || [];
+      console.log(`Found ${picks.length} picks for user ${userId}`);
+      
       const sortedPicks = picks.sort((a: Pick, b: Pick) => {
         // First sort by rank (ascending)
         if (a.rank !== b.rank) {
@@ -112,10 +122,13 @@ export const useAppStore = create<AppState>((set) => ({
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
       
+      console.log('Updating store with user profile and picks');
       set({
         userProfile: data,
         userPicks: sortedPicks,
+        userLoading: false
       });
+      console.log('Store updated successfully with user data');
     } catch (error) {
       console.error('Error fetching user data:', error);
       set({ userProfile: null, userPicks: [] });
@@ -474,5 +487,16 @@ export const useAppStore = create<AppState>((set) => ({
 
   closePickModal: () => {
     set({ isPickModalOpen: false, currentPickId: null });
+  },
+  
+  resetState: () => {
+    set({
+      userProfile: null,
+      userPicks: [],
+      loading: false,
+      userLoading: false,
+      isPickModalOpen: false,
+      currentPickId: null
+    });
   },
 }));

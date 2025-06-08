@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Shield, Bell, LogOut, ChevronRight } from 'lucide-react';
+import { User, Shield, Bell, LogOut, ChevronRight, Mail, FileText, Lock } from 'lucide-react';
 import { ThemeSettings } from '../components/ThemeSettings';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
@@ -106,30 +106,44 @@ export function UserSettingsPage() {
         {/* Theme Settings */}
         <ThemeSettings />
         
-        {/* Settings List */}
+        {/* Account Settings */}
+        <h3 className="text-lg font-medium text-gray-700 mb-3 px-1">Account</h3>
         <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
           <Link 
-            to="/account" 
+            to="/account-setup" 
             className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50"
           >
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center mr-3">
                 <User size={18} className="text-gray-500" />
               </div>
-              <span className="text-[#252525]">Account Settings</span>
+              <span className="text-[#252525]">Profile Information</span>
             </div>
             <ChevronRight size={18} className="text-gray-400" />
           </Link>
           
           <Link 
-            to="/account/security" 
+            to="/email-settings" 
             className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50"
           >
             <div className="flex items-center">
               <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center mr-3">
-                <Shield size={18} className="text-gray-500" />
+                <Mail size={18} className="text-gray-500" />
               </div>
-              <span className="text-[#252525]">Security</span>
+              <span className="text-[#252525]">Email Settings</span>
+            </div>
+            <ChevronRight size={18} className="text-gray-400" />
+          </Link>
+          
+          <Link 
+            to="/security" 
+            className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50"
+          >
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center mr-3">
+                <Lock size={18} className="text-gray-500" />
+              </div>
+              <span className="text-[#252525]">Password & Security</span>
             </div>
             <ChevronRight size={18} className="text-gray-400" />
           </Link>
@@ -143,6 +157,36 @@ export function UserSettingsPage() {
                 <Bell size={18} className="text-gray-500" />
               </div>
               <span className="text-[#252525]">Notifications</span>
+            </div>
+            <ChevronRight size={18} className="text-gray-400" />
+          </Link>
+        </div>
+        
+        {/* Legal */}
+        <h3 className="text-lg font-medium text-gray-700 mb-3 px-1">Legal</h3>
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6">
+          <Link 
+            to="/terms" 
+            className="flex items-center justify-between p-4 border-b border-gray-100 hover:bg-gray-50"
+          >
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center mr-3">
+                <FileText size={18} className="text-gray-500" />
+              </div>
+              <span className="text-[#252525]">Terms & Conditions</span>
+            </div>
+            <ChevronRight size={18} className="text-gray-400" />
+          </Link>
+          
+          <Link 
+            to="/privacy-policy" 
+            className="flex items-center justify-between p-4 hover:bg-gray-50"
+          >
+            <div className="flex items-center">
+              <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center mr-3">
+                <Shield size={18} className="text-gray-500" />
+              </div>
+              <span className="text-[#252525]">Privacy Policy</span>
             </div>
             <ChevronRight size={18} className="text-gray-400" />
           </Link>

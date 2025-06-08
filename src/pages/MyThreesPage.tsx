@@ -49,6 +49,64 @@ export function MyThreesPage({
   onDeletePick: propOnDeletePick
 }: MyThreesPageProps = {}) {
   const { user } = useAuth();
+  // Use the app store for user data
+  const { userProfile, userPicks, userLoading, fetchUserData } = useAppStore();
+
+  // Immediately log what data we have
+  console.log('MyThreesPage: Initial render state', { 
+    userProfile: userProfile ? 'exists' : 'null', 
+    userPicks: userPicks?.length || 0, 
+    user: user?.id 
+  });
+
+  // Sync prop data with store data
+  React.useEffect(() => {
+    console.log('MyThreesPage: Data sync effect running with', {
+      propProfile: propProfile ? 'exists' : 'null',
+      propPicks: propPicks?.length || 0,
+      userProfile: userProfile ? 'exists' : 'null',
+      userPicks: userPicks?.length || 0,
+      userLoading
+    });
+
+    // Always set profile if available from either source
+    if (propProfile) {
+      setProfile(propProfile);
+    } else if (userProfile) {
+      setProfile(userProfile);
+    }
+
+    // Always set picks if available from either source
+    if (propPicks && propPicks.length > 0) {
+      setPicks({
+        places: propPicks.filter(pick => pick.category === 'places'),
+        products: propPicks.filter(pick => pick.category === 'products'),
+        books: propPicks.filter(pick => pick.category === 'books'),
+      });
+    } else if (userPicks && userPicks.length > 0) {
+      setPicks({
+        places: userPicks.filter(pick => pick.category === 'places'),
+        products: userPicks.filter(pick => pick.category === 'products'),
+        books: userPicks.filter(pick => pick.category === 'books'),
+      });
+    }
+    
+    // Update loading state
+    if (propLoading !== undefined) {
+      setLoading(propLoading);
+    } else {
+      setLoading(userLoading);
+    }
+  }, [propProfile, propPicks, propLoading, userProfile, userPicks, userLoading]);
+  
+  // Force data reload if we have a user but no profile
+  React.useEffect(() => {
+    if (user && !userProfile && !userLoading) {
+      console.log('MyThreesPage: Forcing data reload for user', user.id);
+      fetchUserData(user.id);
+    }
+  }, [user, userProfile, userLoading, fetchUserData]);
+
   const navigate = useNavigate();
   const { fetchFeedPicks, fetchCurators } = useAppStore();
   // Store and use the profile state

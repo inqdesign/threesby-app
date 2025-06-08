@@ -89,29 +89,35 @@ function InitialContentPlugin({ initialContent }: { initialContent: string }) {
     if (hasInitializedRef.current || !initialContent) {
       return;
     }
+    
+    // Set initialized flag to prevent multiple initializations
     hasInitializedRef.current = true;
-    try {
-      const json = initialContent && initialContent.trim() ? JSON.parse(initialContent) : null;
-      if (json) {
-        editor.setEditorState(editor.parseEditorState(JSON.stringify(json)));
-      } else {
-    editor.update(() => {
-      const root = $getRoot();
-      root.clear();
+    
+    // Use setTimeout to move the state update out of React's rendering phase
+    setTimeout(() => {
+      try {
+        const json = initialContent && initialContent.trim() ? JSON.parse(initialContent) : null;
+        if (json) {
+          editor.setEditorState(editor.parseEditorState(JSON.stringify(json)));
+        } else {
+          editor.update(() => {
+            const root = $getRoot();
+            root.clear();
+            const paragraph = $createParagraphNode();
+            root.append(paragraph);
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing initial JSON content:', error);
+        // fallback to empty doc
+        editor.update(() => {
+          const root = $getRoot();
+          root.clear();
           const paragraph = $createParagraphNode();
           root.append(paragraph);
         });
-        }
-    } catch (error) {
-      console.error('Error parsing initial JSON content:', error);
-      // fallback to empty doc
-      editor.update(() => {
-        const root = $getRoot();
-        root.clear();
-        const paragraph = $createParagraphNode();
-        root.append(paragraph);
-      });
       }
+    }, 0)
   }, [editor, initialContent]);
   return null;
 }

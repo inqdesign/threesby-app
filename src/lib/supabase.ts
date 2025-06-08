@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/supabase';
+import { getSupabaseStorageKey } from './authUtils';
 
 // Helper function to compress images and convert to WebP
 async function compressImage(file: File): Promise<File | null> {
@@ -81,7 +82,34 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
+/**
+ * Supabase client with optimized configuration for robust auth persistence:
+ * - persistSession: Ensures session is saved to storage
+ * - autoRefreshToken: Automatically refreshes token before expiry
+ * - detectSessionInUrl: Enabled for OAuth flows
+ * - storage: Uses browser's localStorage for session persistence
+ * - storageKey: Custom key for better identification in localStorage
+ * - flowType: PKCE flow for better security
+ */
+// Get the actual storage key that Supabase is using
+const SUPABASE_STORAGE_KEY = getSupabaseStorageKey();
+
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: localStorage,
+    // Use the dynamically generated storage key to match what Supabase is actually using
+    storageKey: SUPABASE_STORAGE_KEY,
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'x-app-version': '1.0.0',
+    },
+  }
+});
 
 export async function uploadImage(file: File, userId: string): Promise<string> {
   if (!file) {
