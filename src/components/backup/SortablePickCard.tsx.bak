@@ -1,0 +1,81 @@
+import React from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { PickCard } from './PickCard';
+import type { Pick } from '../types';
+
+interface SortablePickCardProps {
+  id: string;
+  pick: Pick;
+  category: 'places' | 'products' | 'books';
+  index: number;
+  onClick: () => void;
+  onImageClick?: () => void;
+  children?: React.ReactNode;
+  isArchived?: boolean;
+  isDraggable?: boolean;
+}
+
+export function SortablePickCard({
+  id,
+  pick,
+  category,
+  index,
+  onClick,
+  onImageClick,
+  children,
+  isArchived,
+  isDraggable = true,
+}: SortablePickCardProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id,
+    disabled: !isDraggable 
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 1,
+    opacity: isDragging ? 0.8 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="relative cursor-pointer"
+      onClick={() => {
+        if (!isDragging && onClick) {
+          onClick();
+        }
+      }}
+    >
+      <div 
+        className="absolute top-0 left-0 right-0 h-8 z-20 cursor-grab active:cursor-grabbing flex items-center justify-center" 
+        {...attributes}
+        {...listeners}
+      >
+        <div className="w-10 h-1.5 bg-gray-300 rounded-full opacity-70 hover:opacity-100 transition-opacity"></div>
+      </div>
+      <div className="w-full h-full relative z-10">
+        <PickCard
+          pick={pick}
+          category={category}
+          index={index}
+          variant="myPick"
+          onImageClick={onImageClick}
+          isArchived={isArchived}
+        >
+          {children}
+        </PickCard>
+      </div>
+    </div>
+  );
+}

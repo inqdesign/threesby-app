@@ -1,0 +1,600 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { CollectionCard } from '../components/CollectionCard';
+import { ArrowLeft, Heart } from 'lucide-react';
+import { format } from 'date-fns';
+import type { Pick } from '../types';
+import './HideScrollbar.css';
+import './CollectionDetailPage.css';
+
+// Define Collection type locally until it's properly exported from types
+type Collection = {
+  id: string;
+  profile_id: string;
+  title: string;
+  description: string;
+  categories: string[];
+  picks: string[];
+  cover_image?: string;
+  font_color?: 'dark' | 'light';
+  created_at: string;
+  updated_at: string;
+  profiles?: any;
+};
+
+export function CollectionDetailPage() {
+  // Prevent body scrolling and hide main navigation when this component mounts
+  useEffect(() => {
+    // Save original styles
+    const originalStyle = window.getComputedStyle(document.body).overflow;
+    
+    // Prevent scrolling on body
+    document.body.style.overflow = 'hidden';
+    
+    // Add class to hide main navigation on mobile
+    document.body.classList.add('collection-detail-page');
+    
+    // Remove any top margin/border that might be causing the 1px line
+    const appElement = document.getElementById('root');
+    if (appElement) {
+      appElement.style.borderTop = 'none';
+      appElement.style.marginTop = '0';
+    }
+    
+    // Restore original styles when component unmounts
+    return () => {
+      document.body.style.overflow = originalStyle;
+      document.body.classList.remove('collection-detail-page');
+    };
+  }, []);
+  
+  const { id } = useParams<{ id: string }>();
+  const [collection, setCollection] = useState<Collection | null>(null);
+  const [picks, setPicks] = useState<Pick[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [curator, setCurator] = useState<{ 
+    id: string;
+    name: string; 
+    title: string;
+    shelfImage?: string;
+  } | null>(null);
+  const [curatorCollections, setCuratorCollections] = useState<Collection[]>([]);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (id) {
+      fetchCollection(id);
+    }
+  }, [id]);
+
+  // Fetch curator collections only once and store in sessionStorage
+  const fetchCuratorCollections = useCallback(async (curatorId: string) => {
+    // Check if we already have curator collections in sessionStorage
+    const cachedCuratorCollections = sessionStorage.getItem(`curator_collections_${curatorId}`);
+    if (cachedCuratorCollections) {
+      try {
+        const parsedData = JSON.parse(cachedCuratorCollections);
+        setCuratorCollections(parsedData);
+        return parsedData;
+      } catch (e) {
+        console.error('Error parsing cached curator collections:', e);
+      }
+    }
+    
+    // If no cache or parsing failed, fetch from server
+    try {
+      const { data, error } = await supabase
+        .from('collections')
+        .select('*')
+        .eq('profile_id', curatorId)
+        .order('created_at', { ascending: false });
+        
+      if (!error && data) {
+        setCuratorCollections(data);
+        // Cache the data
+        sessionStorage.setItem(`curator_collections_${curatorId}`, JSON.stringify(data));
+        return data;
+      }
+    } catch (error) {
+      console.error('Error fetching curator collections:', error);
+    }
+    return [];
+  }, []);
+
+  // Memoize the fetch function to prevent unnecessary re-renders
+  const fetchCollection = useCallback(async (collectionId: string) => {
+    try {
+      // Always set loading to true at the start of fetch to prevent flashing "not found" message
+      setLoading(true);
+      
+      // Check if we have cached data in sessionStorage
+      const cachedData = sessionStorage.getItem(`collection_${collectionId}`);
+      if (cachedData) {
+        try {
+          const parsedData = JSON.parse(cachedData);
+          setCollection(parsedData.collection);
+          setCurator(parsedData.curator);
+          setPicks(parsedData.picks);
+          
+          // Fetch curator collections separately to prevent reloading
+          if (parsedData.curator && parsedData.curator.id) {
+            fetchCuratorCollections(parsedData.curator.id);
+          }
+          
+          // Fetch fresh data in the background
+          fetchFreshData(collectionId);
+          return;
+        } catch (e) {
+          console.error('Error parsing cached collection data:', e);
+          // Continue with fresh fetch if cache parsing fails
+        }
+      }
+      
+      // If no cache or cache parsing failed, fetch fresh data
+      await fetchFreshData(collectionId);
+      
+    } catch (error) {
+      console.error('Error fetching collection details:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchCuratorCollections]);
+  
+  // Function to fetch fresh data from the server
+  const fetchFreshData = async (collectionId: string) => {
+    try {
+      // Fetch collection with curator profile
+      const { data: collectionData, error: collectionError } = await supabase
+        .from('collections')
+        .select(`
+          *,
+          profiles:profile_id(full_name, title, shelf_image_url)
+        `)
+        .eq('id', collectionId)
+        .single();
+      
+      if (collectionError) throw collectionError;
+      
+      setCollection(collectionData);
+      
+      let curatorData = null;
+      if (collectionData.profiles) {
+        const curatorId = collectionData.profile_id;
+        curatorData = {
+          id: curatorId,
+          name: collectionData.profiles.full_name || 'Unknown',
+          title: collectionData.profiles.title || '',
+          shelfImage: collectionData.profiles.shelf_image_url
+        };
+        setCurator(curatorData);
+        
+        // Fetch curator collections using the separate function
+        // This will use cached data if available
+        await fetchCuratorCollections(curatorId);
+      }
+      
+      let picksData = [];
+      // Fetch picks included in this collection
+      if (collectionData.picks && collectionData.picks.length > 0) {
+        const { data: fetchedPicksData, error: picksError } = await supabase
+          .from('picks')
+          .select('*')
+          .in('id', collectionData.picks);
+        
+        if (picksError) throw picksError;
+        
+        picksData = fetchedPicksData || [];
+        setPicks(picksData);
+      }
+      
+      // Cache the data in sessionStorage
+      const cacheData = {
+        collection: collectionData,
+        curator: curatorData,
+        curatorCollections: curatorCollections,
+        picks: picksData
+      };
+      
+      try {
+        sessionStorage.setItem(`collection_${collectionId}`, JSON.stringify(cacheData));
+      } catch (e) {
+        console.error('Error caching collection data:', e);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching fresh collection details:', error);
+    }
+  };
+
+  // Scroll to active card when collection changes
+  useEffect(() => {
+    if (collection) {
+      // For mobile: scroll the active card into view
+      setTimeout(() => {
+        const mobileContainer = document.getElementById('mobile-collection-cards');
+        const desktopContainer = document.getElementById('desktop-collection-cards');
+        const activeCardIndex = curatorCollections.findIndex(c => c.id === collection.id);
+        
+        if (mobileContainer && activeCardIndex >= 0) {
+          // For mobile: horizontal scrolling with smooth animation
+          const cardWidth = 125 + 8; // card width + margin
+          mobileContainer.scrollTo({
+            left: cardWidth * activeCardIndex,
+            behavior: 'smooth'
+          });
+        }
+        
+        if (desktopContainer && activeCardIndex >= 0) {
+          // For desktop: vertical scrolling with smooth animation
+          const cards = desktopContainer.querySelectorAll('.mb-3');
+          if (cards[activeCardIndex]) {
+            cards[activeCardIndex].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      }, 100); // Small delay to ensure DOM is ready
+    }
+  }, [collection, curatorCollections]);
+  
+  return (
+    <div className="absolute inset-0 overflow-hidden" style={{ top: 0, border: 'none', borderTop: 'none', marginTop: 0 }}>
+      {/* Background image with blur - fixed position */}
+      <div 
+        className="fixed inset-0 z-0" 
+        style={{
+          backgroundImage: curator?.shelfImage ? `url(${curator.shelfImage})` : 'none',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          borderTop: 'none',
+          marginTop: 0
+        }}
+      >
+        <div className="absolute inset-0 backdrop-blur-xl bg-black/30"></div>
+      </div>
+      
+      {/* MOBILE: Fixed navigation and collection cards for mobile */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-20 pointer-events-auto" style={{ borderTop: 'none', marginTop: 0 }}>
+        {/* Navigation */}
+        <div className="w-full flex flex-row justify-between p-4">
+          <button 
+            onClick={() => navigate('/collections')} 
+            className="inline-flex items-center text-sm text-white hover:text-gray-200"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            <span className="hidden md:inline">Back to Collections</span>
+          </button>
+          
+          <div className="text-white">
+            <p className="text-xs text-white/70 uppercase mb-0">CURATED BY</p>
+            <p className="text-xl leading-tight">{curator?.name}</p>
+          </div>
+        </div>
+        
+        {/* Collection cards - horizontal scrolling */}
+        <div className="px-4 py-2 overflow-x-auto hide-scrollbar pointer-events-auto" id="mobile-collection-cards">
+          <div className="flex flex-nowrap">
+            {curatorCollections.map((curatorCollection, index, array) => (
+              <div 
+                key={curatorCollection.id} 
+                className={`flex-shrink-0 w-[125px] h-[175px] ${index === array.length - 1 ? 'mr-6' : 'mr-2'}`}
+              >
+                <div onClick={(e) => {
+                  e.preventDefault();
+                  window.history.pushState({}, '', `/collections/${curatorCollection.id}`);
+                  fetchCollection(curatorCollection.id);
+                }}>
+                  <CollectionCard 
+                    collection={curatorCollection} 
+                    linkWrapper={false} 
+                    issueNumber={String(index + 1).padStart(2, '0')}
+                    isActive={curatorCollection.id === collection?.id}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Scrollable content container */}
+      <div className="absolute inset-0 overflow-auto" style={{ borderTop: 'none', marginTop: 0 }}>
+      
+      {/* Show loading state while fetching data */}
+      {loading ? (
+        <div className="relative z-10 flex justify-center items-center h-full text-white">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+        </div>
+      ) : collection ? (
+        <>
+          {/* Loading overlay - only shown when loading is true */}
+          {loading && (
+            <div className="absolute inset-0 flex justify-center items-center z-20 bg-black/20 backdrop-blur-sm">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+            </div>
+          )}
+          
+          {/* MOBILE: Content that scrolls underneath the fixed header */}
+          <div className="md:hidden mt-[286px] w-full" style={{ position: 'relative', zIndex: 50 }}>
+            <div className="w-full bg-white rounded-t-lg shadow-xl" style={{ position: 'relative', zIndex: 50 }}>
+              <div className="p-0 w-full flex flex-col h-full justify-between">
+                {/* Content for mobile */}
+                <div className="p-5 w-full">
+                  {/* Title/description and info table */}
+                  <div className="flex flex-col gap-6 mb-8 w-full">
+                    {/* Title and description */}
+                    <div className="w-full">
+                      <h1 className="text-4xl font-bold mb-2">{collection?.title || 'Collection'}</h1>
+                      <p className="text-gray-600">{collection?.description || ''}</p>
+                    </div>
+                    
+                    {/* Info table */}
+                    <div className="w-full">
+                      <div className="w-full font-mono text-xs md:text-sm">
+                        <div className="flex justify-between py-3 border-b border-gray-100">
+                          <div className="text-gray-500">ISSUE#</div>
+                          <div>{collection && curatorCollections ? curatorCollections.findIndex(c => c.id === collection.id) + 1 : '-'}</div>
+                        </div>
+                        <div className="flex justify-between py-3 border-b border-gray-100">
+                          <div className="text-gray-500">DATE</div>
+                          <div>{collection?.created_at ? format(new Date(collection.created_at), 'dd. MM. yyyy') : '-'}</div>
+                        </div>
+                        <div className="flex justify-between py-3 border-b border-gray-100">
+                          <div className="text-gray-500">COLLECTED BY</div>
+                          <div className="text-right">{curator?.name}</div>
+                        </div>
+                        <div className="flex justify-between py-3 border-b border-gray-100">
+                          <div className="text-gray-500">CATEGORIES</div>
+                          <div className="text-right max-w-[60%]">{collection?.categories?.join(', ') || 'Music'}</div>
+                        </div>
+                        <div className="flex justify-end py-3">
+                          <div className="inline-flex items-center gap-1">
+                            <Heart className="w-4 h-4" /> 
+                            <span>1.4K</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Picks section */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-mono mb-4">PICKS</h3>
+                    
+                    {/* Picks grid and list */}
+                    <div className="flex flex-col gap-6">
+                      {/* Grid above list on mobile */}
+                      <div className="order-1 w-full mb-4">
+                        <div className="grid grid-cols-3 gap-2">
+                          {picks.slice(0, 9).map((pick) => (
+                            <div 
+                              key={pick.id} 
+                              className="aspect-square bg-gray-100 rounded overflow-hidden cursor-pointer" 
+                              onClick={() => {
+                                const event = new CustomEvent('openPickModal', {
+                                  detail: { pickId: pick.id }
+                                });
+                                window.dispatchEvent(event);
+                              }}
+                            >
+                              {pick.image_url ? (
+                                <img 
+                                  src={pick.image_url} 
+                                  alt={pick.title} 
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm">
+                                  No image
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* List below grid on mobile */}
+                      <div className="order-2 w-full">
+                        <div className="font-mono">
+                          {picks.map((pick, index) => (
+                            <div 
+                              key={pick.id} 
+                              className="py-3 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50"
+                              onClick={() => {
+                                const event = new CustomEvent('openPickModal', {
+                                  detail: { pickId: pick.id }
+                                });
+                                window.dispatchEvent(event);
+                              }}
+                            >
+                              <div className="grid grid-cols-12 items-center gap-2">
+                                <div className="text-sm col-span-1">#{String(index + 1).padStart(2, '0')}</div>
+                                <div className="text-sm font-medium col-span-5 truncate">{pick.title}</div>
+                                <div className="text-sm text-gray-500 col-span-6 truncate">{pick.reference}</div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* DESKTOP: Original desktop layout */}
+          <div className="hidden md:flex absolute inset-0 z-10 flex-row gap-4 p-8 pt-[110px] pb-8" style={{ marginTop: 0, borderTop: 'none' }}>
+            {/* First column - Back button and CURATED BY */}
+            <div className="w-1/6 flex flex-col justify-start pr-4 mb-0">
+              <button 
+                onClick={() => navigate('/collections')} 
+                className="inline-flex items-center text-sm text-white hover:text-gray-200 mb-auto"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1" />
+                <span>Back to Collections</span>
+              </button>
+              
+              <div className="text-white mt-auto">
+                <p className="text-xs text-white/70 uppercase mb-0">CURATED BY</p>
+                <p className="text-2xl leading-tight">{curator?.name}</p>
+              </div>
+            </div>
+            
+            {/* Second column - Collection cards */}
+            <div className="w-1/6 flex flex-col mb-0 pointer-events-auto">
+              <div className="flex overflow-y-auto overflow-x-hidden" id="desktop-collection-cards">
+                <div className="flex flex-col">
+                  {curatorCollections.map((curatorCollection, index) => (
+                    <div 
+                      key={curatorCollection.id} 
+                      className="w-auto h-auto mb-3"
+                    >
+                      <div onClick={(e) => {
+                        e.preventDefault();
+                        window.history.pushState({}, '', `/collections/${curatorCollection.id}`);
+                        fetchCollection(curatorCollection.id);
+                      }}>
+                        <CollectionCard 
+                          collection={curatorCollection} 
+                          linkWrapper={false} 
+                          issueNumber={String(index + 1).padStart(2, '0')}
+                          isActive={curatorCollection.id === collection?.id}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            {/* Middle column - Collection content */}
+            <div className="w-2/3 bg-white rounded-lg overflow-y-auto shadow-xl max-h-full h-auto">
+              <div className="p-8 flex flex-col h-full justify-between">
+                {/* Title/description and info table - 2 columns */}
+                <div className="flex flex-col md:flex-row gap-6 mb-8">
+                  {/* Left side - Title and description */}
+                  <div className="w-full md:w-1/2">
+                    <h1 className="text-4xl font-bold mb-2">{collection?.title || 'Collection'}</h1>
+                    <p className="text-gray-600">{collection?.description || ''}</p>
+                  </div>
+                  
+                  {/* Right side - Info table */}
+                  <div className="w-full md:w-1/2">
+                    <div className="w-full font-mono text-sm md:text-base">
+                      <div className="flex justify-between py-3 border-b border-gray-100">
+                        <div className="text-gray-500">ISSUE#</div>
+                        <div>{collection && curatorCollections ? curatorCollections.findIndex(c => c.id === collection.id) + 1 : '-'}</div>
+                      </div>
+                      <div className="flex justify-between py-3 border-b border-gray-100">
+                        <div className="text-gray-500">DATE</div>
+                        <div>{collection?.created_at ? format(new Date(collection.created_at), 'dd. MM. yyyy') : '-'}</div>
+                      </div>
+                      <div className="flex justify-between py-3 border-b border-gray-100">
+                        <div className="text-gray-500">COLLECTED BY</div>
+                        <div>{curator?.name}</div>
+                      </div>
+                      <div className="flex justify-between py-3 border-b border-gray-100">
+                        <div className="text-gray-500">CATEGORIES</div>
+                        <div>{collection?.categories?.join(', ') || 'Music'}</div>
+                      </div>
+                      <div className="flex justify-end py-3">
+                        <div className="inline-flex items-center gap-1">
+                          <Heart className="w-4 h-4" /> 
+                          <span>1.4K</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Picks section - bottom aligned */}
+                <div className="mt-auto">
+                  <h3 className="text-gray-500 uppercase text-sm font-medium font-mono">PICKS</h3>
+                  
+                  {/* Pick grid and list - Different layout for mobile and desktop */}
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Mobile: Grid above list, Desktop: Grid on right, list on left */}
+                    <div className="order-2 md:order-1 w-full md:w-1/2">
+                      <div className="font-mono">
+                        {picks.map((pick, index) => (
+                          <div 
+                            key={pick.id} 
+                            className="py-3 md:py-4 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50"
+                            onClick={() => {
+                              // Use the same custom event approach to open the modal
+                              const event = new CustomEvent('openPickModal', {
+                                detail: { pickId: pick.id }
+                              });
+                              window.dispatchEvent(event);
+                            }}
+                          >
+                            <div className="grid grid-cols-12 items-center gap-2">
+                              <div className="text-sm md:text-base col-span-1">#{String(index + 1).padStart(2, '0')}</div>
+                              <div className="text-sm md:text-base font-medium col-span-5 truncate">{pick.title}</div>
+                              <div className="text-sm md:text-base text-gray-500 col-span-6 truncate">{pick.reference}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {/* Picks grid - order changes based on screen size */}
+                    <div className="order-1 md:order-2 w-full md:w-1/2 mb-4 md:mb-0">
+                      <div className="grid grid-cols-3 gap-2">
+                        {picks.slice(0, 9).map((pick) => (
+                          <div 
+                            key={pick.id} 
+                            className="aspect-square bg-gray-100 rounded overflow-hidden cursor-pointer" 
+                            onClick={() => {
+                              // Instead of navigating, dispatch a custom event to open the modal
+                              // This keeps the current page visible in the background
+                              const event = new CustomEvent('openPickModal', {
+                                detail: { pickId: pick.id }
+                              });
+                              window.dispatchEvent(event);
+                            }}
+                          >
+                            {pick.image_url ? (
+                              <img 
+                                src={pick.image_url} 
+                                alt={pick.title} 
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm">
+                                No image
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      ) : (
+          <div className="relative z-10 flex justify-center items-center text-white text-center p-4 md:p-8 mt-4">
+            <div>
+              <h2 className="text-xl font-medium">Collection not found</h2>
+              <p className="mt-2 opacity-80">The collection you're looking for doesn't exist or has been removed.</p>
+              <button 
+                onClick={() => navigate('/collections')} 
+                className="mt-4 inline-block px-4 py-2 bg-white text-black rounded-md"
+              >
+                Back to Collections
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default CollectionDetailPage;

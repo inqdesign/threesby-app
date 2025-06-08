@@ -1,0 +1,112 @@
+/* Hide scrollbars but maintain functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Main collection container */
+.collection-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+/* Container for cards with horizontal scrolling */
+.collection-row {
+  display: flex;
+  overflow-x: auto;
+  padding: 12px 0;
+  width: 100%;
+}
+
+/* Extend collection row on mobile to go all the way to the edge */
+@media (max-width: 767px) {
+  .collection-row {
+    margin-right: -1rem; /* Negative margin to extend beyond container */
+    padding-right: 0; /* No padding to allow cards to go to the edge */
+  }
+  
+  .collection-container {
+    margin-left: -1rem; /* Extend container to the left edge */
+    width: calc(100% + 2rem); /* Extend width to cover full screen width */
+    padding-left: 1.5rem; /* Increased left padding */
+  }
+}
+
+/* Base card styles */
+.collection-card {
+  flex-shrink: 0;
+  margin-right: 16px;
+  aspect-ratio: 5/7;
+}
+
+/* Mobile: smaller cards to show more */
+@media (max-width: 767px) {
+  .collection-card {
+    /* Reduced width to show more cards */
+    width: 40%;
+    min-width: 125px;
+  }
+}
+
+/* Small desktop: 3 cards per row */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .collection-card {
+    /* (100% - (3-1) * 16px) / 3 */
+    width: calc((100% - 32px) / 3);
+  }
+  
+  /* Right-aligned for few cards */
+  .collection-row.few-cards {
+    justify-content: flex-end;
+  }
+  
+  /* Left-aligned for many cards */
+  .collection-row.many-cards {
+    justify-content: flex-start;
+  }
+}
+
+/* Medium desktop: 4 cards per row */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .collection-card {
+    /* (100% - (4-1) * 16px) / 4 */
+    width: calc((100% - 48px) / 4);
+  }
+  
+  /* Right-aligned for few cards */
+  .collection-row.few-cards {
+    justify-content: flex-end;
+  }
+  
+  /* Left-aligned for many cards */
+  .collection-row.many-cards {
+    justify-content: flex-start;
+  }
+}
+
+/* Large desktop: 5 cards per row */
+@media (min-width: 1280px) {
+  .collection-card {
+    /* (100% - (5-1) * 16px) / 5 */
+    width: calc((100% - 64px) / 5);
+  }
+  
+  /* Right-aligned for few cards */
+  .collection-row.few-cards {
+    justify-content: flex-end;
+  }
+  
+  /* Left-aligned for many cards */
+  .collection-row.many-cards {
+    justify-content: flex-start;
+  }
+}
+
+/* Last card shouldn't have right margin when right-aligned */
+.collection-row.few-cards .collection-card:last-child {
+  margin-right: 0;
+}

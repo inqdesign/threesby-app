@@ -1,0 +1,30 @@
+/* Staggered animation for collection cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply animation to collection cards */
+.collection-card {
+  animation: fadeInUp 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+/* Generate staggered delays for collection cards */
+.collection-row > .collection-card:nth-child(1) { animation-delay: 0.05s; }
+.collection-row > .collection-card:nth-child(2) { animation-delay: 0.1s; }
+.collection-row > .collection-card:nth-child(3) { animation-delay: 0.15s; }
+.collection-row > .collection-card:nth-child(4) { animation-delay: 0.2s; }
+.collection-row > .collection-card:nth-child(5) { animation-delay: 0.25s; }
+.collection-row > .collection-card:nth-child(6) { animation-delay: 0.3s; }
+.collection-row > .collection-card:nth-child(7) { animation-delay: 0.35s; }
+.collection-row > .collection-card:nth-child(8) { animation-delay: 0.4s; }
+.collection-row > .collection-card:nth-child(9) { animation-delay: 0.45s; }
+.collection-row > .collection-card:nth-child(10) { animation-delay: 0.5s; }
+.collection-row > .collection-card:nth-child(n+11) { animation-delay: 0.55s; }

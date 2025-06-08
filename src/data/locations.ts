@@ -1,0 +1,78 @@
+// List of major cities around the world
+export const locations = [
+  // North America
+  'New York, USA',
+  'Los Angeles, USA',
+  'Chicago, USA',
+  'Toronto, Canada',
+  'Mexico City, Mexico',
+  'San Francisco, USA',
+  'Miami, USA',
+  'Vancouver, Canada',
+  'Montreal, Canada',
+
+  // Europe
+  'London, UK',
+  'Paris, France',
+  'Berlin, Germany',
+  'Madrid, Spain',
+  'Rome, Italy',
+  'Amsterdam, Netherlands',
+  'Barcelona, Spain',
+  'Vienna, Austria',
+  'Stockholm, Sweden',
+  'Copenhagen, Denmark',
+  'Dublin, Ireland',
+  'Lisbon, Portugal',
+  'Athens, Greece',
+  'Prague, Czech Republic',
+  'Budapest, Hungary',
+  'Warsaw, Poland',
+  'Oslo, Norway',
+  'Helsinki, Finland',
+  'Zurich, Switzerland',
+  'Brussels, Belgium',
+
+  // Asia
+  'Tokyo, Japan',
+  'Seoul, South Korea',
+  'Beijing, China',
+  'Shanghai, China',
+  'Hong Kong',
+  'Singapore',
+  'Bangkok, Thailand',
+  'Mumbai, India',
+  'Delhi, India',
+  'Dubai, UAE',
+  'Istanbul, Turkey',
+  'Taipei, Taiwan',
+  'Kyoto, Japan',
+  'Ho Chi Minh City, Vietnam',
+  'Kuala Lumpur, Malaysia',
+
+  // Australia & Oceania
+  'Sydney, Australia',
+  'Melbourne, Australia',
+  'Auckland, New Zealand',
+  'Wellington, New Zealand',
+  'Brisbane, Australia',
+  'Perth, Australia',
+
+  // Africa
+  'Cape Town, South Africa',
+  'Johannesburg, South Africa',
+  'Cairo, Egypt',
+  'Marrakech, Morocco',
+  'Nairobi, Kenya',
+  'Lagos, Nigeria',
+  'Accra, Ghana',
+
+  // South America
+  'Rio de Janeiro, Brazil',
+  'São Paulo, Brazil',
+  'Buenos Aires, Argentina',
+  'Santiago, Chile',
+  'Lima, Peru',
+  'Bogotá, Colombia',
+  'Medellín, Colombia',
+];

@@ -1,0 +1,437 @@
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { SmoothPickCard } from '../components/SmoothPickCard';
+import { Search } from 'lucide-react';
+import { useScrollDirection } from '../hooks/useScrollDirection';
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import './DiscoverPage.css';
+import type { Profile } from '../types';
+import { FeaturedContent } from '../components/FeaturedContent';
+import { Footer } from '../components/Footer';
+import { useAppStore } from '../store';
+
+type Category = 'places' | 'products' | 'books';
+
+type DiscoverPageProps = {
+  isLoading?: boolean;
+};
+
+export function DiscoverPage({ isLoading = false }: DiscoverPageProps) {
+  const location = useLocation();
+  const { feedPicks, loading: feedLoading, fetchFeedPicks } = useAppStore();
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
+  const [showAll, setShowAll] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchInput, setShowSearchInput] = useState(false);
+  const isScrollingUp = useScrollDirection();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const scrollPositionRef = useRef<number>(0);
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+  const hasRestoredScrollRef = useRef<boolean>(false);
+
+  // Handle scroll position saving
+  useEffect(() => {
+    // Save current scroll position every 500ms while on discover page
+    const handleScroll = () => {
+      scrollPositionRef.current = window.scrollY;
+      localStorage.setItem('discover_scroll_position', scrollPositionRef.current.toString());
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      // Save final position when leaving the page
+      localStorage.setItem('discover_scroll_position', scrollPositionRef.current.toString());
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Handle scroll position restoration with improved reliability
+  useEffect(() => {
+    // Only restore scroll if we're coming back from a pick detail page
+    if (location.state?.source === 'back_from_pick_detail' && !hasRestoredScrollRef.current) {
+      // Use scroll position from state if available, otherwise try localStorage
+      const statePosition = location.state?.scrollPosition;
+      const savedPosition = statePosition || localStorage.getItem('discover_scroll_position');
+      console.log('Attempting to restore scroll position:', savedPosition);
+      
+      if (savedPosition) {
+        const position = typeof savedPosition === 'number' ? savedPosition : parseInt(savedPosition, 10);
+        
+        // Set a flag to prevent multiple restoration attempts
+        hasRestoredScrollRef.current = true;
+        
+        // Disable smooth scrolling temporarily
+        const originalScrollBehavior = document.documentElement.style.scrollBehavior;
+        document.documentElement.style.scrollBehavior = 'auto';
+        document.body.style.scrollBehavior = 'auto';
+        
+        // Immediately set scroll position to prevent the initial render at the top
+        window.scrollTo(0, position);
+        
+        // Function to check if content is loaded and restore scroll
+        const restoreScroll = () => {
+          // Don't try to restore while still loading
+          if (feedLoading) return false; 
+          
+          // Check if we have enough content to scroll to
+          const feedContainer = feedContainerRef.current;
+          const hasEnoughContent = feedContainer && 
+            feedContainer.scrollHeight > position + 100; // Add small buffer
+          
+          if (hasEnoughContent || attemptCount > 5) {
+            console.log('Restoring scroll to position:', position);
+            
+            // Force scroll position directly without animation
+            try {
+              // Try multiple scroll methods to ensure it works
+              window.scrollTo(0, position);
+              document.documentElement.scrollTop = position;
+              document.body.scrollTop = position;
+              
+              // Make one more attempt after a short delay to ensure it sticks
+              setTimeout(() => {
+                window.scrollTo(0, position);
+              }, 100);
+              
+              console.log('Scroll position set to:', position);
+            } catch (e) {
+              console.error('Error setting scroll position:', e);
+            }
+            
+            return true;
+          }
+          
+          return false; // Not ready yet
+        };
+        
+        // Try multiple times with increasing intervals
+        let attemptCount = 0;
+        const maxAttempts = 15; // Increase max attempts
+        
+        const attemptRestore = () => {
+          if (attemptCount >= maxAttempts) {
+            // Restore original scroll behavior after all attempts
+            document.documentElement.style.scrollBehavior = originalScrollBehavior;
+            document.body.style.scrollBehavior = originalScrollBehavior;
+            return;
+          }
+          
+          attemptCount++;
+          
+          if (!restoreScroll()) {
+            // If not successful, try again with increasing delay
+            const delay = Math.min(50 * attemptCount, 300); // Cap at 300ms for faster attempts
+            setTimeout(attemptRestore, delay);
+          } else {
+            // Restore original scroll behavior after successful restoration
+            setTimeout(() => {
+              document.documentElement.style.scrollBehavior = originalScrollBehavior;
+              document.body.style.scrollBehavior = originalScrollBehavior;
+            }, 500); // Wait a bit before restoring smooth scrolling
+          }
+        };
+        
+        // Start the restoration process immediately
+        restoreScroll();
+        // And then try a few more times to ensure it sticks
+        setTimeout(attemptRestore, 50);
+      }
+    }
+  }, [location.state, feedLoading]);
+
+  useEffect(() => {
+    const fetchWithRetry = async (attempts = 3, delay = 2000) => {
+      for (let i = 0; i < attempts; i++) {
+        try {
+          await fetchFeedPicks();
+          setError(null);
+          break;
+        } catch (err) {
+          console.error(`Fetch attempt ${i + 1} failed:`, err);
+          if (i === attempts - 1) {
+            setError('Failed to load content');
+          } else {
+            await new Promise((resolve) => setTimeout(resolve, delay));
+          }
+        }
+      }
+    };
+
+    fetchWithRetry();
+  }, [location.pathname, fetchFeedPicks]);
+
+  useEffect(() => {
+    if (isLoading) {
+      fetchFeedPicks();
+    }
+  }, [isLoading, fetchFeedPicks]);
+
+
+  const filteredPicks = Array.isArray(feedPicks) ? feedPicks.filter((pick) => {
+    // Get the profile from the pick object
+    // The profile data is likely nested in the pick object from the join query
+    const profile = (pick as any).profiles as Profile;
+    
+    const matchesSearch =
+      profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pick.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      pick.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesCategory = showAll || selectedCategories.includes(pick.category as Category);
+
+    return matchesSearch && matchesCategory;
+  }) : [];
+
+  return (
+    <div className="min-h-screen bg-[#F4F4F4]">
+      <div className="max-w-[1200px] mx-auto border-l border-r border-gray-200">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Feed Section (Left Column) */}
+          <div className="lg:col-span-8">
+            {/* Sticky Header Container - This will stay fixed at the top while scrolling */}
+            <div 
+              className={`filter-container ${(!isScrollingUp && !isDesktop) ? 'hidden' : ''}`} 
+              data-component-name="DiscoverPageHeader"
+            >
+              <div className="discover-page-header">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-base font-mono uppercase text-[#585858]">What's people care today.</h2>
+                  <button 
+                    onClick={() => setShowSearchInput(!showSearchInput)} 
+                    className="p-2 rounded-full hover:bg-gray-100 md:hidden"
+                    aria-label="Toggle search"
+                  >
+                    <Search className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+                  
+                  {/* Search button is shown on both mobile and desktop */}
+                  
+                  {/* Mobile Search Input - Expandable */}
+                  {showSearchInput && (
+                    <div className="relative mb-4 md:hidden">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search picks..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full text-sm outline-none"
+                        autoFocus
+                      />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1">
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2.5 rounded-full">
+                      <input
+                        type="checkbox"
+                        name="category-all"
+                        checked={showAll}
+                        onChange={() => {
+                          setShowAll(!showAll);
+                          if (!showAll) {
+                            setSelectedCategories([]);
+                          }
+                        }}
+                        className="sr-only"
+                      />
+                      <span className={`w-4 h-4 rounded-full border ${showAll ? 'bg-black border-black' : 'bg-white border-gray-300'} flex items-center justify-center`}>
+                        {showAll && <span className="text-white">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </span>}
+                      </span>
+                      <span className="text-sm">All</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2.5 rounded-full">
+                      <input
+                        type="checkbox"
+                        name="category-books"
+                        checked={selectedCategories.includes('books')}
+                        onChange={() => {
+                          const newSelectedCategories = selectedCategories.includes('books')
+                            ? selectedCategories.filter(cat => cat !== 'books')
+                            : [...selectedCategories, 'books' as Category];
+                          setSelectedCategories(newSelectedCategories);
+                          setShowAll(newSelectedCategories.length === 0);
+                        }}
+                        className="sr-only"
+                      />
+                      <span className={`w-4 h-4 rounded-full border ${selectedCategories.includes('books') ? 'bg-black border-black' : 'bg-white border-gray-300'} flex items-center justify-center`}>
+                        {selectedCategories.includes('books') && <span className="text-white">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </span>}
+                      </span>
+                      <span className="text-sm">Book</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2.5 rounded-full">
+                      <input
+                        type="checkbox"
+                        name="category-places"
+                        checked={selectedCategories.includes('places')}
+                        onChange={() => {
+                          const newSelectedCategories = selectedCategories.includes('places')
+                            ? selectedCategories.filter(cat => cat !== 'places')
+                            : [...selectedCategories, 'places' as Category];
+                          setSelectedCategories(newSelectedCategories);
+                          setShowAll(newSelectedCategories.length === 0);
+                        }}
+                        className="sr-only"
+                      />
+                      <span className={`w-4 h-4 rounded-full border ${selectedCategories.includes('places') ? 'bg-black border-black' : 'bg-white border-gray-300'} flex items-center justify-center`}>
+                        {selectedCategories.includes('places') && <span className="text-white">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </span>}
+                      </span>
+                      <span className="text-sm">Place</span>
+                    </label>
+                    
+                    <label className="flex items-center gap-2 cursor-pointer bg-white px-3 py-2.5 rounded-full">
+                      <input
+                        type="checkbox"
+                        name="category-products"
+                        checked={selectedCategories.includes('products')}
+                        onChange={() => {
+                          const newSelectedCategories = selectedCategories.includes('products')
+                            ? selectedCategories.filter(cat => cat !== 'products')
+                            : [...selectedCategories, 'products' as Category];
+                          setSelectedCategories(newSelectedCategories);
+                          setShowAll(newSelectedCategories.length === 0);
+                        }}
+                        className="sr-only"
+                      />
+                      <span className={`w-4 h-4 rounded-full border ${selectedCategories.includes('products') ? 'bg-black border-black' : 'bg-white border-gray-300'} flex items-center justify-center`}>
+                        {selectedCategories.includes('products') && <span className="text-white">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                          </svg>
+                        </span>}
+                      </span>
+                      <span className="text-sm">Thing</span>
+                    </label>
+                    {/* Desktop Search - Always visible */}
+                    <div className="relative flex-1 ml-2 hidden md:block">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Search picks..."
+                        className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full text-sm outline-none"
+                      />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feed Content */}
+            <div className="discover-page-content">
+              {feedLoading ? (
+                <div className="feed-items">
+                  {[...Array(3)].map((_, i) => (
+                    <div key={i} className="bg-white p-4 space-y-4 mb-8">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 bg-gray-200 rounded-full animate-pulse" />
+                        <div className="space-y-1">
+                          <div className="h-3 w-16 bg-gray-200 rounded animate-pulse" />
+                          <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                        </div>
+                      </div>
+                      <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                      <div className="space-y-2">
+                        <div className="h-3 w-20 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : error ? (
+                <div className="text-center py-12">
+                  <p className="text-red-600 mb-4">{error}</p>
+                  <button
+                    onClick={() => fetchFeedPicks()}
+                    className="px-4 py-2 bg-black text-white rounded-full hover:bg-gray-800 transition-colors"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : filteredPicks.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-gray-500 font-medium">No picks found</p>
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="mt-4 text-black hover:text-gray-800 underline"
+                    >
+                      Clear search
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="feed-items" ref={feedContainerRef}>
+                  {filteredPicks.map((pick) => (
+                    <SmoothPickCard
+                      key={pick.id}
+                      pick={{
+                        ...pick,
+                        profile: (pick as any).profiles as {
+                          id: string;
+                          full_name: string | null;
+                          title: string | null;
+                          avatar_url?: string | null;
+                          is_admin?: boolean;
+                          is_creator?: boolean;
+                          is_brand?: boolean;
+                        }
+                      }}
+                      variant="feed"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Featured Content & Footer (Right Column) */}
+          <div className="lg:col-span-4">
+            <div className="sticky top-[72px] overflow-y-auto">
+              <div className="space-y-6 border-l border-gray-200">
+                {/* Featured Content */}
+                <div className="featured-content-section">
+                  <FeaturedContent 
+                    type="threes" 
+                    title="OUR THREES" 
+                    key="featured-threes"
+                  />
+                </div>
+                <div className="featured-content-section curators">
+                  <FeaturedContent 
+                    type="curators" 
+                    title="FEATURED CURATORS" 
+                    key="featured-curators"
+                  />
+                </div>
+
+                {/* Footer */}
+                <div className="footer-container">
+                  <Footer />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

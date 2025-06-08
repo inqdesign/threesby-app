@@ -1,0 +1,645 @@
+import React, { Fragment } from "react";
+import { Dialog, Transition } from '@headlessui/react';
+import { Maximize2, Minimize2, X } from 'lucide-react';
+import { useAuth } from "../hooks/useAuth";
+import { supabase } from "../lib/supabase";
+import { SimpleImageUpload } from './SimpleImageUpload';
+import { LocationSelect } from './LocationSelect';
+import type { Profile } from "../types";
+import './ProfileEditModal.css';
+
+type ProfileEditModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (data: Partial<Profile>) => Promise<void>;
+  initialData?: {
+    full_name: string;
+    title: string;
+    avatar_url: string;
+    shelf_image_url?: string;
+    bio?: string;
+    location?: string;
+    tags?: string[];
+    username?: string;
+    social_links?: {
+      twitter?: string;
+      instagram?: string;
+      website?: string;
+    };
+  };
+};
+
+export function ProfileEditModal({ 
+  isOpen, 
+  onClose, 
+  onSubmit,
+  initialData,
+}: ProfileEditModalProps): JSX.Element {
+  const { user } = useAuth();
+  const [formData, setFormData] = React.useState({
+    full_name: initialData?.full_name || '',
+    title: initialData?.title || '',
+    avatar_url: initialData?.avatar_url || '',
+    shelf_image_url: initialData?.shelf_image_url || '',
+    bio: initialData?.bio || '',
+    location: initialData?.location || '',
+    username: initialData?.username || '',
+    tags: initialData?.tags || [] as string[],
+    social_links: {
+      twitter: initialData?.social_links?.twitter || '',
+      instagram: initialData?.social_links?.instagram || '',
+      website: initialData?.social_links?.website || ''
+    }
+  });
+  const [uploading, setUploading] = React.useState(false);
+  const [isFullScreen, setIsFullScreen] = React.useState(false);
+  const formContainerRef = React.useRef<HTMLDivElement>(null);
+  const [tagsInput, setTagsInput] = React.useState('');
+  const [isAddingTag, setIsAddingTag] = React.useState(false);
+  const [imageError, setImageError] = React.useState<string | null>(null);
+
+  // Make sure we properly fetch and update all profile data when initialData changes
+  React.useEffect(() => {
+    if (initialData && user) {
+      console.log('Initial profile data:', initialData);
+      
+      // Directly use the data from the profile
+      setFormData({
+        full_name: initialData.full_name || '',
+        title: initialData.title || '',
+        avatar_url: initialData.avatar_url || '',
+        shelf_image_url: initialData.shelf_image_url || '',
+        bio: initialData.bio || '',
+        location: initialData.location || '',
+        username: initialData.username || '',
+        tags: initialData.tags || [],
+        social_links: {
+          twitter: initialData.social_links?.twitter || '',
+          instagram: initialData.social_links?.instagram || '',
+          website: initialData.social_links?.website || ''
+        }
+      });
+      
+      // Log the data being set
+      console.log('Setting form data with tags:', initialData.tags);
+      console.log('Setting form data with location:', initialData.location);
+    }
+  }, [initialData, user]);
+
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return;
+    
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-avatar-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `profiles/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('picks')
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('picks')
+        .getPublicUrl(filePath);
+      
+      setFormData(prev => ({
+        ...prev,
+        avatar_url: publicUrl
+      }));
+    } catch (error) {
+      console.error('Error uploading avatar image:', error);
+      alert('Error uploading avatar image. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleShelfImageUpload = async (file: File) => {
+    if (!user) return;
+    
+    setUploading(true);
+    try {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setImageError('Please select an image file');
+        return;
+      }
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-shelf-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `profiles/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('picks')
+        .upload(filePath, file);
+        
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('picks')
+        .getPublicUrl(filePath);
+      
+      setFormData(prev => ({
+        ...prev,
+        shelf_image_url: publicUrl
+      }));
+      setImageError(null);
+    } catch (error) {
+      console.error('Error uploading shelf image:', error);
+      alert('Error uploading shelf image. Please try again.');
+    } finally {
+      setUploading(false);
+    }
+  };
+  
+  // Tags management
+  const addTag = () => {
+    // Handle comma-separated tags
+    if (tagsInput.includes(',')) {
+      const tagParts = tagsInput.split(',');
+      const newTags = [...formData.tags];
+      
+      // Process all parts except the last one (which might be incomplete)
+      for (let i = 0; i < tagParts.length - 1; i++) {
+        const tag = tagParts[i].trim();
+        if (tag && !newTags.includes(tag)) {
+          newTags.push(tag);
+        }
+      }
+      
+      // Update form data with new tags
+      setFormData({ ...formData, tags: newTags });
+      
+      // Keep the part after the last comma as the current input
+      const lastPart = tagParts[tagParts.length - 1].trim();
+      setTagsInput(lastPart);
+    } else {
+      // Handle single tag
+      const newTag = tagsInput.trim();
+      if (newTag && !formData.tags.includes(newTag)) {
+        setFormData({ ...formData, tags: [...formData.tags, newTag] });
+        setTagsInput('');
+      }
+    }
+  };
+
+  const handleSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
+    if (e) e.preventDefault(); // Prevent form submission from redirecting
+    
+    if (!user) return;
+    
+    try {
+      console.log('Submitting profile data:', formData);
+      console.log('Tags to be saved:', formData.tags);
+      console.log('Location to be saved:', formData.location);
+      
+      // Call the onSubmit prop with the form data
+      await onSubmit({
+        full_name: formData.full_name,
+        title: formData.title,
+        avatar_url: formData.avatar_url,
+        shelf_image_url: formData.shelf_image_url,
+        bio: formData.bio,
+        location: formData.location,
+        tags: formData.tags,
+        social_links: formData.social_links
+      });
+      
+      // Close the modal after successful submission
+      onClose();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      alert('Error saving profile. Please try again.');
+    }
+  };
+
+  // Disable background scrolling when modal is open
+  React.useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      
+      // Reset scroll position to top when modal opens
+      setTimeout(() => {
+        // Reset form container scroll
+        if (formContainerRef.current) {
+          formContainerRef.current.scrollTop = 0;
+        }
+        
+        // Reset all scrollable containers in the modal
+        const scrollableElements = document.querySelectorAll('.overflow-y-auto');
+        scrollableElements.forEach(element => {
+          (element as HTMLElement).scrollTop = 0;
+        });
+      }, 50); // Small delay to ensure DOM is updated
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
+  return (
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-[999]" onClose={onClose}>
+        {/* Overlay backdrop */}
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+        </Transition.Child>
+
+        {/* Full screen container with proper z-index */}
+        <div className="fixed inset-0 overflow-hidden">
+          <div className="absolute inset-0 overflow-hidden">
+            <Transition.Child
+              as={Fragment}
+              enter="transform transition ease-in-out duration-300"
+              enterFrom="translate-x-full"
+              enterTo="translate-x-0"
+              leave="transform transition ease-in-out duration-300"
+              leaveFrom="translate-x-0"
+              leaveTo="translate-x-full"
+            >
+              <Dialog.Panel className={`pointer-events-auto fixed inset-y-0 ${isFullScreen ? 'inset-x-0' : 'inset-x-0 md:right-0 md:left-auto md:w-[700px]'} flex ${isFullScreen ? '' : 'md:pl-10'} transform-gpu`}>
+                <div className={`flex h-full w-full flex-col overflow-y-auto bg-white shadow-xl`}>
+                  <div className="sticky top-0 z-10 bg-white px-6 py-4 border-b border-gray-200">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <button
+                          type="button"
+                          onClick={onClose}
+                          className="px-3 py-1.5 text-[#585757] bg-[#F4F4F4] rounded-md hover:bg-gray-200 transition-colors text-sm"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          className="text-gray-600 hover:text-gray-900 transition-colors hidden md:block ml-2"
+                          onClick={() => setIsFullScreen(!isFullScreen)}
+                          aria-label={isFullScreen ? "Exit full screen" : "Enter full screen"}
+                        >
+                          {isFullScreen ? (
+                            <Minimize2 className="w-5 h-5" />
+                          ) : (
+                            <Maximize2 className="w-5 h-5" />
+                          )}
+                        </button>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          type="button"
+                          onClick={handleSubmit}
+                          disabled={uploading}
+                          className="px-3 py-1.5 bg-[#252525] text-white rounded-md hover:bg-[#111111] transition-colors disabled:opacity-50 text-sm"
+                        >
+                          {uploading ? 'Saving...' : 'Save'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="profile-form" ref={formContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+                  {/* Moved Shelf Background Image to the top */}
+                  <div>
+                    <label className="block text-sm font-medium text-[#585757] mb-2">
+                      Shelf Background Image
+                    </label>
+                    {imageError && (
+                      <p className="text-red-500 text-sm mb-2">{imageError}</p>
+                    )}
+                    <div className="relative w-full h-48 flex items-center justify-center bg-gray-100 p-4 rounded-lg">
+                      <SimpleImageUpload
+                        onImageSelected={handleShelfImageUpload}
+                        currentUrl={formData.shelf_image_url}
+                        buttonText="Upload Background"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="username" className="block text-sm font-medium text-[#585757] mb-2">
+                      Username *
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">@</span>
+                      <input
+                        type="text"
+                        id="username"
+                        name="username"
+                        value={formData.username}
+                        onChange={(e) => {
+                          // Only allow lowercase letters, numbers, and underscores
+                          const sanitizedValue = e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '');
+                          setFormData({
+                            ...formData,
+                            username: sanitizedValue
+                          });
+                        }}
+                        className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 p-3 pl-8"
+                        placeholder="your_username"
+                        required
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1 mb-4">Only lowercase letters, numbers, and underscores allowed</p>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[#585757] mb-2">
+                      Profile Picture
+                    </label>
+                    <div className="flex items-center space-x-4">
+                      <div className="relative">
+                        <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100">
+                          {formData.avatar_url ? (
+                            <img
+                              src={formData.avatar_url}
+                              alt="Profile"
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-full w-full flex items-center justify-center text-gray-400">
+                              <span className="text-3xl">{formData.full_name?.[0] || '?'}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={onClose}
+                        className="px-3 py-1.5 text-[#585757] bg-[#F4F4F4] rounded-md hover:bg-gray-200 transition-colors text-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        className="text-gray-600 hover:text-gray-900 transition-colors hidden md:block ml-2"
+                        onClick={() => setIsFullScreen(!isFullScreen)}
+                        aria-label={isFullScreen ? "Exit full screen" : "Enter full screen"}
+                      >
+                        {isFullScreen ? (
+                          <Minimize2 className="w-5 h-5" />
+                        ) : (
+                          <Maximize2 className="w-5 h-5" />
+                        )}
+                      </button>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={uploading}
+                        className="px-3 py-1.5 bg-[#252525] text-white rounded-md hover:bg-[#111111] transition-colors disabled:opacity-50 text-sm"
+                      >
+                        {uploading ? 'Saving...' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div id="profile-form" ref={formContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Moved Shelf Background Image to the top */}
+                <div>
+                  <label className="block text-sm font-medium text-[#585757] mb-2">
+                    Shelf Background Image
+                  </label>
+                  {imageError && (
+                    <p className="text-red-500 text-sm mb-2">{imageError}</p>
+                  )}
+                  <div className="relative w-full h-48 flex items-center justify-center bg-gray-100 p-4 rounded-lg">
+                    <SimpleImageUpload
+                      onImageSelected={handleShelfImageUpload}
+                      currentUrl={formData.shelf_image_url}
+                      buttonText="Upload Background"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-[#585757] mb-2">
+                    Profile Picture
+                  </label>
+                  <div className="flex items-center space-x-4">
+                    <div className="relative">
+                      <div className="h-20 w-20 rounded-full overflow-hidden bg-gray-100">
+                        {formData.avatar_url ? (
+                          <img
+                            src={formData.avatar_url}
+                            alt="Profile"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-full w-full flex items-center justify-center text-gray-400">
+                            <span className="text-3xl">{formData.full_name?.[0] || '?'}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => {
+                          const file = (e.target as HTMLInputElement).files?.[0];
+                          if (file) handleAvatarUpload(file);
+                        };
+                        input.click();
+                      }}
+                      disabled={uploading}
+                      className="px-3 py-1.5 text-sm font-medium text-[#585757] bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors focus:outline-none"
+                    >
+                      {uploading ? 'Uploading...' : 'Change'}
+                    </button>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="title" className="block text-sm font-medium text-[#585757] mb-2">
+                      Title
+                    </label>
+                    <input
+                      type="text"
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 p-3"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#585757] mb-2">
+                      Interests
+                    </label>
+                    <div className="flex flex-wrap items-center gap-2 w-full rounded-lg bg-gray-100 border-0 shadow-none p-3">
+                      {/* Display existing tags as pills */}
+                      {formData.tags.map((tag: string, index: number) => (
+                        <div key={index} className="flex items-center bg-gray-200 rounded-lg px-3 py-1.5 text-sm h-10">
+                          <span>{tag}</span>
+                          <button
+                            type="button"
+                            className="ml-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                            onClick={() => {
+                              const newTags = [...formData.tags];
+                              newTags.splice(index, 1);
+                              setFormData({ ...formData, tags: newTags });
+                            }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      
+                      {/* Only show input field when actively adding a tag or when there are no tags */}
+                      {(isAddingTag || formData.tags.length === 0) && (
+                        <div className="flex items-center flex-grow">
+                          <input
+                            type="text"
+                            value={tagsInput}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setTagsInput(value);
+                              
+                              // If a comma was just typed, process the tags
+                              if (value.includes(',')) {
+                                addTag();
+                              }
+                            }}
+                            onBlur={() => {
+                              // If input is empty when focus is lost, hide the input
+                              if (tagsInput.trim() === '' && formData.tags.length > 0) {
+                                setIsAddingTag(false);
+                              }
+                            }}
+                            onKeyDown={(e) => {
+                              // Handle Escape key to cancel adding a tag
+                              if (e.key === 'Escape') {
+                                setTagsInput('');
+                                setIsAddingTag(false);
+                              }
+                              
+                              // Handle backspace to remove the last tag when input is empty
+                              if (e.key === 'Backspace' && tagsInput === '' && formData.tags.length > 0) {
+                                const newTags = [...formData.tags];
+                                newTags.pop();
+                                setFormData({ ...formData, tags: newTags });
+                              }
+                              
+                              // Handle Enter key to add a tag
+                              if (e.key === 'Enter' && tagsInput.trim() !== '') {
+                                e.preventDefault();
+                                addTag();
+                                // Keep input visible if no tags yet
+                                if (formData.tags.length === 0) {
+                                  setIsAddingTag(true);
+                                } else {
+                                  setIsAddingTag(false);
+                                }
+                              }
+                            }}
+                            className="flex-grow bg-transparent border-0 shadow-none focus:ring-0 outline-none min-w-[120px]"
+                            placeholder={formData.tags.length === 0 ? `Enter interests (e.g. design, travel, food)` : ''}
+                          />
+                          {tagsInput.trim() !== '' && (
+                            <button
+                              type="button"
+                              className="ml-2 px-2 py-2 bg-gray-200 rounded-md text-xs text-gray-700 hover:bg-gray-300 focus:outline-none"
+                              onClick={() => {
+                                addTag();
+                                // Hide input after adding tag if there are already tags
+                                if (formData.tags.length > 0) {
+                                  setIsAddingTag(false);
+                                }
+                              }}
+                            >
+                              Add
+                            </button>
+                          )}
+                        </div>
+                      )}
+                      
+                      {/* Add button when there are tags and not currently adding a new one */}
+                      {formData.tags.length > 0 && !isAddingTag && (
+                        <button
+                          type="button"
+                          className="text-xs text-gray-500 hover:text-gray-700 focus:outline-none flex items-center px-2 py-2"
+                          onClick={() => {
+                            setIsAddingTag(true);
+                            setTagsInput('');
+                          }}
+                        >
+                          <span className="mr-1">+</span> Add
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="location" className="block text-sm font-medium text-[#585757] mb-2">
+                      Location
+                    </label>
+                    <LocationSelect
+                      value={formData.location}
+                      onChange={(location) => setFormData({ ...formData, location })}
+                      placeholder="Select or enter your location"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#585757] mb-2">
+                      Bio
+                    </label>
+                    <div className="bg-gray-100 rounded-lg border-0 shadow-none relative">
+                      <textarea
+                        value={formData.bio || ''}
+                        onChange={e => setFormData({ ...formData, bio: e.target.value })}
+                        placeholder="Write something about yourself..."
+                        className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 p-3 min-h-[80px]"
+                        rows={4}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-[#585757] mb-2">
+                      Social Links
+                    </label>
+                    <div className="space-y-2">
+                      {['twitter', 'instagram', 'website'].map((platform) => (
+                        <div key={platform} className="flex items-center space-x-2">
+                          <input
+                            type="text"
+                            value={formData.social_links[platform as keyof typeof formData.social_links] || ''}
+                            placeholder={`${platform} URL`}
+                            onChange={(e) => {
+                              setFormData({
+                                ...formData,
+                                social_links: {
+                                  ...formData.social_links,
+                                  [platform]: e.target.value
+                                }
+                              });
+                            }}
+                            className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 p-3"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+
+                </div>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
+  );
+}

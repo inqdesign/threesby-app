@@ -1,0 +1,432 @@
+import React, { useMemo } from 'react';
+import { DndContext, closestCenter, DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy } from '@dnd-kit/sortable';
+import { Book, Package, MapPin } from 'lucide-react';
+import { SortablePickCard } from './SortablePickCard.tsx';
+import type { Pick } from '../types';
+
+type Category = 'places' | 'products' | 'books';
+
+interface PicksGridProps {
+  picks: Pick[];
+  categories: Category[];
+  onPickClick: (pick: Pick, category: Category, rank: number) => void;
+  onAddPick: (category: Category, rank: number) => void;
+  onReorder: (newOrder: Pick[]) => void;
+  showOnlyTopPicks?: boolean;
+  gap?: string; // Optional gap size between items, default is 10px
+}
+
+export function PicksGrid({
+  picks,
+  categories,
+  onPickClick,
+  onAddPick,
+  onReorder,
+  showOnlyTopPicks = false,
+  gap = '10px',
+}: PicksGridProps) {
+  // Group picks by category and sort by rank
+  const picksByCategory = useMemo(() => {
+    const result: Record<Category, Pick[]> = {
+      places: [],
+      products: [],
+      books: [],
+    };
+    
+    picks.forEach(pick => {
+      if (pick.category) {
+        result[pick.category as Category].push(pick);
+      }
+    });
+    
+    // Sort each category by rank
+    Object.keys(result).forEach(category => {
+      result[category as Category].sort((a, b) => (a.rank || 999) - (b.rank || 999));
+    });
+    
+    return result;
+  }, [picks]);
+  
+  // Create a map of filled slots
+  const filledSlots = useMemo(() => {
+    const slots = new Map<string, Pick>();
+    
+    picks.forEach(pick => {
+      if (pick.category && pick.rank > 0) {
+        slots.set(`${pick.category}-${pick.rank}`, pick);
+      }
+    });
+    
+    return slots;
+  }, [picks]);
+  
+  // Determine where to place the "Add" tile for each category
+  const addTiles = React.useMemo(() => {
+    const tiles = new Map();
+    categories.forEach(category => {
+      let topPicksCount = 0;
+      for (let i = 1; i <= 3; i++) {
+        if (filledSlots.has(`${category}-${i}`)) {
+          topPicksCount++;
+        }
+      }
+      if (topPicksCount === 3) {
+        tiles.set(`${category}-4`, 4);
+      } else {
+        for (let i = 1; i <= 3; i++) {
+          const key = `${category}-${i}`;
+          if (!filledSlots.has(key)) {
+            tiles.set(key, i);
+            break;
+          }
+        }
+      }
+    });
+    return tiles;
+  }, [categories, filledSlots]);
+  
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) return;
+    
+    // Extract category and rank from the IDs
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    
+    const [activeCategory, activeRank] = activeId.split('-');
+    const [overCategory, overRank] = overId.split('-');
+    
+    // Only allow reordering within the same category and only for top picks (rank 1-3)
+    if (activeCategory !== overCategory || 
+        parseInt(activeRank) > 3 || 
+        parseInt(overRank) > 3) {
+      return;
+    }
+    
+    console.log('Drag end:', { activeId, overId, activeCategory, activeRank, overCategory, overRank });
+    
+    // Find the picks involved
+    const activePick = filledSlots.get(activeId);
+    const overPick = filledSlots.get(overId);
+    
+    console.log('Picks involved:', { activePick, overPick, filledSlots: Array.from(filledSlots.entries()) });
+    
+    if (!activePick) {
+      console.log('No active pick found, aborting drag');
+      return;
+    }
+    
+    // Create a copy of the picks for this category
+    const categoryPicks = [...picksByCategory[activeCategory as Category]];
+    
+    // If there's a pick in the target position, swap their ranks
+    if (overPick) {
+      const updatedPicks = categoryPicks.map(pick => {
+        if (pick.id === activePick.id) {
+          return { ...pick, rank: parseInt(overRank) };
+        }
+        if (pick.id === overPick.id) {
+          return { ...pick, rank: parseInt(activeRank) };
+        }
+        return pick;
+      });
+      
+      onReorder(updatedPicks);
+    } else {
+      // If the target position is empty, just update the active pick's rank
+      const updatedPicks = categoryPicks.map(pick => {
+        if (pick.id === activePick.id) {
+          return { ...pick, rank: parseInt(overRank) };
+        }
+        return pick;
+      });
+      
+      onReorder(updatedPicks);
+    }
+  };
+
+  return (
+    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <div className="space-y-12">
+        {categories.map(category => {
+          // Get picks for this category
+          const categoryPicks = picksByCategory[category] || [];
+          
+          // Get archived picks (rank 0 or rank > 3)
+          const archivedPicks = categoryPicks.filter(pick => pick.rank === 0 || pick.rank > 3);
+          
+          return (
+            <div key={category} className="space-y-4">
+              {/* Category header removed as requested */}
+              
+              {/* Top Picks Grid (3x3) */}
+              <SortableContext items={[1, 2, 3].map(rank => `${category}-${rank}`)} strategy={rectSortingStrategy}>
+                <div className={`grid grid-cols-3 gap-[${gap}]`}>
+                  {/* First row */}
+                  {[1, 2, 3].map(rank => {
+                    const key = `${category}-${rank}`;
+                    const pick = filledSlots.get(key);
+                    const isAddTile = addTiles.has(key);
+                    
+                    if (pick) {
+                      // Existing pick - show normal tile
+                      return (
+                        <SortablePickCard
+                          key={`${category}-${rank}`}
+                          id={`${category}-${rank}`}
+                          pick={pick}
+                          category={category}
+                          index={rank - 1}
+                          onClick={() => onPickClick(pick, category, pick.rank)}
+                          onImageClick={() => onPickClick(pick, category, pick.rank)}
+                        >
+                          <div className="absolute top-2 right-2 z-10 bg-[#5aff00] px-2 py-0.5 rounded-sm text-xs font-bold uppercase">
+                            ON
+                          </div>
+                        </SortablePickCard>
+                      );
+                    } else if (isAddTile) {
+                      // This is the designated "Add" tile for this category
+                      return (
+                        <div key={`add-${category}-${rank}`} className="relative">
+                          <div 
+                            className="aspect-square rounded-[4px] bg-[#f5ffde] border border-[#e0e0e0] flex flex-col items-center justify-center cursor-pointer hover:bg-[#f0ffcc] transition-colors"
+                            onClick={() => onAddPick(category, rank)}
+                          >
+                            <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-sm text-xs font-bold uppercase">
+                              #{String(rank).padStart(2, '0')}
+                            </div>
+                            {/* Text label at bottom left */}
+                            {category === 'books' && (
+                              <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                                Add Book
+                              </div>
+                            )}
+                            {category === 'products' && (
+                              <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                                Add Product
+                              </div>
+                            )}
+                            {category === 'places' && (
+                              <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                                Add Place
+                              </div>
+                            )}
+                            {/* Icon positioned at bottom right */}
+                            <div className="absolute bottom-2 right-2">
+                              {category === 'books' && <Book className="w-5 h-5 text-[#9d9b9b]" />}
+                              {category === 'products' && <Package className="w-5 h-5 text-[#9d9b9b]" />}
+                              {category === 'places' && <MapPin className="w-5 h-5 text-[#9d9b9b]" />}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      // Empty non-interactive tile
+                      return (
+                        <div key={`empty-${category}-${rank}`} className="relative">
+                          <div className="aspect-square rounded-[4px] bg-gray-50 border border-gray-100 relative">
+                            <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-sm text-xs font-bold uppercase text-gray-300">
+                              #{String(rank).padStart(2, '0')}
+                            </div>
+                            <div className="absolute bottom-2 right-2 text-gray-300">
+                              {category === 'books' && <Book className="w-5 h-5" />}
+                              {category === 'products' && <Package className="w-5 h-5" />}
+                              {category === 'places' && <MapPin className="w-5 h-5" />}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
+                  
+                  {/* Second row */}
+                  {[4, 5, 6].map(rank => {
+                    const key = `${category}-${rank}`;
+                    const pick = filledSlots.get(key);
+                    const isAddTile = addTiles.has(key);
+                    
+                    if (pick) {
+                      // Existing pick - show normal tile
+                      return (
+                        <div key={`${category}-${rank}`} className="relative">
+                          <div 
+                            className="aspect-square rounded-[4px] bg-white shadow-sm hover:shadow-md cursor-pointer overflow-hidden"
+                            onClick={() => onPickClick(pick, category, pick.rank)}
+                          >
+                            <img
+                              alt={pick.title}
+                              className="object-cover w-full h-full cursor-pointer"
+                              src={pick.image_url}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent triggering the parent div's onClick
+                                onPickClick(pick, category, pick.rank);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    } else if (isAddTile) {
+                      // This is the designated "Add" tile for this category in the second row
+                      return (
+                        <div key={`add-${category}-${rank}`} className="relative">
+                          <div 
+                            className="aspect-square rounded-[4px] bg-[#f5ffde] border border-[#e0e0e0] flex flex-col items-center justify-center cursor-pointer hover:bg-[#f0ffcc] transition-colors"
+                            onClick={() => onAddPick(category, rank)}
+                          >
+                            <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-sm text-xs font-bold uppercase">
+                              #{String(rank).padStart(2, '0')}
+                            </div>
+                            {/* Text label at bottom left */}
+                            {category === 'books' && (
+                              <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                                Add Book
+                              </div>
+                            )}
+                            {category === 'products' && (
+                              <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                                Add Product
+                              </div>
+                            )}
+                            {category === 'places' && (
+                              <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                                Add Place
+                              </div>
+                            )}
+                            {/* Icon positioned at bottom right */}
+                            <div className="absolute bottom-2 right-2">
+                              {category === 'books' && <Book className="w-5 h-5 text-[#9d9b9b]" />}
+                              {category === 'products' && <Package className="w-5 h-5 text-[#9d9b9b]" />}
+                              {category === 'places' && <MapPin className="w-5 h-5 text-[#9d9b9b]" />}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      // Empty non-interactive tile
+                      return (
+                        <div key={`empty-${category}-row2-${rank}`} className="relative">
+                          <div className="aspect-square rounded-[4px] bg-gray-50 border border-gray-100 relative">
+                            <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-sm text-xs font-bold uppercase text-gray-300">
+                              #{String(rank).padStart(2, '0')}
+                            </div>
+                            <div className="absolute bottom-2 right-2 text-gray-300">
+                              {category === 'books' && <Book className="w-5 h-5" />}
+                              {category === 'products' && <Package className="w-5 h-5" />}
+                              {category === 'places' && <MapPin className="w-5 h-5" />}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
+                  
+                  {/* Third row */}
+                  {[7, 8, 9].map(rank => {
+                    const key = `${category}-${rank}`;
+                    const pick = filledSlots.get(key);
+                    
+                    if (pick) {
+                      // Existing pick - show normal tile
+                      return (
+                        <div key={`${category}-${rank}`} className="relative">
+                          <div 
+                            className="aspect-square rounded-[4px] bg-white shadow-sm hover:shadow-md cursor-pointer overflow-hidden"
+                            onClick={() => onPickClick(pick, category, pick.rank)}
+                          >
+                            <img
+                              alt={pick.title}
+                              className="object-cover w-full h-full cursor-pointer"
+                              src={pick.image_url}
+                              onClick={(e) => {
+                                e.stopPropagation(); // Prevent triggering the parent div's onClick
+                                onPickClick(pick, category, pick.rank);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    } else {
+                      // Empty non-interactive tile
+                      return (
+                        <div key={`empty-${category}-row3-${rank}`} className="relative">
+                          <div className="aspect-square rounded-[4px] bg-gray-50 border border-gray-100 relative">
+                            <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-sm text-xs font-bold uppercase text-gray-300">
+                              #{String(rank).padStart(2, '0')}
+                            </div>
+                            <div className="absolute bottom-2 right-2 text-gray-300">
+                              {category === 'books' && <Book className="w-5 h-5" />}
+                              {category === 'products' && <Package className="w-5 h-5" />}
+                              {category === 'places' && <MapPin className="w-5 h-5" />}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                  })}
+                </div>
+              </SortableContext>
+              
+              {/* Archived Picks */}
+              {!showOnlyTopPicks && archivedPicks.length > 0 && (
+                <div className="mt-8">
+                  <h3 className="text-sm font-medium mb-4">Archived</h3>
+                  <div className={`grid grid-cols-3 gap-[${gap}]`}>
+                    {archivedPicks.map(pick => (
+                      <SortablePickCard
+                        key={pick.id}
+                        id={`${category}-${pick.id}`}
+                        pick={pick}
+                        category={category as 'places' | 'products' | 'books'}
+                        index={pick.rank - 1}
+                        isArchived={true}
+                        onClick={() => onPickClick(pick, category, pick.rank)}
+                        onImageClick={() => onPickClick(pick, category, pick.rank)}
+                      />
+                    ))}
+                    
+                    {/* Add tile for archived section (if all top 3 slots are filled) */}
+                    {addTiles.size === 0 && (
+                      <div 
+                        className="aspect-square rounded-[4px] bg-[#f5ffde] border border-[#e0e0e0] flex flex-col items-center justify-center cursor-pointer hover:bg-[#f0ffcc] transition-colors relative"
+                        onClick={() => onAddPick(category, 0)}
+                      >
+                        <div className="absolute top-2 right-2 z-10 px-2 py-0.5 rounded-sm text-xs font-bold uppercase">
+                          #00
+                        </div>
+                        {/* Text label at bottom left */}
+                        {category === 'books' && (
+                          <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                            Add Book
+                          </div>
+                        )}
+                        {category === 'products' && (
+                          <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                            Add Product
+                          </div>
+                        )}
+                        {category === 'places' && (
+                          <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                            Add Place
+                          </div>
+                        )}
+                        {/* Icon positioned at bottom right */}
+                        <div className="absolute bottom-2 right-2">
+                          {category === 'books' && <Book className="w-5 h-5 text-[#9d9b9b]" />}
+                          {category === 'products' && <Package className="w-5 h-5 text-[#9d9b9b]" />}
+                          {category === 'places' && <MapPin className="w-5 h-5 text-[#9d9b9b]" />}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </DndContext>
+  );
+}

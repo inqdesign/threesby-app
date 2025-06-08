@@ -1,0 +1,341 @@
+/* Main container for the Lexical editor */
+.lexical-editor-container {
+  position: relative;
+  width: 100%;
+  border-radius: 0.5rem;
+  background-color: #f3f4f6;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  overflow: hidden;
+}
+
+/* Inner container for editor components */
+.editor-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* Toolbar styling */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: #fff;
+  border-top-left-radius: 0.3rem;
+  border-top-right-radius: 0.3rem;
+}
+
+.toolbar-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0 0.125rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: 0.25rem;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.toolbar-item:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.toolbar-item.active {
+  background-color: #e5e7eb;
+  color: #111827;
+}
+
+/* Image styling in editor */
+.editor-image {
+  position: relative;
+  margin: 1rem 0;
+  max-width: 100%;
+  text-align: center;
+}
+
+.editor-image-container {
+  display: inline-block;
+  position: relative;
+  max-width: 100%;
+}
+
+.editor-image-container img {
+  max-width: 100%;
+  display: block;
+  margin: 0 auto;
+  border-radius: 4px;
+}
+
+.editor-image-container img.selected {
+  outline: 2px solid #3b82f6;
+  border-radius: 4px;
+}
+
+.editor-image-resizer {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+}
+
+.editor-image-resizer.top-left {
+  top: -4px;
+  left: -4px;
+  cursor: nwse-resize;
+}
+
+.editor-image-resizer.top-right {
+  top: -4px;
+  right: -4px;
+  cursor: nesw-resize;
+}
+
+.editor-image-resizer.bottom-left {
+  bottom: -4px;
+  left: -4px;
+  cursor: nesw-resize;
+}
+
+.editor-image-resizer.bottom-right {
+  bottom: -4px;
+  right: -4px;
+  cursor: nwse-resize;
+}
+
+.editor-image-caption {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 1.5rem;
+  margin: 0 0.5rem;
+  background-color: #e5e7eb;
+}
+
+/* Editor content area */
+.editor-content {
+  position: relative;
+  padding: 1rem;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+}
+
+/* Text alignment classes */
+.editor-input.text-left {
+  text-align: left;
+}
+
+.editor-input.text-center {
+  text-align: center;
+}
+
+.editor-input.text-right {
+  text-align: right;
+}
+
+.editor-input.text-justify {
+  text-align: justify;
+}
+
+/* Content editable area */
+.lexical-editor-container .editor-content .editor-input[contenteditable="true"] {
+  position: relative;
+  outline: none !important;
+  min-height: 150px;
+  width: 100%;
+  resize: none;
+  font-size: 16px;
+  line-height: 1.5;
+  caret-color: #3b82f6;
+  tab-size: 1;
+  color: #1f2937;
+  display: block;
+  white-space: normal !important; /* Override inline style */
+  word-break: normal !important; /* Override inline style */
+}
+
+/* Placeholder styling */
+.editor-placeholder {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  color: #9ca3af;
+  pointer-events: none;
+  user-select: none;
+  font-size: 16px;
+}
+
+/* Paragraph styles */
+.editor-paragraph {
+  margin: 0 0 1em 0;
+  width: 100%;
+  position: relative;
+  display: block !important;
+  white-space: normal !important;
+  word-break: normal !important;
+}
+
+/* Text formatting styles */
+.editor-text-bold {
+  font-weight: bold;
+}
+
+.editor-text-italic {
+  font-style: italic;
+}
+
+.editor-text-underline {
+  text-decoration: underline;
+}
+
+.editor-text-code {
+  background-color: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-family: monospace;
+}
+
+/* Heading styles */
+.editor-heading-h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 1rem 0;
+}
+
+.editor-heading-h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0.75rem 0;
+}
+
+.editor-heading-h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0.5rem 0;
+}
+
+/* Quote styling */
+.editor-quote {
+  margin: 1rem 0;
+  padding-left: 1rem;
+  border-left: 4px solid #e5e7eb;
+  color: #4b5563;
+}
+
+/* List styling */
+.editor-list-ol {
+  padding-left: 1.5rem;
+  list-style-type: decimal;
+}
+
+.editor-list-ul {
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.editor-listitem {
+  margin: 0.25rem 0;
+}
+
+.editor-nested-listitem {
+  list-style-type: circle;
+}
+
+/* Link styling */
+.editor-link {
+  color: #3b82f6;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Image styling */
+.editor-image {
+  position: relative;
+  margin: 1em 0;
+  display: block;
+  max-width: 100%;
+}
+
+.editor-image-container {
+  display: block;
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.editor-image img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  cursor: pointer;
+  margin: 0 auto;
+}
+
+.editor-image img.selected {
+  outline: 2px solid #1a73e8;
+}
+
+.editor-image-resizer {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background-color: #1a73e8;
+  border-radius: 50%;
+  z-index: 10;
+}
+
+.editor-image-resizer.top-left {
+  top: -4px;
+  left: -4px;
+  cursor: nwse-resize;
+}
+
+.editor-image-resizer.top-right {
+  top: -4px;
+  right: -4px;
+  cursor: nesw-resize;
+}
+
+.editor-image-resizer.bottom-left {
+  bottom: -4px;
+  left: -4px;
+  cursor: nesw-resize;
+}
+
+.editor-image-resizer.bottom-right {
+  bottom: -4px;
+  right: -4px;
+  cursor: nwse-resize;
+}
+
+.editor-image-caption {
+  text-align: center;
+  color: #555;
+  font-size: 0.9em;
+  margin-top: 0.5em;
+}
+
+/* Image styling */
+.editor-image {
+  position: relative;
+  margin: 1rem 0;
+  max-width: 100%;
+  cursor: default;
+}
+
+.editor-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+}

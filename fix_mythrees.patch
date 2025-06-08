@@ -1,0 +1,11 @@
+--- src/pages/MyThreesPage.tsx.old	2025-05-12 13:25:00
++++ src/pages/MyThreesPage.tsx	2025-05-12 13:25:00
+@@ -547,7 +547,7 @@
+       setShowDeleteConfirm(false);
+       setPickToDelete(null);
+     }
+-  }, [picks, handleAddPick, handlePickClick, handleReorder, getFirstAvailableRank]);
++  }, [user, fetchFeedPicks, fetchCurators]);
+
+   // Handle reordering of picks
+   const handleReorder = async (category: Category, newOrder: Pick[]) => {

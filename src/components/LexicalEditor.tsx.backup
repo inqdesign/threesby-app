@@ -1,0 +1,321 @@
+import React, { useEffect, useState, forwardRef, useImperativeHandle, useCallback } from 'react';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
+import { ContentEditable } from '@lexical/react/LexicalContentEditable';
+import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
+import { AutoFocusPlugin } from '@lexical/react/LexicalAutoFocusPlugin';
+import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
+import { ToolbarPlugin } from './editor/ToolbarPlugin';
+import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
+import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
+import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
+import { ListPlugin } from '@lexical/react/LexicalListPlugin';
+import { HeadingNode, QuoteNode } from '@lexical/rich-text';
+import { ListItemNode, ListNode } from '@lexical/list';
+import { LinkNode, AutoLinkNode } from '@lexical/link';
+import { CodeHighlightNode, CodeNode } from '@lexical/code';
+import { TableNode, TableCellNode, TableRowNode } from '@lexical/table';
+import { ImageNode, INSERT_IMAGE_COMMAND, ImagePayload, $createImageNode } from './editor/ImageNode';
+import { $getRoot, $createParagraphNode, $createTextNode, $getSelection } from 'lexical';
+import { $generateHtmlFromNodes } from '@lexical/html';
+import type { LexicalEditor as LexicalEditorType } from 'lexical';
+import { TextInputFixPlugin } from './editor/TextInputFixPlugin';
+import './LexicalEditor.css';
+
+// Define the editor theme
+const theme = {
+  ltr: 'ltr',
+  rtl: 'rtl',
+  paragraph: 'editor-paragraph',
+  quote: 'editor-quote',
+  heading: {
+    h1: 'editor-heading-h1',
+    h2: 'editor-heading-h2',
+    h3: 'editor-heading-h3',
+  },
+  list: {
+    nested: {
+      listitem: 'editor-nested-listitem',
+    },
+    ol: 'editor-list-ol',
+    ul: 'editor-list-ul',
+    listitem: 'editor-listitem',
+  },
+  image: 'editor-image',
+  link: 'editor-link',
+  text: {
+    bold: 'editor-text-bold',
+    italic: 'editor-text-italic',
+    underline: 'editor-text-underline',
+    code: 'editor-text-code',
+  },
+};
+
+// Define the nodes we want to use
+const nodes = [
+  HeadingNode,
+  QuoteNode,
+  ListNode,
+  ListItemNode,
+  LinkNode,
+  AutoLinkNode,
+  CodeNode,
+  CodeHighlightNode,
+  TableNode,
+  TableCellNode,
+  TableRowNode,
+  ImageNode,
+];
+
+// Create a plugin to handle placeholder text
+function PlaceholderPlugin({ placeholder }: { placeholder: string }) {
+  return <div className="editor-placeholder">{placeholder}</div>;
+}
+
+// Create a plugin to handle initial content
+function InitialContentPlugin({ initialContent }: { initialContent: string }) {
+  const [editor] = useLexicalComposerContext();
+  const hasInitializedRef = React.useRef<boolean>(false);
+
+  // Only set content once on initial mount
+  useEffect(() => {
+    if (hasInitializedRef.current || !initialContent) {
+      return;
+    }
+    
+    hasInitializedRef.current = true;
+
+    // Set initial content only once
+    editor.update(() => {
+      const root = $getRoot();
+      if (root.getFirstChild() === null) {
+        const paragraph = $createParagraphNode();
+        const textNode = $createTextNode(initialContent);
+        paragraph.append(textNode);
+        root.append(paragraph);
+      }
+    });
+  }, [editor, initialContent]);
+
+  return null;
+}
+
+// A simple clipboard plugin that lets Lexical's native clipboard handling work
+function ClipboardPlugin() {
+  return null;
+}
+
+// Plugin to handle image insertion commands
+function ImagePlugin(): JSX.Element | null {
+  const [editor] = useLexicalComposerContext();
+  
+  useEffect(() => {
+    if (!editor) {
+      return;
+    }
+    
+    // Register command listener for image insertion
+    return editor.registerCommand<ImagePayload>(
+      INSERT_IMAGE_COMMAND,
+      (payload) => {
+        console.log('ImagePlugin: Processing image insertion command', payload);
+        const { src, altText, width, height, showCaption } = payload;
+        const imageNode = $createImageNode({
+          src,
+          altText,
+          width,
+          height,
+          showCaption
+        });
+        
+        try {
+          const selection = $getSelection();
+          if (selection) {
+            selection.insertNodes([imageNode]);
+            console.log('ImagePlugin: Image node inserted successfully');
+            return true;
+          }
+        } catch (error) {
+          console.error('ImagePlugin: Error inserting image node', error);
+        }
+        
+        return false;
+      },
+      0 // Priority
+    );
+  }, [editor]);
+  
+  return null;
+}
+
+// Define the props for the LexicalEditor component
+interface LexicalEditorProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
+  autoFocus?: boolean;
+  onImageUpload?: () => void;
+}
+
+// Define the methods we want to expose via the ref
+export interface LexicalEditorRefMethods {
+  focus: () => void;
+  clear: () => void;
+  getEditor: () => LexicalEditorType | null;
+  insertImage: (url: string) => void;
+}
+
+// Create the LexicalEditor component
+const LexicalEditor = forwardRef<LexicalEditorRefMethods, LexicalEditorProps>(
+  ({ value, onChange, placeholder = 'Enter some text...', className = '', autoFocus = true, onImageUpload }, ref) => {
+    const [editor, setEditor] = useState<LexicalEditorType | null>(null);
+    
+    // Store the image upload handler for use in the toolbar
+    const imageUploadHandler = useCallback(() => {
+      if (onImageUpload) {
+        onImageUpload();
+      }
+    }, [onImageUpload]);
+
+    // Expose methods via ref
+    useImperativeHandle(ref, () => ({
+      focus: () => {
+        editor?.focus();
+      },
+      clear: () => {
+        editor?.update(() => {
+          const root = $getRoot();
+          root.clear();
+          const paragraph = $createParagraphNode();
+          root.append(paragraph);
+        });
+      },
+      getEditor: () => {
+        return editor;
+      },
+      insertImage: (url: string) => {
+        console.log('Inserting image with URL:', url);
+        if (editor) {
+          editor.focus();
+          try {
+            editor.dispatchCommand(INSERT_IMAGE_COMMAND, { 
+              src: url, 
+              altText: 'Image',
+              width: 'auto',
+              height: 'auto',
+              showCaption: false
+            });
+            console.log('Image insertion command dispatched successfully');
+          } catch (error) {
+            console.error('Error inserting image:', error);
+          }
+        } else {
+          console.error('Editor not initialized for image insertion');
+        }
+      }
+    }));
+
+
+
+    // Define the editor configuration
+    const initialConfig = {
+      namespace: 'OnShelfEditor',
+      theme,
+      nodes,
+      onError: (error: Error) => {
+        console.error('Lexical Editor Error:', error);
+      },
+      editorState: null,
+      editable: true,
+      onEditorInitialized: (editorInstance: LexicalEditorType) => {
+        setEditor(editorInstance);
+      },
+    };
+
+    return (
+      <div className={`lexical-editor-container ${className}`}>
+        <LexicalComposer initialConfig={initialConfig}>
+          <div className="editor-inner">
+            <ToolbarPlugin onImageClick={imageUploadHandler} />
+            <div className="editor-content">
+              <RichTextPlugin
+                contentEditable={
+                  <ContentEditable 
+                    className="editor-input" 
+                    ariaLabel="Rich Text Editor"
+                    spellCheck={false}
+                    autoCapitalize="off"
+                    autoCorrect="off"
+                    style={{
+                      minHeight: '150px',
+                      outline: 'none',
+                      padding: '8px',
+                      position: 'relative',
+                      tabSize: 1,
+                      whiteSpace: 'normal',
+                      wordBreak: 'normal',
+                      userSelect: 'text'
+                    }}
+                  />
+                }
+                placeholder={<PlaceholderPlugin placeholder={placeholder} />}
+                ErrorBoundary={() => <div>Something went wrong</div>}
+              />
+              <OnChangePlugin
+                onChange={(editorState) => {
+                  editorState.read(() => {
+                    try {
+                      // Generate HTML from the editor content
+                      const htmlString = editor ? $generateHtmlFromNodes(editor) : '';
+                      // Also get plain text as a fallback
+                      const root = $getRoot();
+                      const text = root.getTextContent();
+                      // Use HTML if available, otherwise use plain text
+                      const contentToSave = htmlString || text;
+                      onChange(contentToSave);
+                    } catch (error) {
+                      console.error('Error generating content:', error);
+                    }
+                }}
+              />
+            }
+            placeholder={<PlaceholderPlugin placeholder={placeholder} />}
+            ErrorBoundary={() => <div>Something went wrong</div>}
+          />
+          <OnChangePlugin
+            onChange={(editorState) => {
+              editorState.read(() => {
+                try {
+                  // Generate HTML from the editor content
+                  const htmlString = editor ? $generateHtmlFromNodes(editor) : '';
+                  // Also get plain text as a fallback
+                  const root = $getRoot();
+                  const text = root.getTextContent();
+                  // Use HTML if available, otherwise use plain text
+                  const contentToSave = htmlString || text;
+                  onChange(contentToSave);
+                } catch (error) {
+                  console.error('Error generating content:', error);
+                }
+              });
+            }}
+          />
+          {autoFocus && <AutoFocusPlugin />}
+          <HistoryPlugin />
+          <ListPlugin />
+          <LinkPlugin />
+          <AutoFocusPlugin />
+          <TextInputFixPlugin />
+          <ClipboardPlugin />
+          <ImagePlugin />
+          <InitialContentPlugin initialContent={value} />
+        </div>
+      </div>
+    </LexicalComposer>
+  </div>
+  }
+);
+
+LexicalEditor.displayName = 'LexicalEditor';
+
+export default LexicalEditor;

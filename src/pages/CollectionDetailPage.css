@@ -1,0 +1,10 @@
+/* Hide main navigation on mobile for collection detail page */
+@media (max-width: 767px) {
+  body.collection-detail-page header {
+    display: none !important;
+  }
+  
+  body.collection-detail-page .md\:pt-\[68px\] {
+    padding-top: 0 !important;
+  }
+}

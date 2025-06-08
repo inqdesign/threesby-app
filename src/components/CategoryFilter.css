@@ -1,0 +1,18 @@
+/* Hide scrollbars but maintain functionality */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Extend category filters to the edge on mobile */
+@media (max-width: 767px) {
+  [data-component-name="CategoryFilter"] {
+    margin-left: 0;
+    width: calc(100% + 1rem);
+    padding-left: 1rem; /* 1rem left padding */
+  }
+}

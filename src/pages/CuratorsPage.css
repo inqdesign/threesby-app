@@ -1,0 +1,17 @@
+/* Mobile sticky profile styles */
+@media (max-width: 768px) {
+  .sticky-profile {
+    position: sticky !important;
+    top: 0 !important;
+    align-self: flex-start !important;
+    z-index: 10 !important;
+    padding: 0 !important;
+    background-color: #F4F4F4 !important;
+    border-radius: 0 !important;
+    transform: translate3d(0, 0, 0) !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    will-change: transform !important;
+  }
+}

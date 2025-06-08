@@ -1,0 +1,213 @@
+import React, { useState } from 'react';
+import type { Profile, Pick } from '../types';
+
+import { Eye } from 'lucide-react';
+import { PreviewModal } from './PreviewModal';
+import { PublishButton } from './PublishButton';
+
+type SubNavProps = {
+  label?: string;
+  profile?: Profile;
+  picks?: Pick[];
+  onSubmit?: () => void;
+  onUnpublish?: () => Promise<void>;
+  onCancelSubmission?: () => void;
+  isOwnProfile?: boolean;
+  onEditProfile?: () => void;
+  onPublish?: () => Promise<void>;
+  children?: React.ReactNode;
+  className?: string;
+  // Props passed from App.tsx
+  user?: any;
+  userProfile?: Profile | null;
+  isAdmin?: boolean;
+  isAuthLoading?: boolean;
+  loading?: boolean;
+  onLogin?: () => void;
+};
+
+export function SubNav({
+  label = 'My Threes',
+  profile,
+  picks = [],
+  onSubmit,
+  onUnpublish,
+  onCancelSubmission,
+  isOwnProfile = true, // Set default to true to ensure buttons show up
+  onEditProfile,
+  onPublish,
+  children,
+  className = '',
+  // App.tsx props
+  user,
+  userProfile,
+  isAdmin,
+  isAuthLoading,
+  loading,
+  onLogin,
+}: SubNavProps) {
+  // Use userProfile if profile is not provided
+  const effectiveProfile = profile || userProfile;
+  const effectivePicks = picks.length > 0 ? picks : [];
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+
+  // For debugging
+  console.log('SubNav props:', { 
+    effectiveProfile, 
+    status: effectiveProfile?.status, 
+    isApproved: effectiveProfile?.status === 'approved',
+    hasOnPublish: !!onPublish
+  });
+
+  const completePicks = effectivePicks.filter((pick) => [1, 2, 3].includes(pick.rank));
+  const hasNinePicks = completePicks.length === 9;
+
+  // Check if profile is complete (e.g., has full_name, title, avatar_url)
+  const isProfileComplete = effectiveProfile?.full_name && effectiveProfile?.title && effectiveProfile?.avatar_url;
+
+  // Determine if changes were made after rejection
+  const isRejectedWithChanges =
+    effectiveProfile?.status === 'rejected' &&
+    (effectiveProfile.last_submitted_at &&
+      new Date(effectiveProfile.last_submitted_at) < new Date(effectivePicks[0]?.last_updated_at || effectiveProfile.updated_at));
+
+  // Show loading state if any loading flags are true
+  const isLoading = loading || isAuthLoading;
+
+  // Determine message, CTA, and label based on state
+  let message = label;
+  let ctaLabel = 'Submit';
+  let ctaAction = onSubmit;
+  let ctaDisabled = true;
+  let statusLabel = effectiveProfile?.status ? effectiveProfile.status.charAt(0).toUpperCase() + effectiveProfile.status.slice(1) : 'Draft';
+
+  if (!hasNinePicks) {
+    message = 'Share your best three Books, Places and Things!';
+    ctaDisabled = true;
+  } else if (hasNinePicks && !isProfileComplete) {
+    message = 'Great! Complete your profile!';
+    ctaDisabled = true;
+  } else if (hasNinePicks && isProfileComplete && effectiveProfile?.status === 'draft') {
+    message = 'Great! Submit your profile!';
+    ctaDisabled = false;
+  } else if (effectiveProfile?.status === 'pending') {
+    message = 'Thank you for your Picks, we will publish your picks as soon as possible';
+    ctaLabel = 'Cancel Submission';
+    ctaAction = onCancelSubmission;
+    ctaDisabled = false;
+    statusLabel = 'In Review';
+  } else if (effectiveProfile?.status === 'rejected') {
+    message = `Please check ${effectiveProfile.rejection_note || 'your submission'}. and submit again.`;
+    ctaDisabled = !isRejectedWithChanges;
+    statusLabel = 'In Pending';
+  } else if (effectiveProfile?.status === 'approved') {
+    message = 'Your profile is published';
+    ctaLabel = 'Submit';
+    ctaAction = undefined; // No primary action button needed
+    ctaDisabled = true;
+    statusLabel = 'Active';
+  } else if (effectiveProfile?.status === 'unpublished') {
+    message = 'Your profile and picks are unpublished.';
+    ctaLabel = 'Publish';
+    ctaAction = onSubmit; // Reuses submit logic to republish
+    ctaDisabled = !hasNinePicks || !isProfileComplete;
+    statusLabel = 'Inactive Curator';
+  }
+
+  const getStatusColor = (status?: string) => {
+    switch (status) {
+      case 'approved':
+        return 'text-green-600 bg-green-50';
+      case 'pending':
+        return 'text-yellow-600 bg-yellow-50';
+      case 'rejected':
+        return 'text-red-600 bg-red-50';
+      case 'draft':
+      case 'unpublished':
+        return 'text-gray-600 bg-gray-50';
+      default:
+        return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  // Always show the buttons if we have a user or profile
+  const shouldShowButtons = isOwnProfile || !!user || !!effectiveProfile;
+  
+  // Force show the update button for approved profiles
+  const shouldShowUpdateButton = 
+    (effectiveProfile?.status === 'approved' || statusLabel === 'Active' || statusLabel === 'Approved') && 
+    (onPublish || handleSubmit);
+
+  return (
+    <>
+      <div
+        className={`flex w-full mt-6 items-center p-4 bg-white rounded-xl ${className}`}
+      >
+        <div className="flex items-center gap-4">
+          {effectiveProfile?.status && (
+            <span className={`text-sm font-medium px-2 py-1 rounded-full ${getStatusColor(effectiveProfile.status)}`}>
+              {statusLabel}
+            </span>
+          )}
+          <p className="font-body text-black">{message}</p>
+          {isLoading && <span className="text-sm text-gray-500 ml-2">Loading...</span>}
+        </div>
+        <div className="flex-1"></div>
+        <div className="flex items-center gap-2.5 ml-auto">
+          {children}
+          {shouldShowButtons && (
+            <>
+              {/* Preview Button */}
+              <button
+                onClick={() => setIsPreviewModalOpen(true)}
+                className="p-2 rounded-full border border-neutral-200 text-[#585757] hover:bg-gray-50 flex items-center justify-center"
+                title="Preview"
+              >
+                <Eye className="w-4 h-4" />
+              </button>
+              
+              {/* Submit/Cancel Button - Not shown when profile is approved */}
+              {ctaAction && effectiveProfile?.status !== 'approved' && (
+                <button
+                  onClick={ctaAction}
+                  disabled={ctaDisabled}
+                  className={`transition-colors ${
+                    ctaDisabled
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed px-4 py-2 rounded-[100px]'
+                      : ctaLabel === 'Cancel Submission'
+                      ? 'px-4 py-2 rounded-[100px] bg-orange-600 text-white hover:bg-orange-700'
+                      : 'px-4 py-2 rounded-[100px] bg-[#252525] text-white hover:bg-[#111111]'
+                  }`}
+                  title={ctaLabel}
+                >
+                  {ctaLabel}
+                </button>
+              )}
+              
+              {/* Update Button with dropdown - Always visible when profile is approved */}
+              {shouldShowUpdateButton && (
+                <PublishButton 
+                  profile={effectiveProfile}
+                  picks={effectivePicks}
+                  onUpdate={onPublish || handleSubmit}
+                  onUnpublish={onUnpublish}
+                />
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Preview Modal */}
+      {effectiveProfile && (
+        <PreviewModal
+          isOpen={isPreviewModalOpen}
+          onClose={() => setIsPreviewModalOpen(false)}
+          profile={effectiveProfile}
+          picks={effectivePicks.filter(pick => [1, 2, 3].includes(pick.rank))}
+          onEditProfile={onEditProfile}
+        />
+      )}
+    </>
+  );
+}

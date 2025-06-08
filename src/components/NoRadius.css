@@ -1,0 +1,10 @@
+/* Global style to force images to have no border radius */
+.no-radius {
+  border-radius: 0 !important;
+  overflow: hidden;
+}
+
+/* Additional override for any nested elements */
+.no-radius * {
+  border-radius: 0 !important;
+}

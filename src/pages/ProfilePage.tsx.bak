@@ -1,0 +1,332 @@
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { useAuth } from "../hooks/useAuth";
+import { supabase } from "../lib/supabase";
+import type { Profile, Pick } from '../types';
+import { MasterLayout } from "../components/MasterLayout";
+import { PickCard } from "../components/PickCard";
+import { Breadcrumbs, useBreadcrumbs } from "../components/Breadcrumbs";
+import { ContextualBackButton } from "../components/ContextualBackButton";
+import * as Tabs from '@radix-ui/react-tabs';
+import { ProfileActions } from '../components/ProfileActions';
+import { PicksGrid } from '../components/PicksGrid';
+
+const profileCache: Record<string, Profile> = {};
+
+export function ProfilePage() {
+  const { user } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  // We don't need to explicitly use location as it's used by useBreadcrumbs()
+  const breadcrumbs = useBreadcrumbs();
+  const [profile, setProfile] = React.useState<Profile | null>(null);
+  const [picks, setPicks] = React.useState<Pick[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [activeTab, setActiveTab] = React.useState('all');
+
+  console.log('ProfilePage: ID from useParams:', id); // Debug log
+
+  React.useEffect(() => {
+    if (id) {
+      fetchProfile();
+    }
+  }, [id]);
+
+  const fetchProfile = React.useCallback(async (profileId = id) => {
+    if (!profileId) {
+      console.log('ProfilePage: No ID provided');
+      setLoading(false);
+      return;
+    }
+
+    // Clear cache when explicitly refreshing
+    if (profileId === id && profileCache[profileId]) {
+      delete profileCache[profileId];
+    }
+
+    if (profileCache[profileId]) {
+      console.log('ProfilePage: Using cached profile for ID:', profileId);
+      setProfile(profileCache[profileId]);
+      setPicks(profileCache[profileId].picks || []);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*, picks(*)')
+        .eq('id', profileId)
+        .single();
+
+      if (error) throw error;
+
+      // Split the follows query into two to avoid .or() issues
+      const { data: followersData, error: followersError } = await supabase
+        .from('follows')
+        .select('follower_id')
+        .eq('following_id', profileId);
+
+      if (followersError) throw followersError;
+
+      const { data: followingData, error: followingError } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', profileId);
+
+      if (followingError) throw followingError;
+
+      const followersCount = followersData?.length || 0;
+      const followingCount = followingData?.length || 0;
+
+      // Apply visibility rules based on profile status and pick status
+      const isOwnProfile = user?.id === profileId;
+      const isAdmin = user?.app_metadata?.role === 'admin';
+      const profilePicks = data.picks || [];
+      
+      // Filter picks based on visibility rules:
+      // 1. If viewing own profile or admin, show all picks (including drafts)
+      // 2. If profile is active, show only published picks
+      // 3. Otherwise, don't show any picks
+      const visiblePicks = isOwnProfile || isAdmin
+        ? profilePicks // Show all picks to owner or admin
+        : data.status === 'active'
+          ? profilePicks.filter((pick: Pick) => pick.status === 'published') // Only show published picks to others
+          : []; // Don't show any picks for non-active profiles
+
+      const profileData = {
+        ...data,
+        followers_count: followersCount,
+        following_count: followingCount,
+        picks: visiblePicks
+      };
+
+      console.log('ProfilePage: Fetched profile data:', profileData); // Debug log
+      console.log('ProfilePage: Fetched picks:', profileData.picks); // Debug log
+      profileCache[profileId] = profileData;
+      setProfile(profileData);
+      setPicks(visiblePicks);
+    } catch (error) {
+      console.error('ProfilePage: Error fetching profile:', error);
+      alert('Failed to load profile. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  if (loading || !profile) {
+    console.log('ProfilePage: Rendering loading state, loading:', loading, 'profile:', profile); // Debug log
+    return (
+      <div className="min-h-screen bg-[#F4F4F4] px-8">
+        <div className="py-8">
+          <div className="hidden md:flex gap-4">
+            <div className="w-1/4">
+              <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse mb-4" />
+              <div className="w-32 h-6 bg-gray-200 rounded animate-pulse mb-2" />
+              <div className="w-48 h-4 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="w-3/4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {picks.map((pick: Pick) => (
+                  <PickCard
+                    key={pick.id}
+                    pick={pick}
+                    variant="Pick"
+                    contentLinkTo={`/picks/${pick.id}`}
+                    contentLinkState={{ source: 'profile', profileName: profile?.full_name || '' }}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="md:hidden">
+            <div className="p-4">
+              <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse mb-4" />
+              <div className="w-32 h-6 bg-gray-200 rounded animate-pulse mb-2" />
+              <div className="w-48 h-4 bg-gray-200 rounded animate-pulse" />
+            </div>
+            <div className="flex space-x-1 border-b border-gray-200 mb-6">
+              {['All', 'Books', 'Things', 'Places'].map((tab) => (
+                <div
+                  key={tab}
+                  className="flex-1 py-4 text-sm font-medium border-b-2 border-gray-200 animate-pulse"
+                >
+                  <div className="w-16 h-4 bg-gray-200 rounded mx-auto" />
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-col pb-20">
+              {[...Array(3)].map((_, index) => (
+                <div key={`skeleton-mobile-${index}`} className="flex items-center gap-4 p-2 border-b border-gray-200">
+                  <div className="w-16 h-16 bg-gray-200 rounded-lg animate-pulse" />
+                  <div className="flex-1">
+                    <div className="w-32 h-4 bg-gray-200 rounded animate-pulse mb-2" />
+                    <div className="w-16 h-3 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F4F4F4] px-8">
+      <div className="py-8">
+        <ContextualBackButton />
+        {breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
+        <div className="mb-8">
+          <MasterLayout
+            profile={profile}
+            isOwnProfile={user?.id === profile.id}
+            onEditProfile={() => {}}
+            loading={loading}
+            leftSideActions={user?.id === profile.id && (
+              <ProfileActions 
+                profile={profile} 
+                picks={picks} 
+                onRefresh={() => fetchProfile(id)}
+              />
+            )}
+          >
+            <div className="w-full">
+              <div className="md:hidden px-4 py-4">
+                <Tabs.Root value={activeTab} onValueChange={setActiveTab}>
+                  <Tabs.List className="flex space-x-1 border-b border-gray-200 mb-6">
+                    <Tabs.Trigger
+                      value="all"
+                      className={`flex-1 py-4 text-sm font-medium border-b-2 ${
+                        activeTab === 'all'
+                          ? 'border-[#252525] text-[#252525]'
+                          : 'border-transparent text-[#9d9b9b]'
+                      }`}
+                    >
+                      All
+                    </Tabs.Trigger>
+                    <Tabs.Trigger
+                      value="books"
+                      className={`flex-1 py-4 text-sm font-medium border-b-2 ${
+                        activeTab === 'books'
+                          ? 'border-[#252525] text-[#252525]'
+                          : 'border-transparent text-[#9d9b9b]'
+                      }`}
+                    >
+                      Books
+                    </Tabs.Trigger>
+                    <Tabs.Trigger
+                      value="products"
+                      className={`flex-1 py-4 text-sm font-medium border-b-2 ${
+                        activeTab === 'products'
+                          ? 'border-[#252525] text-[#252525]'
+                          : 'border-transparent text-[#9d9b9b]'
+                      }`}
+                    >
+                      Things
+                    </Tabs.Trigger>
+                    <Tabs.Trigger
+                      value="places"
+                      className={`flex-1 py-4 text-sm font-medium border-b-2 ${
+                        activeTab === 'places'
+                          ? 'border-[#252525] text-[#252525]'
+                          : 'border-transparent text-[#9d9b9b]'
+                      }`}
+                    >
+                      Places
+                    </Tabs.Trigger>
+                  </Tabs.List>
+
+                  <Tabs.Content value="all" className="pb-20">
+                    <div className="grid grid-cols-1 gap-4">
+                      {picks.map((pick: Pick) => (
+                        <PickCard
+                          key={pick.id}
+                          pick={pick}
+                          variant="Pick"
+                          display="mobile"
+                          contentLinkTo={`/picks/${pick.id}`}
+                          contentLinkState={{ source: 'profile', profileName: profile?.full_name || '' }}
+                        />
+                      ))}
+                    </div>
+                  </Tabs.Content>
+
+                  <Tabs.Content value="books" className="pb-20">
+                    <PicksGrid
+                      picks={picks.filter(pick => pick.category === 'books')}
+                      categories={['books']}
+                      onPickClick={() => {}}
+                      onAddPick={() => {}}
+                      onReorder={() => {}}
+                      showOnlyTopPicks={true}
+                    />
+                  </Tabs.Content>
+
+                  <Tabs.Content value="products" className="pb-20">
+                    <PicksGrid
+                      picks={picks.filter(pick => pick.category === 'products')}
+                      categories={['products']}
+                      onPickClick={() => {}}
+                      onAddPick={() => {}}
+                      onReorder={() => {}}
+                      showOnlyTopPicks={true}
+                    />
+                  </Tabs.Content>
+
+                  <Tabs.Content value="places" className="pb-20">
+                    <PicksGrid
+                      picks={picks.filter(pick => pick.category === 'places')}
+                      categories={['places']}
+                      onPickClick={() => {}}
+                      onAddPick={() => {}}
+                      onReorder={() => {}}
+                      showOnlyTopPicks={true}
+                    />
+                  </Tabs.Content>
+                </Tabs.Root>
+              </div>
+
+              <div className="hidden md:block px-4 py-4">
+                <div className="grid grid-cols-1 gap-8">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Books</h3>
+                    <PicksGrid
+                      picks={picks.filter(pick => pick.category === 'books')}
+                      categories={['books']}
+                      onPickClick={() => {}}
+                      onAddPick={() => {}}
+                      onReorder={() => {}}
+                      showOnlyTopPicks={true}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Products</h3>
+                    <PicksGrid
+                      picks={picks.filter(pick => pick.category === 'products')}
+                      categories={['products']}
+                      onPickClick={() => {}}
+                      onAddPick={() => {}}
+                      onReorder={() => {}}
+                      showOnlyTopPicks={true}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Places</h3>
+                    <PicksGrid
+                      picks={picks.filter(pick => pick.category === 'places')}
+                      categories={['places']}
+                      onPickClick={() => {}}
+                      onAddPick={() => {}}
+                      onReorder={() => {}}
+                      showOnlyTopPicks={true}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </MasterLayout>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,370 @@
+import React from 'react';
+import { 
+  DndContext, 
+  closestCenter, 
+  KeyboardSensor, 
+  PointerSensor, 
+  TouchSensor,
+  useSensor, 
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import { 
+  SortableContext, 
+  useSortable, 
+  rectSortingStrategy,
+  sortableKeyboardCoordinates 
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { PickCard } from './PickCard';
+import { Book, Package, MapPin, Check } from 'lucide-react';
+import type { Pick } from '../types';
+
+type Category = 'places' | 'products' | 'books';
+
+type TopPicksGridProps = {
+  picks: Pick[];
+  categories: Category[];
+  onPickClick: (pick: Pick, category: Category, rank: number) => void;
+  onAddPick: (category: Category, rank: number) => void;
+  onReorder?: (newOrder: Pick[]) => void;
+  firstAvailableRank?: number; // The first available rank (1-3) for the Add button
+};
+
+interface SortablePickCardProps {
+  id: string;
+  pick?: Pick;
+  category: Category;
+  index: number;
+  isEmpty?: boolean;
+  onClick?: () => void;
+  onImageClick?: (pick: Pick) => void;
+  children?: React.ReactNode;
+  isDraggable?: boolean;
+}
+
+function SortablePickCard({ id, pick, category, index, isEmpty, onClick, onImageClick, children, isDraggable = true }: SortablePickCardProps) {
+  // Only make it sortable if it's a real pick (not empty) and isDraggable is true
+  const shouldBeSortable = pick && !isEmpty && isDraggable;
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ 
+    id,
+    disabled: !shouldBeSortable
+  });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+    opacity: isDragging ? 0.5 : 1,
+  };
+  
+  // Handle click event - ensure it's properly passed to the PickCard
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    }
+  };
+  
+  // Create a custom handler for image clicks that prevents drag initiation
+  const handleImageClick = (p: Pick) => {
+    if (onImageClick) {
+      onImageClick(p);
+    }
+  };
+  
+  return (
+    <div ref={setNodeRef} style={style}>
+      {/* Create a drag handle that's separate from the card content */}
+      {shouldBeSortable && (
+        <div 
+          className="absolute top-0 left-0 right-0 h-8 z-10 cursor-grab flex justify-center items-center" 
+          {...attributes} 
+          {...listeners}
+        >
+          <div className="w-10 h-1.5 bg-gray-300 rounded-full opacity-50 hover:opacity-100 transition-opacity"></div>
+        </div>
+      )}
+      
+      {/* The actual card content */}
+      <div> {/* Removed padding-top to create a cleaner layout */}
+        <PickCard
+          pick={pick}
+          category={category}
+          index={index}
+          isEmpty={isEmpty}
+          variant="myPick"
+          onClick={handleClick}
+          onImageClick={handleImageClick}
+        >
+          {children}
+        </PickCard>
+      </div>
+    </div>
+  );
+}
+
+export const TopPicksGrid = React.memo(({ picks, categories, onPickClick, onAddPick, onReorder, firstAvailableRank }: TopPicksGridProps) => {
+  // Track which tiles should be interactive and which should be placeholders
+  const slotCount = categories.length === 1 ? 3 : 9;
+
+  const gridSlots = React.useMemo(() => {
+    const slots: (Pick | null)[] = Array(slotCount).fill(null);
+    categories.forEach((category, catIndex) => {
+      // Get all picks for this category
+      const allCategoryPicks = picks
+        .filter((pick) => pick.category === category)
+        .sort((a, b) => a.rank - b.rank);
+      
+      // Get top picks (rank 1-3)
+      const topPicks = allCategoryPicks
+        .filter((pick) => [1, 2, 3].includes(pick.rank));
+      
+      // Place top picks in their slots
+      topPicks.forEach((pick) => {
+        const slotIndex = categories.length === 1 
+          ? pick.rank - 1 
+          : catIndex * 3 + (pick.rank - 1);
+        
+        if (slotIndex >= 0 && slotIndex < slotCount) {
+          slots[slotIndex] = pick;
+        }
+      });
+    });
+    return slots;
+  }, [picks, categories, slotCount]);
+
+  // Create an array of IDs for the sortable context
+  const itemIds = React.useMemo(() => {
+    return gridSlots.map((item, index) => {
+      // Use the actual pick ID if available, otherwise use a stable placeholder ID
+      return item?.id || `empty-${index}`;
+    });
+  }, [gridSlots]);
+
+  // We'll use the itemIds directly for the sortable context
+
+  const getCategoryDisplayName = (category: Category) => {
+    switch (category) {
+      case 'books': return 'Book';
+      case 'products': return 'Product';
+      case 'places': return 'Place';
+      default: return 'Item';
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    
+    const oldIndex = itemIds.findIndex(id => id === active.id);
+    const newIndex = itemIds.findIndex(id => id === over.id);
+    
+    // Only allow reordering within the same category and top 3 positions
+    const oldCategoryIndex = Math.floor(oldIndex / 3);
+    const newCategoryIndex = Math.floor(newIndex / 3);
+    
+    // If we have multiple categories, ensure we're only reordering within the same category
+    if (categories.length > 1 && oldCategoryIndex !== newCategoryIndex) {
+      return;
+    }
+    
+    // Calculate position within category for determining new rank
+    const newPositionInCategory = newIndex % 3;
+    
+    // Get the actual picks involved
+    const draggedPick = gridSlots[slotIdx(oldIndex)];
+    const targetPick = gridSlots[slotIdx(newIndex)];
+    
+    // If we're dragging an empty slot or add tile, don't allow it
+    if (!draggedPick) return;
+    
+    // Create a new order by moving the item to its new position
+    // (UI will update when the onReorder callback updates the picks state)
+    
+    // Determine the new ranks for the picks
+    const updatedPicks: Pick[] = [];
+    
+    // If we're swapping with another pick
+    if (targetPick) {
+      // Create a copy of the dragged pick with the new rank
+      updatedPicks.push({
+        ...draggedPick,
+        rank: targetPick.rank
+      });
+      
+      // Create a copy of the target pick with the dragged pick's rank
+      updatedPicks.push({
+        ...targetPick,
+        rank: draggedPick.rank
+      });
+    } else {
+      // We're moving to an empty slot, calculate the new rank
+      const newRank = (newPositionInCategory % 3) + 1;
+      
+      // Create a copy of the dragged pick with the new rank
+      updatedPicks.push({
+        ...draggedPick,
+        rank: newRank
+      });
+    }
+    
+    // Call the onReorder callback with the updated picks
+    if (onReorder) {
+      onReorder(updatedPicks);
+    }
+  };
+  
+  // Helper function to get the slot index
+  const slotIdx = (index: number) => {
+    const id = itemIds[index];
+    return itemIds.indexOf(id);
+  };
+
+  // Create a map of which slots already have picks
+  const filledSlots = new Map();
+  picks.forEach(pick => {
+    if (pick.rank >= 1 && pick.rank <= 3) {
+      filledSlots.set(`${pick.category}-${pick.rank}`, true);
+    }
+  });
+  
+  // Determine which slot should show the Add tile for each category
+  const addTiles = new Map();
+  categories.forEach(category => {
+    // If firstAvailableRank is provided and it's between 1-3, use it
+    if (firstAvailableRank && firstAvailableRank >= 1 && firstAvailableRank <= 3) {
+      const key = `${category}-${firstAvailableRank}`;
+      addTiles.set(key, firstAvailableRank);
+    } else {
+      // Otherwise, find the first empty slot (1, 2, or 3)
+      for (let i = 1; i <= 3; i++) {
+        const key = `${category}-${i}`;
+        if (!filledSlots.has(key)) {
+          addTiles.set(key, i);
+          break;
+        }
+      }
+      // If no empty slots found (all top 3 are filled), don't show an Add button in the top grid
+      // The Add button will be shown in the archived section instead
+    }
+  });
+
+  // Enable sensors for mouse, touch, and keyboard
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      // Require the mouse to move by 10 pixels before activating
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      // Press delay of 250ms, with tolerance of 5px of movement
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  return (
+    <DndContext 
+      sensors={sensors}
+      collisionDetection={closestCenter} 
+      onDragEnd={handleDragEnd}
+    >
+      <SortableContext items={itemIds} strategy={rectSortingStrategy}>
+        <div className="grid grid-cols-3 gap-[10px]">
+          {itemIds.map((id, index) => {
+            const slotIdx = itemIds.indexOf(id);
+            const pick = gridSlots[slotIdx];
+            const categoryIndex = categories.length === 1 ? 0 : Math.floor(index / 3);
+            const category = categories[categoryIndex] as 'books' | 'products' | 'places';
+            const rankForNewPick = categories.length === 1 ? index + 1 : (index % 3) + 1;
+            
+            // Check if this is an Add tile
+            const key = `${category}-${rankForNewPick}`;
+            const isAddTile = addTiles.has(key);
+            
+            if (pick) {
+              // Existing pick - show normal tile
+              return (
+                <div key={pick.id} className="relative">
+                  <div className="absolute top-2 right-2 z-30 bg-[#a1ff7a] px-1.5 py-0.5 rounded-[4px] text-[10px] text-black font-medium flex items-center gap-1">
+                    <Check className="w-3 h-3" /> ON
+                  </div>
+                  <SortablePickCard
+                    id={pick.id}
+                    pick={pick}
+                    category={category}
+                    index={rankForNewPick - 1}
+                    onClick={() => onPickClick(pick, category, pick.rank)}
+                    onImageClick={() => onPickClick(pick, category, pick.rank)}
+                    isDraggable={true}
+                  />
+                </div>
+              );
+            } else if (isAddTile) {
+              // This is the designated "Add" tile for this category
+              return (
+                <div 
+                  key={`add-${category}-${rankForNewPick}`} 
+                  className="relative"
+                  onClick={() => onAddPick(category, rankForNewPick)}
+                >
+                  <div 
+                    className="aspect-square rounded-[4px] bg-[#f5ffde] border border-[#e0e0e0] flex flex-col items-center justify-center cursor-pointer hover:bg-[#f0ffcc] transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Add ${getCategoryDisplayName(category)}`}
+                  >
+                    <div className="absolute top-2 right-2 text-[10px] text-[#9d9b9b]">
+                      #{rankForNewPick}
+                    </div>
+                    <div className="absolute bottom-2 right-2">
+                      {category === 'books' && <Book className="w-5 h-5 text-[#9d9b9b]" />}
+                      {category === 'products' && <Package className="w-5 h-5 text-[#9d9b9b]" />}
+                      {category === 'places' && <MapPin className="w-5 h-5 text-[#9d9b9b]" />}
+                    </div>
+                    <div className="absolute bottom-2 left-2 text-[#252525] font-medium text-sm">
+                      Add {getCategoryDisplayName(category)}
+                    </div>
+                  </div>
+                </div>
+              );
+            } else {
+              // Empty non-interactive tile
+              return (
+                <div 
+                  key={`empty-${index}`} 
+                  className="relative"
+                  onClick={() => onAddPick(category, rankForNewPick)}
+                >
+                  <div 
+                    className="aspect-square rounded-[4px] bg-[#f3f2ed] cursor-pointer hover:bg-[#f0f0f0] transition-colors"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Empty slot ${rankForNewPick}`}
+                  >
+                    <div className="absolute top-2 right-2 text-[10px] text-[#9d9b9b]">
+                      #{rankForNewPick}
+                    </div>
+                    <div className="flex items-center justify-center h-full">
+                      {category === 'places' && <MapPin className="w-6 h-6 text-[#9d9b9b]" />}
+                      {category === 'products' && <Package className="w-6 h-6 text-[#9d9b9b]" />}
+                      {category === 'books' && <Book className="w-6 h-6 text-[#9d9b9b]" />}
+                    </div>
+                    <div className="absolute bottom-2 left-2 text-[#9d9b9b] font-medium text-sm">
+                      Empty
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+          })}
+        </div>
+      </SortableContext>
+    </DndContext>
+  );
+});

@@ -1,0 +1,312 @@
+/* Custom styles for the Discover page */
+*, ::before, ::after {
+    box-sizing: border-box;
+    border-width: 0;
+    border-style: solid;
+    /* border-color: #e5e7eb; */
+}
+
+/* Hide scrollbars while maintaining scrolling functionality */
+.min-h-screen {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.min-h-screen::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+.featured-content-section {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: white;
+  margin: 0;
+  border-radius: 1rem;
+  box-shadow: none;
+}
+
+/* Mobile styles for featured content */
+@media (max-width: 1023px) {
+  .featured-content-section {
+    padding: 1.5rem;
+    margin-bottom: 0;
+  }
+  
+  /* Add gap between featured sections */
+  .lg\:hidden.w-full {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Remove padding from DiscoverPage div on mobile */
+  [data-component-name="DiscoverPage"] {
+    padding: 0 !important;
+  }
+  
+  /* Align FeaturedContent to the bottom */
+  [data-component-name="FeaturedContent"] .flex.items-end {
+    align-items: flex-end;
+  }
+  
+  /* Add bigger gap between left and right sections in featured cards */
+  [data-component-name="FeaturedContent"] .flex.lg\:block > div:first-child {
+    padding-right: 1rem !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .featured-content-section {
+    padding: 1.5rem;
+    margin: 0;
+  }
+  
+  /* Add padding to the featured section container in Discover */
+  .lg\:col-span-3 > div {
+    padding: 1.5rem;
+  }
+}
+
+.featured-content-section.curators {
+  margin-top: 0;
+}
+
+.footer-container {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .footer-container {
+    padding: 2rem;
+  }
+}
+
+/* Pick card styles */
+.pick-card-profile {
+  padding: 1rem !important;
+}
+
+.pick-card-content {
+  padding: 1rem !important;
+}
+
+/* Staggered animation for cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.feed-items > div {
+  animation: fadeInUp 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+/* Generate staggered delays for up to 30 cards */
+.feed-items > div:nth-child(1) { animation-delay: 0.05s; }
+.feed-items > div:nth-child(2) { animation-delay: 0.1s; }
+.feed-items > div:nth-child(3) { animation-delay: 0.15s; }
+.feed-items > div:nth-child(4) { animation-delay: 0.2s; }
+.feed-items > div:nth-child(5) { animation-delay: 0.25s; }
+.feed-items > div:nth-child(6) { animation-delay: 0.3s; }
+.feed-items > div:nth-child(7) { animation-delay: 0.35s; }
+.feed-items > div:nth-child(8) { animation-delay: 0.4s; }
+.feed-items > div:nth-child(9) { animation-delay: 0.45s; }
+.feed-items > div:nth-child(10) { animation-delay: 0.5s; }
+.feed-items > div:nth-child(11) { animation-delay: 0.55s; }
+.feed-items > div:nth-child(12) { animation-delay: 0.6s; }
+.feed-items > div:nth-child(n+13) { animation-delay: 0.65s; }
+
+.footer-inner {
+  padding: 0 !important;
+}
+
+/* Custom padding for the Discover page sections */
+.discover-page-header {
+  padding: 0;
+  margin-top: 0;
+}
+
+.discover-page-content {
+  padding: 0;
+  margin-top: 0;
+}
+
+@media (min-width: 768px) {
+  .discover-page-content {
+    padding: 0;
+    margin-top: 0;
+  }
+}
+
+/* Hide vertical borders on mobile */
+.hidden-borders-mobile {
+  border-left: none !important;
+  border-right: none !important;
+}
+
+@media (min-width: 768px) {
+  .hidden-borders-mobile {
+    border-left: 1px solid #e5e7eb !important;
+    border-right: 1px solid #e5e7eb !important;
+  }
+}
+
+/* Filter bar styling with responsive positioning */
+.filter-container {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  width: 100%;
+  backface-visibility: hidden; /* Prevents flickering in some browsers */
+  will-change: transform; /* Optimizes for animations */
+}
+
+@media (min-width: 768px) {
+  .filter-container {
+    position: sticky;
+    padding: 0 0 2rem 0; /* Remove top padding, keep bottom padding */
+    top: 0; /* Stick to the top */
+  }
+}
+
+/* Initial state before scrolling */
+.filter-container:not(.is-sticky) {
+  padding-bottom: 0;
+}
+
+/* When the filter container becomes sticky (during scroll) */
+.filter-container.is-sticky {
+  padding: 0;
+  /* border-bottom: 1px solid rgba(229, 231, 235, 0.5); */
+}
+
+.filter-container.filter-hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+/* Ensure the discover-page-header stays within the sticky container */
+.discover-page-header {
+  width: 100%;
+  background-color: #F4F4F4;
+  padding: 0; /* Remove all padding */
+  margin: 0; /* Remove all margins */
+}
+
+/* Ensure content below the sticky header is properly positioned */
+.discover-page-content {
+  position: relative;
+  z-index: 10; /* Lower z-index than the header */
+  margin-top: 0; /* Remove top margin */
+}
+
+@media (min-width: 768px) {
+  .discover-page-header {
+    padding: 0;
+    margin-top: 0;
+  }
+  .discover-page-content {
+    padding: 0;
+    margin-top: 0; /* Ensure no margin-top on larger screens */
+  }
+}
+
+/* Carousel indicator styles for custom indicators */
+.carousel-indicators {
+  display: flex;
+  gap: 4px;
+}
+
+/* Remove outline from search input */
+.discover-page-header input[type="text"] {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Set color for all section headings */
+h2.text-base.font-mono.uppercase {
+  color: #585858 !important;
+}
+
+.carousel-indicator {
+  border-radius: 0;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  font-family: 'Geist Mono', monospace;
+  font-size: 12px;
+  padding: 5px 10px;
+  color: #262626;
+}
+
+.carousel-indicator.active {
+  background-color: #ADFF8B;
+}
+
+.carousel-indicator.inactive {
+  background-color: #f5f5f5;
+}
+
+.carousel-indicator.inactive:hover {
+  background-color: #e5e5e5;
+}
+
+/* Integrated featured content styles */
+.featured-integrated {
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+  box-shadow: none;
+  height: 100%;
+  overflow: hidden;
+}
+
+.featured-integrated .carousel {
+  width: 100%;
+  height: 100%;
+}
+
+.featured-integrated .carousel-item {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Hide the title in the FeaturedContent component since we're showing it as a tag */
+.featured-integrated h2 {
+  display: none;
+}
+
+/* Make the carousel image fit the card */
+.featured-integrated .aspect-square {
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: none;
+  height: 100%;
+  object-fit: cover;
+}
+
+.featured-integrated .carousel-indicators {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+@media (min-width: 768px) {
+  .featured-integrated .carousel-item {
+    flex-direction: row;
+    gap: 2rem;
+    align-items: center;
+  }
+  
+  .featured-integrated .carousel-item > div {
+    width: 50%;
+  }
+}

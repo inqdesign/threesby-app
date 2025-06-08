@@ -1,0 +1,408 @@
+import { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
+import { SmoothPickCard } from '../components/SmoothPickCard';
+import { Search } from 'lucide-react';
+// import { useScrollDirection } from '../hooks/useScrollDirection'; // Commented out as it's not currently used
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import './DiscoverPage.css';
+import type { Profile } from '../types';
+import { FeaturedContent } from '../components/FeaturedContent';
+import { Footer } from '../components/Footer';
+import { useAppStore } from '../store';
+import { CategoryFilter, FilterCategory } from '../components/CategoryFilter';
+
+type Category = 'places' | 'products' | 'books';
+
+type DiscoverPageProps = {
+  isLoading?: boolean;
+};
+
+export function DiscoverPage({ isLoading = false }: DiscoverPageProps) {
+  const location = useLocation();
+  const { feedPicks, loading: feedLoading, fetchFeedPicks } = useAppStore();
+  const [, setError] = useState<string | null>(null);
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
+  const [showAll, setShowAll] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showSearchInput] = useState(false);
+  // const isScrollingUp = useScrollDirection(); // Commented out as it's not currently used
+  const isDesktop = useMediaQuery('(min-width: 768px)');
+  const scrollPositionRef = useRef<number>(0);
+  const feedContainerRef = useRef<HTMLDivElement>(null);
+  const featuredSectionRef = useRef<HTMLDivElement>(null);
+  const hasRestoredScrollRef = useRef<boolean>(false);
+  const [isSticky, setIsSticky] = useState(false);
+  const [featuredSectionHeight, setFeaturedSectionHeight] = useState(0);
+
+  // Measure the height of the featured section on mobile
+  useEffect(() => {
+    if (!isDesktop && featuredSectionRef.current) {
+      const measureFeaturedHeight = () => {
+        const height = featuredSectionRef.current?.offsetHeight || 0;
+        setFeaturedSectionHeight(height);
+      };
+      
+      // Measure initially and on resize
+      measureFeaturedHeight();
+      window.addEventListener('resize', measureFeaturedHeight);
+      
+      // Also measure after content loads (images might change height)
+      const observer = new ResizeObserver(measureFeaturedHeight);
+      observer.observe(featuredSectionRef.current);
+      
+      return () => {
+        window.removeEventListener('resize', measureFeaturedHeight);
+        if (featuredSectionRef.current) {
+          observer.disconnect();
+        }
+      };
+    }
+  }, [isDesktop]);
+  
+  // Handle scroll position saving and sticky header behavior
+  useEffect(() => {
+    // Track last scroll position for smoother transitions
+    let lastScrollY = window.scrollY;
+    let ticking = false;
+    
+    // Handle scroll events with debouncing to prevent flickering
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          // Store current scroll position
+          const currentScrollY = window.scrollY;
+          scrollPositionRef.current = currentScrollY;
+          localStorage.setItem('discover_scroll_position', currentScrollY.toString());
+          
+          // Update last scroll position
+          lastScrollY = currentScrollY;
+          
+          // Calculate threshold based on featured section height on mobile
+          const stickyThreshold = isDesktop ? 50 : featuredSectionHeight;
+          
+          // Only update sticky state if we've scrolled significantly
+          if (Math.abs(currentScrollY - lastScrollY) > 5) {
+            // Always make it sticky after scrolling past the featured section
+            setIsSticky(currentScrollY > stickyThreshold);
+          }
+          
+          ticking = false;
+        });
+        
+        ticking = true;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
+    // Try to restore scroll position when coming back to Discover page
+    const checkForReturnNavigation = () => {
+      // Check if we're returning from another page
+      const isReturning = sessionStorage.getItem('returning_to_discover') === 'true';
+      if (isReturning) {
+        // Clear the flag
+        sessionStorage.removeItem('returning_to_discover');
+        
+        // Get saved position
+        const savedPosition = localStorage.getItem('discover_scroll_position');
+        if (savedPosition) {
+          const position = parseInt(savedPosition, 10);
+          if (!isNaN(position) && position > 10) {
+            console.log('Restoring Discover page scroll to:', position);
+            // Disable smooth scrolling temporarily
+            document.documentElement.style.scrollBehavior = 'auto';
+            
+            // For desktop browsers, we need a more aggressive approach
+            const restoreScroll = () => {
+              window.scrollTo(0, position);
+              console.log('Scroll restoration attempt');
+            };
+            
+            // Multiple attempts with increasing delays for reliability
+            restoreScroll(); // Immediate
+            setTimeout(restoreScroll, 10); // Quick follow-up
+            setTimeout(restoreScroll, 50); // Short delay
+            setTimeout(restoreScroll, 100); // Medium delay
+            setTimeout(restoreScroll, 300); // Longer delay for content loading
+            setTimeout(() => {
+              restoreScroll();
+              // Reset scroll behavior
+              document.documentElement.style.scrollBehavior = '';
+            }, 500); // Final attempt
+          }
+        }
+      }
+    };
+    
+    // Check on mount and when visibility changes
+    checkForReturnNavigation();
+    
+    return () => {
+      // Save final position when leaving the page
+      localStorage.setItem('discover_scroll_position', scrollPositionRef.current.toString());
+      // Set flag if navigating to Curators page
+      if (window.location.pathname === '/discover') {
+        sessionStorage.setItem('returning_to_discover', 'true');
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  // Handle scroll position restoration with improved reliability
+  useEffect(() => {
+    if (location.state?.source === 'back_from_pick_detail' && !hasRestoredScrollRef.current) {
+      const savedPosition = location.state.scrollPosition || 0;
+      
+      // Temporarily disable smooth scrolling for instant jump
+      document.documentElement.style.scrollBehavior = 'auto';
+      
+      // Try to restore position immediately
+      window.scrollTo(0, savedPosition);
+      
+      // Also try after a short delay (for more reliability)
+      setTimeout(() => {
+        window.scrollTo(0, savedPosition);
+        
+        // Try one more time after content has likely loaded
+        setTimeout(() => {
+          window.scrollTo(0, savedPosition);
+          
+          // Restore original scroll behavior
+          document.documentElement.style.scrollBehavior = '';
+          
+          hasRestoredScrollRef.current = true;
+        }, 100);
+      }, 50);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    // Reset the scroll restoration flag when navigating away
+    return () => {
+      hasRestoredScrollRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Fetch feed picks when the component mounts or when the location changes
+    // This ensures we have the latest data when navigating back to this page
+    const fetchWithRetry = async () => {
+      try {
+        await fetchFeedPicks();
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching feed picks:', err);
+        setError('Failed to load feed picks. Please try again later.');
+      }
+    };
+
+    fetchWithRetry();
+  }, [location.pathname, fetchFeedPicks]);
+
+  useEffect(() => {
+    if (isLoading) {
+      fetchFeedPicks();
+    }
+  }, [isLoading, fetchFeedPicks]);
+
+
+  // Filter and sort the feed picks by the most recent update date
+  const filteredPicks = Array.isArray(feedPicks) ? feedPicks
+    // First filter the picks based on search and category, and exclude rank=0 picks
+    .filter((pick) => {
+      // Get the profile from the pick object
+      // The profile data is likely nested in the pick object from the join query
+      const profile = (pick as any).profiles as Profile;
+      
+      const matchesSearch =
+        profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pick.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pick.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesCategory = showAll || selectedCategories.includes(pick.category as Category);
+      
+      // Exclude picks with rank=0
+      const isValidRank = pick.rank !== 0;
+
+      return matchesSearch && matchesCategory && isValidRank;
+    })
+    // Then sort by the most recent update date
+    .sort((a, b) => {
+      const dateA = new Date(a.updated_at || a.created_at);
+      const dateB = new Date(b.updated_at || b.created_at);
+      return dateB.getTime() - dateA.getTime(); // Most recent first
+    }) : [];
+
+  return (
+    <div className="min-h-screen bg-[#F4F4F4] pb-24">
+      {/* Sticky Header Container - This will stay fixed at the top while scrolling */}
+      <div 
+        className={`filter-container ${isSticky ? 'is-sticky' : ''} sticky top-0 z-30 bg-[#F4F4F4] p-4 md:p-8`}
+      >
+        <div className="discover-page-header">
+          {/* Header is now handled by the CategoryFilter component */}
+          
+          {/* Search button is shown on both mobile and desktop */}
+          
+          {/* Mobile Search Input - Expandable */}
+          {showSearchInput && (
+            <div className="relative mb-4 md:hidden">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search picks..."
+                className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full text-xs md:text-sm outline-none"
+                autoFocus
+                style={{ fontSize: '16px' }} /* Prevents zoom on iOS */
+              />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            </div>
+          )}
+          <CategoryFilter
+            categories={['books', 'places', 'products'] as FilterCategory[]}
+            activeCategories={selectedCategories as FilterCategory[]}
+            onCategoryChange={(categories) => {
+              setSelectedCategories(categories as Category[]);
+              setShowAll(categories.length === 0);
+            }}
+            showSearch={true}
+            headerText="What's people care today."
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            pageType="discover"
+          />
+        </div>
+      </div>
+      
+      <div className="w-full mx-auto p-4 md:p-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
+          {/* Featured content is now integrated directly into the feed */}
+          
+          {/* Feed Section (Full Width) */}
+          <div className="lg:col-span-12">
+
+            {/* Feed Content */}
+            <div className="discover-page-content" style={{ marginTop: '0' }}>
+              {feedLoading ? (
+                <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-12">
+                  {/* Featured Picks Skeleton */}
+                  <div className="space-y-4 pick-card-container overflow-hidden">
+                    <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                    <div className="py-4 px-3 space-y-2">
+                      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  
+                  {/* Featured Curators Skeleton */}
+                  <div className="space-y-4 pick-card-container overflow-hidden">
+                    <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                    <div className="py-4 px-3 space-y-2">
+                      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                    </div>
+                  </div>
+                  
+                  {/* Regular feed picks skeletons */}
+                  {[...Array(10)].map((_, i) => (
+                    <div key={i} className="space-y-4 pick-card-container overflow-hidden">
+                      <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                      <div className="py-4 px-3 space-y-2">
+                        <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <>
+                {/* Featured content row for mobile - 2 columns */}
+                <div className="w-full grid grid-cols-2 gap-4 mb-6 sm:hidden">
+                  {/* Featured Picks */}
+                  <div className="relative">
+                    <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
+                      <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', padding: '4px 8px' }}>OUR THREES</span>
+                    </div>
+                    <FeaturedContent 
+                      type="threes" 
+                      title="OUR THREES" 
+                      key="featured-picks-mobile"
+                      className="featured-mobile"
+                    />
+                  </div>
+                  
+                  {/* Featured Curators */}
+                  <div className="relative">
+                    <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
+                      <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', padding: '4px 8px' }}>CURATORS</span>
+                    </div>
+                    <FeaturedContent 
+                      type="curators" 
+                      title="THREE CURATORS" 
+                      key="featured-curators-mobile"
+                      className="featured-mobile"
+                    />
+                  </div>
+                </div>
+                
+                {/* Main feed grid - 2 columns on mobile */}
+                <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6 md:gap-12" ref={feedContainerRef}>
+                  {/* Featured Picks - Only visible on tablet and above */}
+                  <div className="relative hidden sm:block">
+                    <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
+                      <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', padding: '5px 10px' }}>OUR THREES</span>
+                      <div id="threes-pagination" className="flex space-x-1"></div>
+                    </div>
+                    <FeaturedContent 
+                      type="threes" 
+                      title="OUR THREES" 
+                      key="featured-picks-integrated"
+                      className="featured-integrated"
+                    />
+                  </div>
+                  
+                  {/* Featured Curators - Only visible on tablet and above */}
+                  <div className="relative hidden sm:block">
+                    <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
+                      <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', padding: '5px 10px' }}>CURATORS</span>
+                      <div id="curators-pagination" className="flex space-x-1"></div>
+                    </div>
+                    <FeaturedContent 
+                      type="curators" 
+                      title="THREE CURATORS" 
+                      key="featured-curators-integrated"
+                      className="featured-integrated"
+                    />
+                  </div>
+                  
+                  {/* Regular feed picks */}
+                  {filteredPicks.map((pick) => (
+                    <SmoothPickCard
+                      key={pick.id}
+                      pick={pick}
+                      variant="feed"
+                      display="desktop"
+                    />
+                  ))}
+                </div>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Footer (Desktop Only) */}
+          <div className="lg:col-span-12 hidden lg:block">
+            <div className="space-y-6">
+                {/* Footer */}
+                <div className="footer-container">
+                  <Footer />
+                </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
