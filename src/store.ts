@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from './lib/supabase';
 import type { Profile, Pick } from './types';
-import { saveToCache, getFromCache, CACHE_KEYS, clearCache, isCacheExpired, forceCacheRefresh } from './lib/cacheUtils';
+import { saveToCache, getFromCache, CACHE_KEYS, clearCache, isCacheExpired, forceCacheRefresh, clearCuratorsCache } from './lib/cacheUtils';
 
 // Retry configuration
 const RETRY_CONFIG = {
@@ -27,11 +27,20 @@ async function withRetry<T>(
       }
       
       // Wait before retrying, with exponential backoff
-      await new Promise(resolve => setTimeout(resolve, delay * Math.pow(RETRY_CONFIG.retryMultiplier, attempt - 1)));
+      const retryDelay = Math.floor(delay * Math.pow(RETRY_CONFIG.retryMultiplier, attempt - 1));
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
     }
   }
   throw new Error('Retry logic failed');
 }
+
+// Chrome detection
+const isChrome = typeof navigator !== 'undefined' && 
+  /Chrome/.test(navigator.userAgent) && 
+  /Google Inc/.test(navigator.vendor);
+
+// Loading operations tracker to prevent duplicate requests
+const loadingOperations = new Set<string>();
 
 interface AppState {
   userProfile: Profile | null;
@@ -113,7 +122,7 @@ export const useStore = create<AppState>((set, get) => ({
         const { data, error } = await supabase
           .from('picks')
           .select('*')
-          .eq('user_id', userId);
+          .eq('profile_id', userId);
 
         if (error) throw error;
         return data;
@@ -200,205 +209,179 @@ export const useStore = create<AppState>((set, get) => ({
   },
 
   fetchFeedPicks: async (force = false) => {
-    const operationKey = 'feed-picks';
-    const state = get();
+    const operationKey = 'feedPicks';
     
-    // Prevent duplicate requests
-    if (state.loadingOperations.has(operationKey) || state.feedLoading) {
-      console.log('Feed picks fetch already in progress, skipping');
+    if (loadingOperations.has(operationKey) && !force) {
+      console.log('Feed picks fetch already in progress, skipping duplicate request');
       return;
     }
-    
-    set({ 
-      feedLoading: true,
-      loadingOperations: new Set(state.loadingOperations).add(operationKey)
-    });
-    
+
     try {
-      // Force refresh if requested
-      if (force) {
+      loadingOperations.add(operationKey);
+      set((state) => ({ ...state, feedLoading: true, error: null }));
+      
+      console.log(`Fetching feed picks (${isChrome ? 'Chrome' : 'Other browser'}, force: ${force})`);
+      
+      // Chrome-specific cache clearing before fetch
+      if (isChrome && force) {
+        console.log('Chrome: Force clearing feed picks cache');
         forceCacheRefresh(CACHE_KEYS.FEED_PICKS);
+        // Small delay to ensure cache is cleared
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
-      
-      // Try cache first only if not expired and not forced
-      if (!force && !isCacheExpired(CACHE_KEYS.FEED_PICKS)) {
-        const cachedFeedPicks = getFromCache<any[]>(CACHE_KEYS.FEED_PICKS);
-        if (cachedFeedPicks && cachedFeedPicks.length > 0) {
-          console.log('Using cached feed picks:', cachedFeedPicks.length);
-          set({ feedPicks: cachedFeedPicks });
-        }
-      }
-      
-      console.log('Fetching fresh feed picks from API');
-      
-      const picksData = await withRetry(async () => {
-        const { data, error } = await supabase
-          .from('picks')
-          .select('*')
-          .eq('status', 'published')
-          .order('updated_at', { ascending: false });
 
-        if (error) throw error;
-        return data;
-      });
-
-      if (!picksData || picksData.length === 0) {
-        console.log('No feed picks found');
-        set({ feedPicks: [] });
-        return;
-      }
-      
-      console.log('Feed picks found:', picksData.length);
-      
-      // Now fetch the user profiles for these picks
-      const profileIds = [...new Set(picksData.map(pick => pick.profile_id).filter(id => id !== undefined && id !== null))];
-      
-      if (profileIds.length > 0) {
-        const profilesData = await withRetry(async () => {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('id', profileIds);
-            
-          if (error) throw error;
-          return data;
-        });
-          
-        if (profilesData) {
-          console.log('Fetched profiles for feed picks:', profilesData.length);
-          
-          // Create a map of profiles by ID for quick lookup
-          const profilesMap = profilesData.reduce((acc, profile) => {
-            acc[profile.id] = profile;
-            return acc;
-          }, {} as Record<string, any>);
-          
-          // Attach profile data to each pick
-          const picksWithProfiles = picksData.map(pick => ({
-            ...pick,
-            profile: profilesMap[pick.profile_id] || null
+      // Try cache first unless force refresh
+      if (!force) {
+        const cachedPicks = getFromCache<Pick[]>(CACHE_KEYS.FEED_PICKS);
+        if (cachedPicks && cachedPicks.length > 0) {
+          console.log(`Feed picks from cache: ${cachedPicks.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+          set((state) => ({ 
+            ...state, 
+            feedPicks: cachedPicks, 
+            feedLoading: false 
           }));
-          
-          set({ feedPicks: picksWithProfiles });
-          saveToCache(CACHE_KEYS.FEED_PICKS, picksWithProfiles);
           return;
         }
       }
+
+      const picks = await withRetry(async () => {
+        console.log('Fetching feed picks from API...');
+        
+        const { data, error } = await supabase
+          .from('picks')
+          .select(`
+            *,
+            profiles (
+              id,
+              full_name,
+              email,
+              avatar_url,
+              title,
+              is_admin,
+              is_creator
+            )
+          `)
+          .eq('status', 'published')
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (error) {
+          console.error('Supabase error in fetchFeedPicks:', error);
+          throw error;
+        }
+        
+        console.log('Raw feed picks data:', data);
+        console.log('Number of picks fetched:', data?.length || 0);
+        
+        return data || [];
+      });
+
+      // Save to cache
+      saveToCache(CACHE_KEYS.FEED_PICKS, picks);
       
-      // If we couldn't fetch profiles or there was an error, just use the picks data
-      set({ feedPicks: picksData });
-      saveToCache(CACHE_KEYS.FEED_PICKS, picksData);
+      set((state) => ({ 
+        ...state, 
+        feedPicks: picks, 
+        feedLoading: false,
+        error: null 
+      }));
+      
+      console.log(`Feed picks loaded: ${picks.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+      
     } catch (error) {
       console.error('Error fetching feed picks:', error);
+      set((state) => ({ 
+        ...state, 
+        feedLoading: false, 
+        error: 'Failed to load feed picks' 
+      }));
     } finally {
-      const newOperations = new Set(state.loadingOperations);
-      newOperations.delete(operationKey);
-      set({ 
-        feedLoading: false,
-        loadingOperations: newOperations
-      });
+      loadingOperations.delete(operationKey);
     }
   },
 
   fetchFeaturedPicks: async (force = false) => {
-    const operationKey = 'featured-picks';
-    const state = get();
+    const operationKey = 'featuredPicks';
     
-    // Prevent duplicate requests
-    if (state.loadingOperations.has(operationKey) || state.featuredLoading) {
-      console.log('Featured picks fetch already in progress, skipping');
+    if (loadingOperations.has(operationKey) && !force) {
+      console.log('Featured picks fetch already in progress, skipping duplicate request');
       return;
     }
-    
-    set({ 
-      featuredLoading: true,
-      loadingOperations: new Set(state.loadingOperations).add(operationKey)
-    });
-    
+
     try {
-      // Force refresh if requested
-      if (force) {
+      loadingOperations.add(operationKey);
+      set((state) => ({ ...state, featuredLoading: true, error: null }));
+      
+      console.log(`Fetching featured picks (${isChrome ? 'Chrome' : 'Other browser'}, force: ${force})`);
+      
+      // Chrome-specific cache clearing before fetch
+      if (isChrome && force) {
+        console.log('Chrome: Force clearing featured picks cache');
         forceCacheRefresh(CACHE_KEYS.FEATURED_PICKS);
+        // Small delay to ensure cache is cleared
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
-      
-      // Try cache first only if not expired and not forced
-      if (!force && !isCacheExpired(CACHE_KEYS.FEATURED_PICKS)) {
-        const cachedFeaturedPicks = getFromCache<Pick[]>(CACHE_KEYS.FEATURED_PICKS);
-        if (cachedFeaturedPicks && cachedFeaturedPicks.length > 0) {
-          console.log('Using cached featured picks:', cachedFeaturedPicks.length);
-          set({ featuredPicks: cachedFeaturedPicks });
-        }
-      }
-      
-      console.log('Fetching fresh featured picks from API');
-      
-      const picksData = await withRetry(async () => {
-        const { data, error } = await supabase
-          .from('picks')
-          .select('*')
-          .eq('is_featured', true)
-          .eq('status', 'published')
-          .order('updated_at', { ascending: false });
 
-        if (error) throw error;
-        return data;
-      });
-
-      if (!picksData || picksData.length === 0) {
-        console.log('No featured picks found');
-        set({ featuredPicks: [] });
-        return;
-      }
-      
-      console.log('Featured picks found:', picksData.length);
-      
-      // Now fetch the user profiles for these picks
-      const userIds = [...new Set(picksData.map(pick => pick.user_id).filter(id => id !== undefined && id !== null))];
-      
-      if (userIds.length > 0) {
-        const profilesData = await withRetry(async () => {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .in('id', userIds);
-            
-          if (error) throw error;
-          return data;
-        });
-          
-        if (profilesData) {
-          console.log('Fetched profiles for picks:', profilesData.length);
-          
-          // Create a map of profiles by ID for quick lookup
-          const profilesMap = profilesData.reduce((acc, profile) => {
-            acc[profile.id] = profile;
-            return acc;
-          }, {} as Record<string, any>);
-          
-          // Attach profile data to each pick
-          const picksWithProfiles = picksData.map(pick => ({
-            ...pick,
-            profile: profilesMap[pick.user_id] || null
+      // Try cache first unless force refresh
+      if (!force) {
+        const cachedPicks = getFromCache<Pick[]>(CACHE_KEYS.FEATURED_PICKS);
+        if (cachedPicks && cachedPicks.length > 0) {
+          console.log(`Featured picks from cache: ${cachedPicks.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+          set((state) => ({ 
+            ...state, 
+            featuredPicks: cachedPicks, 
+            featuredLoading: false 
           }));
-          
-          set({ featuredPicks: picksWithProfiles });
-          saveToCache(CACHE_KEYS.FEATURED_PICKS, picksWithProfiles);
           return;
         }
       }
+
+      const picks = await withRetry(async () => {
+        console.log('Fetching featured picks from API...');
+        
+        const { data, error } = await supabase
+          .from('picks')
+          .select(`
+            *,
+            profiles (
+              id,
+              full_name,
+              email,
+              avatar_url,
+              title,
+              is_admin,
+              is_creator
+            )
+          `)
+          .eq('status', 'published')
+          .order('created_at', { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+        return data || [];
+      });
+
+      // Save to cache
+      saveToCache(CACHE_KEYS.FEATURED_PICKS, picks);
       
-      // If we couldn't fetch profiles or there was an error, just use the picks data
-      set({ featuredPicks: picksData });
-      saveToCache(CACHE_KEYS.FEATURED_PICKS, picksData);
+      set((state) => ({ 
+        ...state, 
+        featuredPicks: picks, 
+        featuredLoading: false,
+        error: null 
+      }));
+      
+      console.log(`Featured picks loaded: ${picks.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+      
     } catch (error) {
       console.error('Error fetching featured picks:', error);
+      set((state) => ({ 
+        ...state, 
+        featuredLoading: false, 
+        error: 'Failed to load featured picks' 
+      }));
     } finally {
-      const newOperations = new Set(state.loadingOperations);
-      newOperations.delete(operationKey);
-      set({ 
-        featuredLoading: false,
-        loadingOperations: newOperations
-      });
+      loadingOperations.delete(operationKey);
     }
   },
 
@@ -487,64 +470,63 @@ export const useStore = create<AppState>((set, get) => ({
 
   fetchCurators: async (force = false) => {
     const operationKey = 'curators';
-    const state = get();
     
-    // Prevent duplicate requests
-    if (state.loadingOperations.has(operationKey) || state.curatorsLoading) {
-      console.log('Curators fetch already in progress, skipping');
+    if (loadingOperations.has(operationKey) && !force) {
+      console.log('Curators fetch already in progress, skipping duplicate request');
       return;
     }
-    
-    set({ 
-      curatorsLoading: true,
-      loadingOperations: new Set(state.loadingOperations).add(operationKey)
-    });
-    
+
     try {
-      // Force refresh if requested
-      if (force) {
-        forceCacheRefresh(CACHE_KEYS.CURATORS);
-      }
+      loadingOperations.add(operationKey);
+      set((state) => ({ ...state, curatorsLoading: true, error: null }));
       
-      // Try cache first only if not expired and not forced
-      if (!force && !isCacheExpired(CACHE_KEYS.CURATORS)) {
-        const cachedCurators = getFromCache<Profile[]>(CACHE_KEYS.CURATORS);
-        if (cachedCurators && cachedCurators.length > 0) {
-          console.log('Using cached curators:', cachedCurators.length);
-          set({ curators: cachedCurators });
-        }
+      console.log(`Fetching curators (${isChrome ? 'Chrome' : 'Other browser'}, force: ${force})`);
+      
+      // Chrome-specific cache clearing before fetch
+      if (isChrome && force) {
+        console.log('Chrome: Force clearing curators cache');
+        clearCuratorsCache();
+        // Small delay to ensure cache is cleared
+        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
-      console.log('Fetching fresh curators from API');
-      
-      const result = await withRetry(async () => {
+      // Always force fetch for curators to ensure fresh data
+      const curators = await withRetry(async () => {
+        console.log('Fetching curators from API...');
+        
         const { data, error } = await supabase
           .from('profiles')
           .select(`
             *,
             picks (*)
           `)
-          .in('status', ['active', 'approved', 'published']); // More inclusive status check
+          .in('status', ['active', 'approved', 'pending'])
+          .eq('is_creator', true)
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-        if (error) throw error;
-        return data;
+        if (error) {
+          console.error('Supabase error in fetchCurators:', error);
+          throw error;
+        }
+        
+        console.log('Raw curators data:', data);
+        console.log('Number of curators fetched:', data?.length || 0);
+        
+        return data || [];
       });
 
-      if (!result || result.length === 0) {
-        console.log('No curators found');
-        set({ curators: [] });
-        return;
-      }
-
-      console.log('Curators found:', result.length);
-      
-      // Process curators - include all profiles with picks
-      const processedCurators = result
+      // Process curators - include only published picks
+      const processedCurators = curators
         .map((curator: any) => {
+          console.log('Processing curator:', curator.full_name, 'with picks:', curator.picks?.length || 0);
+          
           // Filter to only include published picks
           const publishedPicks = curator.picks
             ? curator.picks.filter((pick: any) => pick.status === 'published')
             : [];
+          
+          console.log('Published picks for', curator.full_name, ':', publishedPicks.length);
           
           // Return curator with only published picks
           return {
@@ -552,23 +534,34 @@ export const useStore = create<AppState>((set, get) => ({
             picks: publishedPicks
           };
         })
+        // Only include curators that have at least one published pick
         .filter((curator: any) => {
-          // Only include curators that have at least one published pick
-          return curator.picks && curator.picks.length > 0;
+          const hasPublishedPicks = curator.picks && curator.picks.length > 0;
+          console.log('Curator', curator.full_name, 'has published picks:', hasPublishedPicks);
+          return hasPublishedPicks;
         });
 
-      console.log('Processed curators with picks:', processedCurators.length);
-      set({ curators: processedCurators });
+      // Save to cache
       saveToCache(CACHE_KEYS.CURATORS, processedCurators);
+      
+      set((state) => ({ 
+        ...state, 
+        curators: processedCurators, 
+        curatorsLoading: false,
+        error: null 
+      }));
+      
+      console.log(`Curators loaded: ${processedCurators.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+      
     } catch (error) {
       console.error('Error fetching curators:', error);
+      set((state) => ({ 
+        ...state, 
+        curatorsLoading: false, 
+        error: 'Failed to load curators' 
+      }));
     } finally {
-      const newOperations = new Set(state.loadingOperations);
-      newOperations.delete(operationKey);
-      set({ 
-        curatorsLoading: false,
-        loadingOperations: newOperations
-      });
+      loadingOperations.delete(operationKey);
     }
   },
 

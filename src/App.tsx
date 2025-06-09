@@ -7,7 +7,6 @@ import { useAuth } from './hooks/useAuth';
 // import { useScrollDirection } from './hooks/useScrollDirection';
 import { supabase } from './lib/supabase';
 import { useAppStore } from './store/index';
-import { getSupabaseStorageKey } from './lib/authUtils';
 import { useSettingsModalStore } from './store/settingsModalStore';
 import { SubNav } from './components/SubNav';
 import { ProfileEditModal } from './components/ProfileEditModal';
@@ -104,8 +103,7 @@ function App() {
     fetchFeedPicks,
     fetchFeaturedPicks,
     fetchFeaturedCurators,
-    fetchCurators,
-    resetState
+    fetchCurators
   } = useAppStore();
 
   // Load user data when user authenticates
@@ -198,7 +196,7 @@ function App() {
             {
               ...data,
               category: selectedCategory,
-              user_id: user.id,
+              profile_id: user.id,
               status: 'published', // Automatically publish new picks
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),

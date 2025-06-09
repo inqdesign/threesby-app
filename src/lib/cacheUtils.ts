@@ -15,7 +15,59 @@ export const CACHE_KEYS = {
 };
 
 // Cache expiration time (in milliseconds)
-const CACHE_EXPIRATION = 5 * 60 * 1000; // 5 minutes (increased for better reliability)
+const CACHE_EXPIRATION = 5 * 60 * 1000; // 5 minutes
+
+// Detect if we're in Chrome for special handling
+const isChrome = typeof navigator !== 'undefined' && 
+  /Chrome/.test(navigator.userAgent) && 
+  /Google Inc/.test(navigator.vendor);
+
+/**
+ * Chrome-specific localStorage wrapper with error handling
+ */
+function chromeLocalStorageSetItem(key: string, value: string): boolean {
+  try {
+    if (isChrome) {
+      // Force localStorage to sync in Chrome
+      localStorage.removeItem(key);
+      localStorage.setItem(key, value);
+      // Verify it was actually set
+      const retrieved = localStorage.getItem(key);
+      if (retrieved !== value) {
+        console.warn(`Chrome localStorage verification failed for ${key}`);
+        return false;
+      }
+    } else {
+      localStorage.setItem(key, value);
+    }
+    return true;
+  } catch (error) {
+    console.error(`Error setting localStorage (${key}):`, error);
+    return false;
+  }
+}
+
+/**
+ * Chrome-specific localStorage getter with fallback
+ */
+function chromeLocalStorageGetItem(key: string): string | null {
+  try {
+    const value = localStorage.getItem(key);
+    if (isChrome && value) {
+      // Double-check in Chrome due to caching issues
+      setTimeout(() => {
+        const doubleCheck = localStorage.getItem(key);
+        if (doubleCheck !== value) {
+          console.warn(`Chrome localStorage inconsistency detected for ${key}`);
+        }
+      }, 0);
+    }
+    return value;
+  } catch (error) {
+    console.error(`Error getting localStorage (${key}):`, error);
+    return null;
+  }
+}
 
 /**
  * Save data to localStorage cache with timestamp
@@ -24,10 +76,16 @@ export function saveToCache<T>(key: string, data: T): void {
   try {
     const cacheData = {
       data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      browser: isChrome ? 'chrome' : 'other'
     };
-    localStorage.setItem(key, JSON.stringify(cacheData));
-    console.log(`Cache saved for ${key} at ${new Date().toISOString()}`);
+    
+    const success = chromeLocalStorageSetItem(key, JSON.stringify(cacheData));
+    if (success) {
+      console.log(`Cache saved for ${key} at ${new Date().toISOString()} (${isChrome ? 'Chrome' : 'Other'})`);
+    } else {
+      console.error(`Failed to save cache for ${key}`);
+    }
   } catch (error) {
     console.error(`Error saving to cache (${key}):`, error);
   }
@@ -39,7 +97,7 @@ export function saveToCache<T>(key: string, data: T): void {
  */
 export function getFromCache<T>(key: string): T | null {
   try {
-    const cachedItem = localStorage.getItem(key);
+    const cachedItem = chromeLocalStorageGetItem(key);
     if (!cachedItem) return null;
     
     const cacheData = JSON.parse(cachedItem);
@@ -60,7 +118,7 @@ export function getFromCache<T>(key: string): T | null {
       return null;
     }
     
-    console.log(`Cache hit for ${key}, age: ${Math.round((now - cacheData.timestamp) / 1000)}s`);
+    console.log(`Cache hit for ${key}, age: ${Math.round((now - cacheData.timestamp) / 1000)}s (${cacheData.browser || 'unknown'})`);
     return cacheData.data as T;
   } catch (error) {
     console.error(`Error retrieving from cache (${key}):`, error);
@@ -75,7 +133,7 @@ export function getFromCache<T>(key: string): T | null {
  */
 export function isCacheExpired(key: string): boolean {
   try {
-    const cachedItem = localStorage.getItem(key);
+    const cachedItem = chromeLocalStorageGetItem(key);
     if (!cachedItem) return true;
     
     const cacheData = JSON.parse(cachedItem);
@@ -83,7 +141,7 @@ export function isCacheExpired(key: string): boolean {
     
     const now = Date.now();
     const isExpired = (now - cacheData.timestamp) > CACHE_EXPIRATION;
-    console.log(`Cache check for ${key}: ${isExpired ? 'expired' : 'valid'}`);
+    console.log(`Cache check for ${key}: ${isExpired ? 'expired' : 'valid'} (${isChrome ? 'Chrome' : 'Other'})`);
     return isExpired;
   } catch (error) {
     console.error(`Error checking cache expiration for ${key}:`, error);
@@ -92,26 +150,43 @@ export function isCacheExpired(key: string): boolean {
 }
 
 /**
- * Force refresh cache by clearing it
+ * Force refresh cache by clearing it - Chrome-optimized
  */
 export function forceCacheRefresh(key: string): void {
   try {
-    localStorage.removeItem(key);
-    console.log(`Forced cache refresh for ${key}`);
+    if (isChrome) {
+      // Multiple attempts to clear in Chrome
+      localStorage.removeItem(key);
+      setTimeout(() => localStorage.removeItem(key), 0);
+      setTimeout(() => localStorage.removeItem(key), 10);
+    } else {
+      localStorage.removeItem(key);
+    }
+    console.log(`Forced cache refresh for ${key} (${isChrome ? 'Chrome-optimized' : 'Standard'})`);
   } catch (error) {
     console.error(`Error forcing cache refresh for ${key}:`, error);
   }
 }
 
 /**
- * Clear all OnShelf cache data
+ * Clear all OnShelf cache data - Chrome-optimized
  */
 export function clearCache(): void {
   try {
-    console.log('Clearing all cache data');
-    Object.values(CACHE_KEYS).forEach(key => {
-      localStorage.removeItem(key);
-    });
+    console.log(`Clearing all cache data (${isChrome ? 'Chrome-optimized' : 'Standard'})`);
+    
+    if (isChrome) {
+      // Multiple clearing attempts for Chrome
+      Object.values(CACHE_KEYS).forEach(key => {
+        localStorage.removeItem(key);
+        setTimeout(() => localStorage.removeItem(key), 0);
+        setTimeout(() => localStorage.removeItem(key), 10);
+      });
+    } else {
+      Object.values(CACHE_KEYS).forEach(key => {
+        localStorage.removeItem(key);
+      });
+    }
   } catch (error) {
     console.error('Error clearing cache:', error);
   }
@@ -122,8 +197,13 @@ export function clearCache(): void {
  */
 export function clearCacheKey(key: string): void {
   try {
-    localStorage.removeItem(key);
-    console.log(`Cleared cache key: ${key}`);
+    if (isChrome) {
+      localStorage.removeItem(key);
+      setTimeout(() => localStorage.removeItem(key), 0);
+    } else {
+      localStorage.removeItem(key);
+    }
+    console.log(`Cleared cache key: ${key} (${isChrome ? 'Chrome-optimized' : 'Standard'})`);
   } catch (error) {
     console.error(`Error clearing cache key (${key}):`, error);
   }
@@ -146,11 +226,14 @@ export function clearCuratorsCache(): void {
  * Get cache stats for debugging
  */
 export function getCacheStats(): Record<string, any> {
-  const stats: Record<string, any> = {};
+  const stats: Record<string, any> = {
+    browser: isChrome ? 'Chrome' : 'Other',
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'Unknown'
+  };
   
   Object.entries(CACHE_KEYS).forEach(([name, key]) => {
     try {
-      const cachedItem = localStorage.getItem(key);
+      const cachedItem = chromeLocalStorageGetItem(key);
       if (cachedItem) {
         const cacheData = JSON.parse(cachedItem);
         if (cacheData.timestamp) {
@@ -159,7 +242,8 @@ export function getCacheStats(): Record<string, any> {
             exists: true,
             age: Math.round(age / 1000),
             expired: age > CACHE_EXPIRATION,
-            size: cachedItem.length
+            size: cachedItem.length,
+            browser: cacheData.browser || 'unknown'
           };
         } else {
           stats[name] = { exists: true, format: 'old', size: cachedItem.length };
@@ -173,4 +257,30 @@ export function getCacheStats(): Record<string, any> {
   });
   
   return stats;
+}
+
+/**
+ * Chrome-specific cache flush
+ */
+export function flushChromeCache(): void {
+  if (!isChrome) return;
+  
+  console.log('Flushing Chrome cache...');
+  
+  // Clear all our cache keys
+  clearCache();
+  
+  // Force garbage collection if available
+  if ('gc' in window && typeof (window as any).gc === 'function') {
+    try {
+      (window as any).gc();
+    } catch (e) {
+      // Ignore errors
+    }
+  }
+  
+  // Force a small delay to let Chrome process
+  setTimeout(() => {
+    console.log('Chrome cache flush complete');
+  }, 100);
 }

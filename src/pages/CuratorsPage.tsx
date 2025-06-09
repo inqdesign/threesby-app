@@ -6,7 +6,6 @@ import { useAuth } from "../hooks/useAuth";
 import { ProfileSection } from "../components/ProfileSection";
 import { Skeleton } from "../components/ui/skeleton";
 import { PicksGrid } from "../components/PicksGrid";
-import { clearCuratorsCache } from '../lib/cacheUtils';
 import type { Pick, Profile } from "../types";
 
 // Define a type for a curator with picks
