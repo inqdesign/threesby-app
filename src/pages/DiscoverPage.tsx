@@ -185,7 +185,9 @@ export function DiscoverPage({}: DiscoverPageProps) {
     // Fetch feed picks when the component mounts
     const fetchWithRetry = async () => {
       try {
-        await fetchFeedPicks();
+        // Force fetch if we have no data or if explicitly refreshing
+        const shouldForce = feedPicks.length === 0 || location.state?.refresh;
+        await fetchFeedPicks(shouldForce);
         setError(null);
       } catch (err) {
         console.error('Error fetching feed picks:', err);
@@ -193,11 +195,8 @@ export function DiscoverPage({}: DiscoverPageProps) {
       }
     };
 
-    // Only fetch if we don't have data or if we're coming back to the page
-    if (feedPicks.length === 0 || location.state?.refresh) {
-      fetchWithRetry();
-    }
-  }, [feedPicks.length, location.state, fetchFeedPicks]);
+    fetchWithRetry();
+  }, [location.state, fetchFeedPicks]);
 
   // Always fetch feed picks on component mount
   useEffect(() => {

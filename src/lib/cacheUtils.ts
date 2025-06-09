@@ -15,7 +15,7 @@ export const CACHE_KEYS = {
 };
 
 // Cache expiration time (in milliseconds)
-const CACHE_EXPIRATION = 2 * 60 * 1000; // 2 minutes (reduced from 5 minutes)
+const CACHE_EXPIRATION = 5 * 60 * 1000; // 5 minutes (increased for better reliability)
 
 /**
  * Save data to localStorage cache with timestamp
@@ -27,6 +27,7 @@ export function saveToCache<T>(key: string, data: T): void {
       timestamp: Date.now()
     };
     localStorage.setItem(key, JSON.stringify(cacheData));
+    console.log(`Cache saved for ${key} at ${new Date().toISOString()}`);
   } catch (error) {
     console.error(`Error saving to cache (${key}):`, error);
   }
@@ -45,6 +46,7 @@ export function getFromCache<T>(key: string): T | null {
     
     // Handle old cache format (without timestamp wrapper)
     if (!cacheData.timestamp) {
+      console.log(`Removing old cache format for ${key}`);
       localStorage.removeItem(key);
       return null;
     }
@@ -53,10 +55,12 @@ export function getFromCache<T>(key: string): T | null {
     
     // Check if cache is expired
     if (now - cacheData.timestamp > CACHE_EXPIRATION) {
+      console.log(`Cache expired for ${key}, removing`);
       localStorage.removeItem(key);
       return null;
     }
     
+    console.log(`Cache hit for ${key}, age: ${Math.round((now - cacheData.timestamp) / 1000)}s`);
     return cacheData.data as T;
   } catch (error) {
     console.error(`Error retrieving from cache (${key}):`, error);
@@ -78,9 +82,24 @@ export function isCacheExpired(key: string): boolean {
     if (!cacheData.timestamp) return true;
     
     const now = Date.now();
-    return (now - cacheData.timestamp) > CACHE_EXPIRATION;
+    const isExpired = (now - cacheData.timestamp) > CACHE_EXPIRATION;
+    console.log(`Cache check for ${key}: ${isExpired ? 'expired' : 'valid'}`);
+    return isExpired;
   } catch (error) {
+    console.error(`Error checking cache expiration for ${key}:`, error);
     return true;
+  }
+}
+
+/**
+ * Force refresh cache by clearing it
+ */
+export function forceCacheRefresh(key: string): void {
+  try {
+    localStorage.removeItem(key);
+    console.log(`Forced cache refresh for ${key}`);
+  } catch (error) {
+    console.error(`Error forcing cache refresh for ${key}:`, error);
   }
 }
 
@@ -104,6 +123,7 @@ export function clearCache(): void {
 export function clearCacheKey(key: string): void {
   try {
     localStorage.removeItem(key);
+    console.log(`Cleared cache key: ${key}`);
   } catch (error) {
     console.error(`Error clearing cache key (${key}):`, error);
   }
@@ -120,4 +140,37 @@ export function clearCuratorsCache(): void {
   } catch (error) {
     console.error('Error clearing curators cache:', error);
   }
+}
+
+/**
+ * Get cache stats for debugging
+ */
+export function getCacheStats(): Record<string, any> {
+  const stats: Record<string, any> = {};
+  
+  Object.entries(CACHE_KEYS).forEach(([name, key]) => {
+    try {
+      const cachedItem = localStorage.getItem(key);
+      if (cachedItem) {
+        const cacheData = JSON.parse(cachedItem);
+        if (cacheData.timestamp) {
+          const age = Date.now() - cacheData.timestamp;
+          stats[name] = {
+            exists: true,
+            age: Math.round(age / 1000),
+            expired: age > CACHE_EXPIRATION,
+            size: cachedItem.length
+          };
+        } else {
+          stats[name] = { exists: true, format: 'old', size: cachedItem.length };
+        }
+      } else {
+        stats[name] = { exists: false };
+      }
+    } catch (error) {
+      stats[name] = { error: error instanceof Error ? error.message : String(error) };
+    }
+  });
+  
+  return stats;
 }

@@ -112,12 +112,9 @@ export function CuratorsPage() {
   React.useEffect(() => {
     console.log('CuratorsPage: Checking if curators data needs to be fetched');
     
-    // Clear curators cache to ensure fresh data
-    clearCuratorsCache();
-    
-    // Always fetch curators data to ensure we have the latest
-    console.log('CuratorsPage: Fetching curators data');
-    fetchCurators();
+    // Force fetch curators data to ensure fresh data
+    console.log('CuratorsPage: Force fetching curators data');
+    fetchCurators(true); // Force fetch
   }, [fetchCurators]);
   
   // Process curators data
