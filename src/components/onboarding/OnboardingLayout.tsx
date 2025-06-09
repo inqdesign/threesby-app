@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { OnboardingStep } from '../../types';
+import { OnboardingStep } from '../../types/index';
 
 type OnboardingLayoutProps = {
   children: React.ReactNode;
@@ -11,7 +11,7 @@ type OnboardingLayoutProps = {
 
 export function OnboardingLayout({
   children,
-  currentStep,
+  currentStep: _currentStep,
   totalSteps,
   currentStepNumber
 }: OnboardingLayoutProps) {

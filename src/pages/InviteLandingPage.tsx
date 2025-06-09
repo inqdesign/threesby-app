@@ -75,7 +75,7 @@ export function InviteLandingPage() {
     }
 
     setShowAuthModal(false);
-    navigate('/my-threes');
+    navigate('/onboarding');
   };
 
   if (loading) {
@@ -235,6 +235,7 @@ export function InviteLandingPage() {
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
+        mode="signup"
       />
     </div>
   );

@@ -79,9 +79,9 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
 
         if (error) throw error;
         
-        // Redirect to MyThrees page after signup
+        // Redirect to onboarding after signup
         onClose();
-        navigate('/my-threes');
+        navigate('/onboarding');
       } else {
         if (!email || !password) {
           throw new Error('Email and password are required');
@@ -116,7 +116,7 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
         provider: 'google',
         options: {
           redirectTo: isSignUp 
-            ? `${window.location.origin}/my-threes` 
+            ? `${window.location.origin}/onboarding` 
             : `${window.location.origin}/discover`
         }
       });

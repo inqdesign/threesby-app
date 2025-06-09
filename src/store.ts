@@ -212,7 +212,6 @@ export const useStore = create<AppState>((set, get) => ({
     const operationKey = 'feedPicks';
     
     if (loadingOperations.has(operationKey) && !force) {
-      console.log('Feed picks fetch already in progress, skipping duplicate request');
       return;
     }
 
@@ -220,21 +219,16 @@ export const useStore = create<AppState>((set, get) => ({
       loadingOperations.add(operationKey);
       set((state) => ({ ...state, feedLoading: true, error: null }));
       
-      console.log(`Fetching feed picks (${isChrome ? 'Chrome' : 'Other browser'}, force: ${force})`);
-      
-      // Chrome-specific cache clearing before fetch
-      if (isChrome && force) {
-        console.log('Chrome: Force clearing feed picks cache');
+      // Force cache clearing if requested
+      if (force) {
         forceCacheRefresh(CACHE_KEYS.FEED_PICKS);
-        // Small delay to ensure cache is cleared
-        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
       // Try cache first unless force refresh
       if (!force) {
         const cachedPicks = getFromCache<Pick[]>(CACHE_KEYS.FEED_PICKS);
         if (cachedPicks && cachedPicks.length > 0) {
-          console.log(`Feed picks from cache: ${cachedPicks.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+
           set((state) => ({ 
             ...state, 
             feedPicks: cachedPicks, 
@@ -245,8 +239,6 @@ export const useStore = create<AppState>((set, get) => ({
       }
 
       const picks = await withRetry(async () => {
-        console.log('Fetching feed picks from API...');
-        
         const { data, error } = await supabase
           .from('picks')
           .select(`
@@ -265,14 +257,7 @@ export const useStore = create<AppState>((set, get) => ({
           .order('created_at', { ascending: false })
           .limit(100);
 
-        if (error) {
-          console.error('Supabase error in fetchFeedPicks:', error);
-          throw error;
-        }
-        
-        console.log('Raw feed picks data:', data);
-        console.log('Number of picks fetched:', data?.length || 0);
-        
+        if (error) throw error;
         return data || [];
       });
 
@@ -286,7 +271,7 @@ export const useStore = create<AppState>((set, get) => ({
         error: null 
       }));
       
-      console.log(`Feed picks loaded: ${picks.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+
       
     } catch (error) {
       console.error('Error fetching feed picks:', error);
@@ -304,7 +289,6 @@ export const useStore = create<AppState>((set, get) => ({
     const operationKey = 'featuredPicks';
     
     if (loadingOperations.has(operationKey) && !force) {
-      console.log('Featured picks fetch already in progress, skipping duplicate request');
       return;
     }
 
@@ -312,21 +296,18 @@ export const useStore = create<AppState>((set, get) => ({
       loadingOperations.add(operationKey);
       set((state) => ({ ...state, featuredLoading: true, error: null }));
       
-      console.log(`Fetching featured picks (${isChrome ? 'Chrome' : 'Other browser'}, force: ${force})`);
+
       
-      // Chrome-specific cache clearing before fetch
-      if (isChrome && force) {
-        console.log('Chrome: Force clearing featured picks cache');
+      // Force cache clearing if requested
+      if (force) {
         forceCacheRefresh(CACHE_KEYS.FEATURED_PICKS);
-        // Small delay to ensure cache is cleared
-        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
       // Try cache first unless force refresh
       if (!force) {
         const cachedPicks = getFromCache<Pick[]>(CACHE_KEYS.FEATURED_PICKS);
         if (cachedPicks && cachedPicks.length > 0) {
-          console.log(`Featured picks from cache: ${cachedPicks.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+
           set((state) => ({ 
             ...state, 
             featuredPicks: cachedPicks, 
@@ -337,8 +318,6 @@ export const useStore = create<AppState>((set, get) => ({
       }
 
       const picks = await withRetry(async () => {
-        console.log('Fetching featured picks from API...');
-        
         const { data, error } = await supabase
           .from('picks')
           .select(`
@@ -371,7 +350,7 @@ export const useStore = create<AppState>((set, get) => ({
         error: null 
       }));
       
-      console.log(`Featured picks loaded: ${picks.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+
       
     } catch (error) {
       console.error('Error fetching featured picks:', error);
@@ -472,7 +451,6 @@ export const useStore = create<AppState>((set, get) => ({
     const operationKey = 'curators';
     
     if (loadingOperations.has(operationKey) && !force) {
-      console.log('Curators fetch already in progress, skipping duplicate request');
       return;
     }
 
@@ -480,20 +458,15 @@ export const useStore = create<AppState>((set, get) => ({
       loadingOperations.add(operationKey);
       set((state) => ({ ...state, curatorsLoading: true, error: null }));
       
-      console.log(`Fetching curators (${isChrome ? 'Chrome' : 'Other browser'}, force: ${force})`);
+
       
-      // Chrome-specific cache clearing before fetch
-      if (isChrome && force) {
-        console.log('Chrome: Force clearing curators cache');
+      // Force cache clearing if requested
+      if (force) {
         clearCuratorsCache();
-        // Small delay to ensure cache is cleared
-        await new Promise(resolve => setTimeout(resolve, 50));
       }
 
       // Always force fetch for curators to ensure fresh data
       const curators = await withRetry(async () => {
-        console.log('Fetching curators from API...');
-        
         const { data, error } = await supabase
           .from('profiles')
           .select(`
@@ -505,28 +478,17 @@ export const useStore = create<AppState>((set, get) => ({
           .order('created_at', { ascending: false })
           .limit(50);
 
-        if (error) {
-          console.error('Supabase error in fetchCurators:', error);
-          throw error;
-        }
-        
-        console.log('Raw curators data:', data);
-        console.log('Number of curators fetched:', data?.length || 0);
-        
+        if (error) throw error;
         return data || [];
       });
 
       // Process curators - include only published picks
       const processedCurators = curators
         .map((curator: any) => {
-          console.log('Processing curator:', curator.full_name, 'with picks:', curator.picks?.length || 0);
-          
           // Filter to only include published picks
           const publishedPicks = curator.picks
             ? curator.picks.filter((pick: any) => pick.status === 'published')
             : [];
-          
-          console.log('Published picks for', curator.full_name, ':', publishedPicks.length);
           
           // Return curator with only published picks
           return {
@@ -535,11 +497,7 @@ export const useStore = create<AppState>((set, get) => ({
           };
         })
         // Only include curators that have at least one published pick
-        .filter((curator: any) => {
-          const hasPublishedPicks = curator.picks && curator.picks.length > 0;
-          console.log('Curator', curator.full_name, 'has published picks:', hasPublishedPicks);
-          return hasPublishedPicks;
-        });
+        .filter((curator: any) => curator.picks && curator.picks.length > 0);
 
       // Save to cache
       saveToCache(CACHE_KEYS.CURATORS, processedCurators);
@@ -551,7 +509,7 @@ export const useStore = create<AppState>((set, get) => ({
         error: null 
       }));
       
-      console.log(`Curators loaded: ${processedCurators.length} items (${isChrome ? 'Chrome' : 'Other'})`);
+
       
     } catch (error) {
       console.error('Error fetching curators:', error);

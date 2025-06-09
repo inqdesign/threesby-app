@@ -116,6 +116,21 @@ function App() {
     }
   }, [user, authLoading, fetchUserData]);
 
+  // Check if user needs onboarding after profile is loaded
+  React.useEffect(() => {
+    if (user && userProfile && !authLoading) {
+      // Don't redirect if user is already on onboarding page or specific allowed pages
+      const allowedPaths = ['/onboarding', '/terms', '/privacy-policy'];
+      const isOnAllowedPath = allowedPaths.some(path => location.pathname.startsWith(path));
+      
+      // If user hasn't completed onboarding and is not on an allowed path, redirect to onboarding
+      if (!userProfile.onboarding_completed && !isOnAllowedPath) {
+        console.log('User needs onboarding, redirecting...');
+        navigate('/onboarding');
+      }
+    }
+  }, [user, userProfile, authLoading, location.pathname, navigate]);
+
   // Load global data on app initialization
   React.useEffect(() => {
     console.log('App.tsx: Loading global app data');
