@@ -162,7 +162,6 @@ const PickCardInternal = memo(
       }
     };
 
-    const showProfileInfo = variant === 'feed';
     const showPickInfo = variant === 'feed' || variant === 'Pick';
     const showSaveAndFollow = variant === 'feed' || variant === 'Pick';
     const showRankLabel = (variant === 'feed') || (variant === 'Pick' && display === 'desktop');
@@ -281,117 +280,7 @@ const PickCardInternal = memo(
           {variant !== 'myPick' && pick && (
             (display === 'desktop') ? (
               <>
-                {showProfileInfo && pick.profile && (
-                  <div className="p-4 pick-card-profile">
-                    {disableProfileLink ? (
-                      <div>
-                        <div className="flex items-center justify-between" data-component-name="ProfileInfo">
-                          <div className="flex items-center gap-2.5">
-                            <div className="relative" style={{ minWidth: '36px' }}>
-                              {pick?.profile?.avatar_url ? (
-                                <img
-                                  src={pick.profile.avatar_url}
-                                  alt={pick.profile?.full_name || 'Anonymous'}
-                                  className="rounded-full profile-avatar w-9 h-9"
-                                  loading="eager"
-                                  decoding="async"
-                                />
-                              ) : (
-                                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-                                  <span className="text-gray-500 font-medium">
-                                    {pick?.profile?.full_name?.[0] || '?'}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-xs font-mono uppercase text-gray-500 mb-0.5" data-component-name="ProfileInfo">
-                                {pick?.profile?.title || 'Designer'}
-                              </p>
-                              <div className="flex items-center gap-1" data-component-name="ProfileInfo">
-                                <h3 className="font-medium text-gray-900 text-sm">
-                                  {pick?.profile?.full_name || 'Anonymous'}
-                                </h3>
-                                <UserBadge
-                                  isAdmin={pick?.profile?.is_admin}
-                                  isCreator={pick?.profile?.is_creator}
-                                  isBrand={pick?.profile?.is_brand}
-                                  brandImageUrl={pick?.profile?.avatar_url || undefined}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {showSaveAndFollow && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                              className="inline-flex items-center justify-center px-4 py-1.5 text-xs font-medium rounded-full transition-colors border border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                              <span>Follow</span>
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <Link
-                        to={`/profile/${pick.profile?.id || ''}`}
-                        className="block"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex items-center justify-between" data-component-name="ProfileInfo">
-                          <div className="flex items-center gap-2.5">
-                            <div className="relative" style={{ minWidth: '36px' }}>
-                              {pick?.profile?.avatar_url ? (
-                                <img
-                                  src={pick.profile.avatar_url}
-                                  alt={pick.profile?.full_name || 'Anonymous'}
-                                  className="rounded-full profile-avatar w-9 h-9"
-                                  loading="eager"
-                                  decoding="async"
-                                />
-                              ) : (
-                                <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
-                                  <span className="text-gray-500 font-medium">
-                                    {pick?.profile?.full_name?.[0] || '?'}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-xs font-mono uppercase text-gray-500 mb-0.5" data-component-name="ProfileInfo">
-                                {pick?.profile?.title || 'Designer'}
-                              </p>
-                              <div className="flex items-center gap-1" data-component-name="ProfileInfo">
-                                <h3 className="font-medium text-gray-900 text-sm">
-                                  {pick?.profile?.full_name || 'Anonymous'}
-                                </h3>
-                                <UserBadge
-                                  isAdmin={pick?.profile?.is_admin}
-                                  isCreator={pick?.profile?.is_creator}
-                                  isBrand={pick?.profile?.is_brand}
-                                  brandImageUrl={pick?.profile?.avatar_url || undefined}
-                                />
-                              </div>
-                            </div>
-                          </div>
-
-                          {showSaveAndFollow && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                              className="inline-flex items-center justify-center px-4 py-1.5 text-xs font-medium rounded-full transition-colors border border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
-                            >
-                              <span>Follow</span>
-                            </button>
-                          )}
-                        </div>
-                      </Link>
-                    )}
-                  </div>
-                )}
+{/* Profile info section removed as requested */}
                 
                 {/* Content section */}
                 <div className="pick-image-container">

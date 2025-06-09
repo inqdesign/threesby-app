@@ -6,7 +6,7 @@ import { AuthModal } from './components/AuthModal';
 import { useAuth } from './hooks/useAuth';
 // import { useScrollDirection } from './hooks/useScrollDirection';
 import { supabase } from './lib/supabase';
-import { useAppStore } from './store';
+import { useAppStore } from './store/index';
 import { getSupabaseStorageKey } from './lib/authUtils';
 import { useSettingsModalStore } from './store/settingsModalStore';
 import { SubNav } from './components/SubNav';
@@ -108,99 +108,42 @@ function App() {
     resetState
   } = useAppStore();
 
-  // We can group picks by category if needed in the future
-  // Example: const groupedPicks: Record<Category, Pick[]> = React.useMemo(() => ({ ... }), [userPicks]);
-
-  // Effect to handle auth state changes and data loading
+  // Load user data when user authenticates
   React.useEffect(() => {
-    if (user) {
-      // Load user data when authenticated
-      console.log('App.tsx: Loading user data for user:', user.id);
-      // Force data refresh on auth state change
-      fetchUserData(user.id).then(() => {
-        console.log('App.tsx: User data loaded successfully');
-        // After data is loaded, check if we got the profile
-        const currentProfile = useAppStore.getState().userProfile;
-        console.log('App.tsx: Current profile after loading:', currentProfile ? 'Profile loaded' : 'Profile is null');
-      }).catch(error => {
+    if (user && !authLoading) {
+      console.log('App.tsx: Loading user data for authenticated user:', user.email);
+      fetchUserData(user.id).catch((error) => {
         console.error('App.tsx: Error loading user data:', error);
       });
-    } else {
-      console.log('App.tsx: No user is authenticated');
     }
-  }, [user, fetchUserData]);
-  
-  // Effect to handle initial page load with authentication and data fetching
+  }, [user, authLoading, fetchUserData]);
+
+  // Load global data on app initialization
   React.useEffect(() => {
-    // This will run once when the component mounts and when auth state changes
-    const initializeAppState = async () => {
+    console.log('App.tsx: Loading global app data');
+    
+    const loadGlobalData = async () => {
       try {
-        console.log('App.tsx: Initializing app state');
-        // Get the actual storage key that Supabase is using
-        const storageKey = getSupabaseStorageKey();
-        
-        // Check localStorage directly first to validate token exists
-        const hasToken = localStorage.getItem(storageKey) !== null;
-        if (hasToken) {
-          console.log('App.tsx: Auth token found in localStorage with key:', storageKey);
-        }
-        
-        const { data, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('App.tsx: Error getting session:', error);
-          resetState();
-          return;
-        }
-        
-        if (data.session?.user) {
-          const userId = data.session.user.id;
-          console.log('App.tsx: Valid session found on page load, user:', data.session.user.email);
-          // Fetch user data with all related information
-          await fetchUserData(userId);
-          console.log('App.tsx: User data fetched successfully');
-          
-          // Load page-specific data based on current route
-          if (location.pathname.includes('/discover')) {
-            console.log('App.tsx: Loading discover page data');
-            fetchFeedPicks();
-            fetchFeaturedPicks();
-            fetchFeaturedCurators();
-          } else if (location.pathname.includes('/curators')) {
-            console.log('App.tsx: Loading curators page data');
-            fetchCurators();
-          } else if (location.pathname.includes('/my-threes')) {
-            console.log('App.tsx: Ensuring user data is loaded for My Threes page');
-            // My Threes page needs latest user data
-            if (!userProfile || userPicks.length === 0) {
-              console.log('App.tsx: No profile or picks found, reloading data');
-              await fetchUserData(userId);
-            }
-          }
-        } else {
-          console.log('App.tsx: No valid session found on page load');
-          // Clear app state since we have no user
-          resetState();
-        }
+        await Promise.all([
+          fetchFeedPicks(),
+          fetchFeaturedPicks(),
+          fetchCurators(),
+          fetchFeaturedCurators()
+        ]);
       } catch (error) {
-        console.error('App.tsx: Error initializing app state:', error);
+        console.error('App.tsx: Error loading global data:', error);
       }
     };
-    
-    if (!authLoading) {
-      initializeAppState();
-    }
-  }, [fetchUserData, fetchFeedPicks, fetchFeaturedPicks, fetchFeaturedCurators, fetchCurators, resetState, location.pathname, userProfile, userPicks, authLoading]);
+
+    loadGlobalData();
+  }, [fetchFeedPicks, fetchFeaturedPicks, fetchCurators, fetchFeaturedCurators]);
+
+  const { signOut } = useAuth();
   
-  // Handle user sign out
   const handleSignOut = async () => {
     try {
       console.log('Signing out user');
-      await supabase.auth.signOut();
-      // Reset app state
-      useAppStore.getState().resetState();
-      // Navigate to discover page after logout
-      navigate('/discover');
+      await signOut();
     } catch (error) {
       console.error('Error signing out:', error);
       alert('Error signing out!');
@@ -221,17 +164,6 @@ function App() {
       window.removeEventListener('show-signup-modal', handleShowSignupModal);
     };
   }, []);
-
-  React.useEffect(() => {
-    // Fetch feed picks on app load
-    fetchFeedPicks();
-    // Fetch featured picks on app load
-    fetchFeaturedPicks();
-    // Fetch featured curators on app load
-    fetchFeaturedCurators();
-    // Fetch curators on app load
-    fetchCurators();
-  }, [fetchFeedPicks, fetchFeaturedPicks, fetchFeaturedCurators, fetchCurators]);
 
   // We removed the click outside handler since we no longer have a dropdown menu
 
@@ -519,7 +451,7 @@ return (
       <div className="w-full">
         <Routes>
           <Route path="/" element={<Navigate to="/discover" replace />} />
-          <Route path="/discover" element={<DiscoverPage isLoading={authLoading} />} />
+          <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/curators" element={<CuratorsPage />} />
           <Route path="/collections" element={<CollectionsPage />} />
           <Route path="/collections/:id" element={<CollectionDetailPage />} />

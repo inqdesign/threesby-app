@@ -8,16 +8,14 @@ import './DiscoverPage.css';
 import type { Profile } from '../types';
 import { FeaturedContent } from '../components/FeaturedContent';
 import { Footer } from '../components/Footer';
-import { useAppStore } from '../store';
+import { useAppStore } from '../store/index';
 import { CategoryFilter, FilterCategory } from '../components/CategoryFilter';
 
 type Category = 'places' | 'products' | 'books';
 
-type DiscoverPageProps = {
-  isLoading?: boolean;
-};
+type DiscoverPageProps = {};
 
-export function DiscoverPage({ isLoading = false }: DiscoverPageProps) {
+export function DiscoverPage({}: DiscoverPageProps) {
   const location = useLocation();
   const { feedPicks, loading: feedLoading, fetchFeedPicks } = useAppStore();
   const [, setError] = useState<string | null>(null);
@@ -184,8 +182,7 @@ export function DiscoverPage({ isLoading = false }: DiscoverPageProps) {
   }, []);
 
   useEffect(() => {
-    // Fetch feed picks when the component mounts or when the location changes
-    // This ensures we have the latest data when navigating back to this page
+    // Fetch feed picks when the component mounts
     const fetchWithRetry = async () => {
       try {
         await fetchFeedPicks();
@@ -196,14 +193,17 @@ export function DiscoverPage({ isLoading = false }: DiscoverPageProps) {
       }
     };
 
-    fetchWithRetry();
-  }, [location.pathname, fetchFeedPicks]);
-
-  useEffect(() => {
-    if (isLoading) {
-      fetchFeedPicks();
+    // Only fetch if we don't have data or if we're coming back to the page
+    if (feedPicks.length === 0 || location.state?.refresh) {
+      fetchWithRetry();
     }
-  }, [isLoading, fetchFeedPicks]);
+  }, [feedPicks.length, location.state, fetchFeedPicks]);
+
+  // Always fetch feed picks on component mount
+  useEffect(() => {
+    console.log('DiscoverPage: Fetching feed picks');
+    fetchFeedPicks();
+  }, [fetchFeedPicks]);
 
 
   // Filter and sort the feed picks by the most recent update date
@@ -211,8 +211,8 @@ export function DiscoverPage({ isLoading = false }: DiscoverPageProps) {
     // First filter the picks based on search and category, and exclude rank=0 picks
     .filter((pick) => {
       // Get the profile from the pick object
-      // The profile data is likely nested in the pick object from the join query
-      const profile = (pick as any).profiles as Profile;
+      // The profile data is attached directly to the pick object by our fetchFeedPicks function
+      const profile = (pick as any).profile as Profile;
       
       const matchesSearch =
         profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

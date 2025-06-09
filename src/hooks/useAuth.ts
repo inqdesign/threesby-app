@@ -20,18 +20,7 @@ export function useAuth() {
 
     // Get initial session
     const initializeAuth = async () => {
-      setLoading(true);
       try {
-        // Get the actual storage key that Supabase is using
-        const storageKey = getSupabaseStorageKey();
-        
-        // Check localStorage directly first to validate token existence
-        const storedSession = localStorage.getItem(storageKey);
-        if (storedSession) {
-          console.log('useAuth: Found token in localStorage with key:', storageKey);
-        }
-        
-        // Get session from Supabase
         console.log('useAuth: Fetching session from Supabase');
         const { data, error: sessionError } = await supabase.auth.getSession();
         
@@ -40,38 +29,24 @@ export function useAuth() {
           throw sessionError;
         }
         
+        console.log('useAuth: Session data received:', data.session ? 'Session exists' : 'No session');
+        
         if (mounted) {
           if (data.session?.user) {
-            const userId = data.session.user.id;
-            console.log('useAuth: Valid session found:', data.session.user.email, 'expires:', new Date(data.session?.expires_at || 0).toLocaleString());
-            
-            // Set user in state
+            console.log('useAuth: Valid session found:', data.session.user.email);
             setUser(data.session.user);
-            await checkUserStatus(userId);
-            
-            // Force refresh token if it's getting close to expiry (within 10 minutes)
-            const expiresAt = data.session.expires_at || 0;
-            const nowInSeconds = Math.floor(Date.now() / 1000);
-            const expiresInSeconds = expiresAt - nowInSeconds;
-            
-            if (expiresInSeconds < 600) {
-              console.log('useAuth: Token expiring soon, refreshing');
-              await supabase.auth.refreshSession();
-            }
-            
-            // Load user data immediately when we have a session
-            console.log('useAuth: Fetching user data');
-            await fetchUserData(userId);
+            await checkUserStatus(data.session.user.id);
           } else {
-            console.log('useAuth: No active session found');
+            console.log('useAuth: No valid session found');
             setUser(null);
-            resetState();
+            setIsAdmin(false);
+            setIsCreator(false);
           }
+          setLoading(false);
         }
       } catch (err) {
         console.error('useAuth: Error initializing auth:', err);
         setError('Failed to initialize authentication');
-      } finally {
         if (mounted) {
           setLoading(false);
         }
@@ -86,20 +61,25 @@ export function useAuth() {
       if (!mounted) return;
 
       console.log('useAuth: Auth state change event:', event);
+      setError(null);
+      
       try {
         if (session?.user) {
-          const userId = session.user.id;
-          console.log('useAuth: User authenticated after state change:', session.user.email);
+          console.log('useAuth: User authenticated:', session.user.email);
           setUser(session.user);
-          await checkUserStatus(userId);
+          await checkUserStatus(session.user.id);
           
-          // If user just signed in or token was refreshed, load their data
-          if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
-            console.log('useAuth: Loading user data after auth event:', event);
-            await fetchUserData(userId);
+          // Load user data after successful authentication
+          if (event === 'SIGNED_IN') {
+            console.log('useAuth: Loading user data after sign in');
+            try {
+              await fetchUserData(session.user.id);
+            } catch (error) {
+              console.error('useAuth: Error loading user data:', error);
+            }
           }
         } else {
-          console.log('useAuth: User signed out or session expired');
+          console.log('useAuth: User signed out or session expired, event:', event);
           setUser(null);
           setIsAdmin(false);
           setIsCreator(false);
@@ -108,11 +88,21 @@ export function useAuth() {
           if (event === 'SIGNED_OUT') {
             console.log('useAuth: Executing resetState after sign out');
             resetState();
-            // Get the actual storage key that Supabase is using
+            
+            // Clear all auth-related localStorage items
             const storageKey = getSupabaseStorageKey();
-            // Clear auth token from localStorage
-            localStorage.removeItem(storageKey);
-            console.log('useAuth: Removed auth token with key:', storageKey);
+            const keysToRemove = [
+              storageKey,
+              'sb-auth-token', // fallback key
+              'supabase.auth.token'
+            ];
+            
+            keysToRemove.forEach(key => {
+              if (localStorage.getItem(key)) {
+                localStorage.removeItem(key);
+                console.log('useAuth: Removed storage key:', key);
+              }
+            });
           }
         }
       } catch (err) {
@@ -125,25 +115,11 @@ export function useAuth() {
       }
     });
 
-    // Setup periodic token refresh every 30 minutes
-    const tokenRefreshInterval = setInterval(async () => {
-      try {
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
-          console.log('useAuth: Refreshing auth token');
-          await supabase.auth.refreshSession();
-        }
-      } catch (err) {
-        console.error('useAuth: Error refreshing token:', err);
-      }
-    }, 30 * 60 * 1000);
-
-    // Cleanup subscription and interval on unmount
+    // Cleanup subscription on unmount
     return () => {
       console.log('useAuth: Cleaning up auth effect');
       mounted = false;
       subscription.unsubscribe();
-      clearInterval(tokenRefreshInterval);
     };
   }, [fetchUserData, resetState]);
 
@@ -156,7 +132,12 @@ export function useAuth() {
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error checking user status:', error);
+        setIsAdmin(false);
+        setIsCreator(false);
+        return;
+      }
 
       if (data) {
         setIsAdmin(data.is_admin || false);
@@ -172,25 +153,54 @@ export function useAuth() {
   // Helper function to sign out
   const signOut = async () => {
     try {
+      setLoading(true);
+      
       // Clear app state first
       resetState();
       
-      // Then sign out from Supabase
+      // Clear localStorage before signing out
+      const storageKey = getSupabaseStorageKey();
+      const keysToRemove = [
+        storageKey,
+        'sb-auth-token',
+        'supabase.auth.token'
+      ];
+      
+      keysToRemove.forEach(key => {
+        if (localStorage.getItem(key)) {
+          localStorage.removeItem(key);
+          console.log('signOut: Removed storage key:', key);
+        }
+      });
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut();
-      if (error) throw error;
       
-      // Update local state
-      setUser(null);
-      setIsAdmin(false);
-      setIsCreator(false);
+      if (error) {
+        console.error('Error signing out:', error);
+        throw error;
+      }
       
-      return { success: true };
+      console.log('Successfully signed out');
+      
+      // Force reload to ensure clean state
+      window.location.href = '/discover';
+      
     } catch (err) {
-      console.error('Error signing out:', err);
+      console.error('Error in signOut:', err);
       setError('Failed to sign out');
-      return { success: false, error: err };
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
-  return { user, loading, isAdmin, isCreator, error, signOut };
+  return {
+    user,
+    loading,
+    isAdmin,
+    isCreator,
+    error,
+    signOut
+  };
 }

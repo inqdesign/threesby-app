@@ -22,23 +22,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check active sessions and set the user
     const getSession = async () => {
       setLoading(true);
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (!error && data?.session) {
-        setSession(data.session);
-        setUser(data.session.user);
+      try {
+        const { data, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.log('Auth session error:', error);
+          // Clear any stale auth data
+          setSession(null);
+          setUser(null);
+        } else if (data?.session) {
+          setSession(data.session);
+          setUser(data.session.user);
+        }
+      } catch (error) {
+        console.error('Error getting auth session:', error);
+        // Clear any stale auth data
+        setSession(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
     };
 
     getSession();
 
     // Listen for auth changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+      async (event, session) => {
+        console.log('Auth state changed:', event);
+        if (event === 'SIGNED_OUT') {
+          // Handle sign out
+          setSession(null);
+          setUser(null);
+        } else if (event === 'SIGNED_IN' && session) {
+          setSession(session);
+          setUser(session.user);
+        } else if (event === 'TOKEN_REFRESHED' && session) {
+          setSession(session);
+          setUser(session.user);
+        }
         setLoading(false);
       }
     );
@@ -70,7 +92,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Sign out
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      console.log('Starting sign out process');
+      
+      // Clear all cache first
+      const { clearCache } = await import('../lib/cacheUtils');
+      clearCache();
+      console.log('Cache cleared');
+      
+      // Import the store to reset state
+      const { useAppStore } = await import('../store/index');
+      
+      // Reset app state to clear all data
+      useAppStore.getState().resetState();
+      console.log('App state reset');
+      
+      // Then sign out from Supabase
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error from Supabase during sign out:', error);
+        throw error;
+      }
+      
+      // Force reload the page to ensure clean state
+      window.location.href = '/';
+      
+      console.log('Successfully signed out and reset app state');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Even if there's an error, try to redirect to home
+      window.location.href = '/';
+      throw error;
+    }
   };
 
   const value = {

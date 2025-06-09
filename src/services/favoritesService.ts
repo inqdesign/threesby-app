@@ -4,8 +4,8 @@ import type { Pick as PickType } from '../types';
 // Temporary local storage for favorites until database is set up
 const localFavorites = new Map<string, Set<string>>();
 
-// Flag to determine if we should use local storage instead of database
-let useLocalStorage = false;
+// Always use local storage for favorites until the database table is properly set up
+let useLocalStorage = true;
 
 /**
  * Add a pick to the user's favorites

@@ -1,11 +1,12 @@
 import React, { useRef, useEffect } from "react";
-import { useAppStore } from '../store';
+import { useAppStore } from '../store/index';
 import "./CuratorsPage.css";
 import "./CuratorAnimation.css";
 import { useAuth } from "../hooks/useAuth";
 import { ProfileSection } from "../components/ProfileSection";
 import { Skeleton } from "../components/ui/skeleton";
 import { PicksGrid } from "../components/PicksGrid";
+import { clearCuratorsCache } from '../lib/cacheUtils';
 import type { Pick, Profile } from "../types";
 
 // Define a type for a curator with picks
@@ -107,48 +108,38 @@ export function CuratorsPage() {
     };
   }, []);
   
-  // Fetch curators data when component mounts and when it becomes visible
+  // Fetch curators data when component mounts
   React.useEffect(() => {
+    console.log('CuratorsPage: Checking if curators data needs to be fetched');
+    
+    // Clear curators cache to ensure fresh data
+    clearCuratorsCache();
+    
+    // Always fetch curators data to ensure we have the latest
     console.log('CuratorsPage: Fetching curators data');
-    
-    // Always fetch data when component mounts
     fetchCurators();
-    
-    // Set up a listener for when the page becomes visible again
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        console.log('CuratorsPage: Page became visible, refreshing data');
-        fetchCurators();
-      }
-    };
-    
-    // Add event listener for visibility changes
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    // Clean up the event listener when component unmounts
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
   }, [fetchCurators]);
   
   // Process curators data
   const processedCurators = React.useMemo(() => {
-    if (!curators || !Array.isArray(curators)) return [];
+    if (!curators || !Array.isArray(curators)) {
+      console.log('CuratorsPage: No curators array available');
+      return [];
+    }
+    
+    console.log('CuratorsPage: Processing', curators.length, 'curators');
     
     return curators
       .filter(curator => {
-        // Only include curators with approved status (new visibility rule)
-        const hasValidStatus = curator.status === 'approved';
+        // Include curators that have at least one published pick (this is already filtered in the store)
+        const hasPicks = Array.isArray(curator.picks) && curator.picks.length > 0;
         
-        // Ensure they have picks (should be at least 9 - 3 per category)
-        const hasPicks = Array.isArray(curator.picks) && curator.picks.length >= 9;
-        
-        // Special case for admins and creators - always show them if they have any picks
-        if (curator.is_admin || curator.is_creator) {
-          return Array.isArray(curator.picks) && curator.picks.length > 0;
+        // Log why a curator might be filtered out
+        if (!hasPicks) {
+          console.log('Curator filtered out due to no picks:', curator.full_name || curator.id);
         }
         
-        return hasValidStatus && hasPicks;
+        return hasPicks;
       })
       .map(curator => {
         // For active profiles, only show published picks to others
