@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Carousel } from './ui/Carousel';
 import { CarouselItem } from './ui/CarouselContent';
 import { PickCard } from './PickCard';
+import { FollowButton } from './FollowButton';
 import { useNavigate } from 'react-router-dom';
 import type { Pick, Profile } from '../types';
 
@@ -54,42 +55,33 @@ export function FeaturedCarouselCard({ type, title, items, className = '' }: Fea
                 onClick={() => handlePickClick(item as Pick)}
               />
             ) : (
-              // Featured Curators - use PickCard design with profile image
-              <div className="cursor-pointer" onClick={() => handleCuratorClick(item as Profile)}>
-                <PickCard
-                  pick={{
-                    id: `curator-${(item as Profile).id}`,
-                    title: (item as Profile).full_name || 'Anonymous',
-                    reference: (item as Profile).bio?.substring(0, 60) || 'Curator',
-                    category: 'books' as 'books' | 'products' | 'places',
-                    rank: 1,
-                    image_url: (item as Profile).avatar_url || '/avatar-placeholder.png',
-                    profile: {
-                      id: (item as Profile).id,
-                      full_name: (item as Profile).full_name,
-                      title: (item as Profile).title,
-                      avatar_url: (item as Profile).avatar_url,
-                      is_admin: (item as Profile).is_admin,
-                      is_creator: (item as Profile).is_creator
-                    }
-                  }}
-                  variant="feed"
-                  display="desktop"
-                  disableProfileLink={false}
-                  // Replace heart icon with follow button
-                  customActions={
-                    <button 
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-medium py-1 px-3 rounded transition-colors"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Follow functionality would go here
-                        console.log('Follow curator', (item as Profile).id);
-                      }}
-                    >
-                      Follow
-                    </button>
-                  }
-                />
+              // Featured Curators - custom card design with follow button
+              <div className="cursor-pointer overflow-hidden pick-card-container" onClick={() => handleCuratorClick(item as Profile)}>
+                {/* Profile image */}
+                <div className="pick-image-container">
+                  <img
+                    src={(item as Profile).avatar_url || '/avatar-placeholder.png'}
+                    alt={(item as Profile).full_name || 'Anonymous'}
+                    className="w-full h-full object-cover aspect-square"
+                  />
+                </div>
+                
+                {/* Profile info section */}
+                <div className="py-4 pick-card-info">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-base font-medium text-[#252525] truncate" style={{ fontSize: '1rem' }}>
+                        {(item as Profile).full_name || 'Anonymous'}
+                      </h3>
+                      <div className="uppercase text-xs font-mono text-[#9d9b9b] line-clamp-1">
+                        {(item as Profile).title || 'Curator'}
+                      </div>
+                    </div>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <FollowButton userId={(item as Profile).id} />
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
           </CarouselItem>

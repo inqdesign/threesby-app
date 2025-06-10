@@ -19,6 +19,12 @@ export function useFollow() {
         });
 
       if (error) throw error;
+      
+      // Trigger a custom event to notify other components about the follow change
+      window.dispatchEvent(new CustomEvent('followChanged', { 
+        detail: { userId, action: 'follow' } 
+      }));
+      
       return true;
     } catch (error) {
       console.error('Error following user:', error);
@@ -42,6 +48,12 @@ export function useFollow() {
         });
 
       if (error) throw error;
+      
+      // Trigger a custom event to notify other components about the follow change
+      window.dispatchEvent(new CustomEvent('followChanged', { 
+        detail: { userId, action: 'unfollow' } 
+      }));
+      
       return true;
     } catch (error) {
       console.error('Error unfollowing user:', error);
@@ -53,15 +65,34 @@ export function useFollow() {
 
   const getFollowCounts = useCallback(async (userId: string) => {
     try {
-      const [{ data: followers }, { data: following }] = await Promise.all([
-        supabase.rpc('get_follower_count', { profile_id: userId }),
-        supabase.rpc('get_following_count', { profile_id: userId })
+      // Use direct table queries instead of RPC functions for better reliability
+      const [followersResponse, followingResponse] = await Promise.all([
+        supabase
+          .from('follows')
+          .select('follower_id', { count: 'exact' })
+          .eq('following_id', userId),
+        supabase
+          .from('follows')
+          .select('following_id', { count: 'exact' })
+          .eq('follower_id', userId)
       ]);
 
-      return {
-        followers: followers || 0,
-        following: following || 0
+      const { count: followersCount, error: followersError } = followersResponse;
+      const { count: followingCount, error: followingError } = followingResponse;
+
+      if (followersError) {
+        console.error('Error getting followers count:', followersError);
+      }
+      if (followingError) {
+        console.error('Error getting following count:', followingError);
+      }
+
+      const result = {
+        followers: followersCount || 0,
+        following: followingCount || 0
       };
+      
+      return result;
     } catch (error) {
       console.error('Error getting follow counts:', error);
       return { followers: 0, following: 0 };

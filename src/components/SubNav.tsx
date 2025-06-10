@@ -5,6 +5,7 @@ import { PreviewModal } from './PreviewModal';
 import { ProfileEditModal } from './ProfileEditModal';
 import { useAppStore } from '../store';
 import { supabase } from '../lib/supabase';
+import { useFollow } from '../hooks/useFollow';
 
 type SubNavProps = {
   label?: string;
@@ -45,7 +46,10 @@ export function SubNav({
   loading,
 }: SubNavProps) {
   const { fetchProfile } = useAppStore();
+  const { getFollowCounts } = useFollow();
   const [refreshedPicks, setRefreshedPicks] = useState<Pick[]>([]);
+  const [followCounts, setFollowCounts] = useState({ followers: 0, following: 0 });
+  
   // Use userProfile if profile is not provided
   // Ensure effectiveProfile is never null when used with PublishButton
   const effectiveProfile = profile || (userProfile || undefined);
@@ -55,6 +59,41 @@ export function SubNav({
   
   // For debugging
   console.log('SubNav received picks:', picks);
+
+  // Fetch dynamic follow counts when effectiveProfile changes
+  useEffect(() => {
+    const fetchFollowCounts = async () => {
+      if (effectiveProfile?.id) {
+        const counts = await getFollowCounts(effectiveProfile.id);
+        setFollowCounts(counts);
+      }
+    };
+    
+    fetchFollowCounts();
+  }, [effectiveProfile?.id, getFollowCounts]);
+
+  // Listen for follow changes to refresh counts
+  useEffect(() => {
+    const handleFollowChange = (event: CustomEvent) => {
+      const { userId } = event.detail;
+      // Refresh if this is the user whose stats we're showing
+      if (userId === effectiveProfile?.id) {
+        const fetchFollowCounts = async () => {
+          if (effectiveProfile?.id) {
+            const counts = await getFollowCounts(effectiveProfile.id);
+            setFollowCounts(counts);
+          }
+        };
+        fetchFollowCounts();
+      }
+    };
+
+    window.addEventListener('followChanged', handleFollowChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('followChanged', handleFollowChange as EventListener);
+    };
+  }, [effectiveProfile?.id, getFollowCounts]);
 
   // Function to fetch the latest picks data
   const fetchLatestPicks = async () => {
@@ -210,7 +249,7 @@ export function SubNav({
               
               {/* Followers count */}
               <div className="text-sm">
-                <span className="font-medium">{effectiveProfile?.followers_count || 0}</span> followers
+                <span className="font-medium">{followCounts.followers}</span> followers
               </div>
             </div>
           )}

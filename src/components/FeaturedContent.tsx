@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Profile, Pick } from '../types';
 import { FeaturedPickCard } from './FeaturedPickCard';
+import { FollowButton } from './FollowButton';
 import { useNavigate } from 'react-router-dom';
 
 interface FeaturedContentProps {
@@ -223,16 +224,9 @@ export function FeaturedContent({ type, className = '' }: FeaturedContentProps) 
                           {featuredCurators[currentIndex].title || 'Curator'}
                         </div>
                       </div>
-                      <button 
-                        className="inline-flex items-center justify-center px-4 py-1.5 text-xs font-medium rounded-full transition-colors border border-gray-200 text-gray-700 bg-white hover:bg-gray-50"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Follow functionality would go here
-                          console.log('Follow curator', featuredCurators[currentIndex].id);
-                        }}
-                      >
-                        <span>Follow</span>
-                      </button>
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <FollowButton userId={featuredCurators[currentIndex].id} />
+                      </div>
                     </div>
                   </div>
                 </div>

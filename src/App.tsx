@@ -34,12 +34,14 @@ import { CuratorsPage } from './pages/CuratorsPage';
 import CollectionDetailPage from './pages/CollectionDetailPage';
 import { CollectionsPage } from './pages/CollectionsPage';
 import { SearchResultsPage } from './pages/SearchResultsPage';
-import { OnboardingPage } from './pages/OnboardingPage';
+import { OnboardingPage } from './pages/OnboardingPage.tsx';
+import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { BottomNav } from './components/BottomNav';
 import { MainNav } from './components/MainNav';
 import { ScrollToTop } from './components/ScrollToTop';
 // import LexicalEditorTest from './components/LexicalEditorTest'; // Component not found
 import { PickModalWrapper } from './components/PickModalWrapper';
+
 import type { Pick } from './types';
 
 function ProtectedRoute({ children, isAllowed }: { children: React.ReactNode; isAllowed: boolean }) {
@@ -118,15 +120,32 @@ function App() {
 
   // Check if user needs onboarding after profile is loaded
   React.useEffect(() => {
-    if (user && userProfile && !authLoading) {
+    if (user && !authLoading && userProfile) {
       // Don't redirect if user is already on onboarding page or specific allowed pages
       const allowedPaths = ['/onboarding', '/terms', '/privacy-policy'];
       const isOnAllowedPath = allowedPaths.some(path => location.pathname.startsWith(path));
       
-      // If user hasn't completed onboarding and is not on an allowed path, redirect to onboarding
-      if (!userProfile.onboarding_completed && !isOnAllowedPath) {
-        console.log('User needs onboarding, redirecting...');
+      // Check if this is a genuinely new user who needs onboarding
+      const isExistingUser = (userProfile as any).is_creator || 
+                           (userProfile as any).is_admin || 
+                           (userProfile.full_name && userProfile.title) ||
+                           (userProfile as any).onboarding_completed === true;
+      
+      // Only redirect to onboarding if this is genuinely a new user
+      if (!isExistingUser && !isOnAllowedPath) {
+        console.log('New user needs onboarding, redirecting...', { 
+          userProfile, 
+          onboarding_completed: (userProfile as any)?.onboarding_completed,
+          is_creator: (userProfile as any)?.is_creator,
+          is_admin: (userProfile as any)?.is_admin,
+          has_profile: userProfile.full_name && userProfile.title
+        });
         navigate('/onboarding');
+      }
+      
+      // If user has completed onboarding and is on an ID-based profile URL, redirect to username URL
+      if (userProfile && (userProfile as any).onboarding_completed && userProfile.username && location.pathname === `/profile/${user.id}`) {
+        navigate(`/@${userProfile.username}`, { replace: true });
       }
     }
   }, [user, userProfile, authLoading, location.pathname, navigate]);
@@ -470,9 +489,10 @@ return (
           <Route path="/collections/:id" element={<CollectionDetailPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/creator" element={<CreatorLandingPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />\n          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/invite" element={<InviteLandingPage />} />
           <Route path="/profile/:id" element={<ProfilePage />} />
+          <Route path="/@:username" element={<ProfilePage />} />
           <Route path="/account/*" element={<ProtectedRoute isAllowed={!!user}><AccountPage /></ProtectedRoute>} />
           <Route path="/account-setup" element={<ProtectedRoute isAllowed={!!user}><AccountSetupPage /></ProtectedRoute>} />
           <Route path="/security" element={<ProtectedRoute isAllowed={!!user}><SecurityPage /></ProtectedRoute>} />
@@ -564,15 +584,62 @@ return (
         <ProfileEditModal
           isOpen={showProfileEditModal}
           onClose={() => setShowProfileEditModal(false)}
-          onSubmit={async () => {
-            // Handle profile update
-            setShowProfileEditModal(false);
+          onSubmit={async (data) => {
+            try {
+              console.log('Saving profile data:', data);
+              
+              // Update profile in database
+              const { error } = await supabase
+                .from('profiles')
+                .update({
+                  full_name: data.full_name,
+                  title: data.title,
+                  username: data.username,
+                  avatar_url: data.avatar_url,
+                  shelf_image_url: data.shelf_image_url,
+                  bio: data.bio,
+                  location: data.location,
+                  tags: data.tags,
+                  social_links: data.social_links,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', user?.id);
+
+              if (error) {
+                // Handle column missing errors gracefully
+                const isColumnError = error.message?.includes('column');
+                if (isColumnError) {
+                  console.log('Some database columns might not exist, continuing anyway:', error.message);
+                  // Still update local state
+                  if (user) {
+                    await fetchUserData(user.id);
+                  }
+                } else {
+                  throw error;
+                }
+              } else {
+                console.log('Profile updated successfully');
+                // Refresh user data
+                if (user) {
+                  await fetchUserData(user.id);
+                }
+              }
+            } catch (error) {
+              console.error('Error updating profile:', error);
+              alert('Error updating profile. Please try again.');
+              throw error; // Re-throw to prevent modal from closing
+            }
           }}
           initialData={{
             full_name: userProfile.full_name || '',
             title: userProfile.title || '',
+            username: (userProfile as any).username || '',
             avatar_url: userProfile.avatar_url || '',
-            social_links: userProfile.social_links
+            shelf_image_url: (userProfile as any).shelf_image_url || '',
+            bio: (userProfile as any).bio || '',
+            location: (userProfile as any).location || '',
+            tags: (userProfile as any).tags || [],
+            social_links: userProfile.social_links || {}
           }}
         />
         )}
@@ -582,6 +649,8 @@ return (
           isOpen={useSettingsModalStore(state => state.isOpen)}
           onClose={useSettingsModalStore(state => state.closeModal)}
         />
+        
+
     </ErrorBoundary>
   );
 
