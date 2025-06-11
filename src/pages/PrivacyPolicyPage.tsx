@@ -35,7 +35,7 @@ export function PrivacyPolicyPage() {
       leaveFrom="opacity-100"
       leaveTo="opacity-0"
     >
-      <div className="fixed inset-0 z-50 bg-white overflow-auto">
+      <div className="fixed inset-0 z-50 bg-background overflow-auto">
         <div className="relative w-full h-full">
           <Transition
             show={show && !isExiting}
@@ -47,7 +47,7 @@ export function PrivacyPolicyPage() {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-background pb-20">
               {/* App Bar */}
               <AppBar 
                 title="Privacy Policy" 
@@ -56,23 +56,23 @@ export function PrivacyPolicyPage() {
               />
               
               <div className="p-4 md:p-8 flex justify-center">
-                <div className="bg-white rounded-xl shadow-sm p-6 w-full max-w-[700px]">
-                  <h2 className="text-xl font-semibold mb-4">ThreesBy – Privacy Policy</h2>
+                <div className="bg-card rounded-xl shadow-sm p-6 w-full max-w-[700px]">
+                  <h2 className="text-xl font-semibold mb-4 text-foreground">ThreesBy – Privacy Policy</h2>
                   
                   <div className="prose prose-sm max-w-none">
-                    <p className="text-gray-700">
+                    <p className="text-muted-foreground">
                       Last updated: June 8, 2025
                     </p>
                     
-                    <p className="text-gray-700 mt-4">
+                    <p className="text-foreground mt-4">
                       At ThreesBy, we value your privacy and are committed to being transparent about how we collect and use your information. This Privacy Policy explains our practices regarding your personal data.
                     </p>
                     
-                    <h3 className="font-semibold mt-6 mb-2">1. Information We Collect</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">1. Information We Collect</h3>
+                    <p className="text-foreground">
                       We collect the following types of information:
                     </p>
-                    <ul className="list-disc pl-5 mt-2 text-gray-700">
+                    <ul className="list-disc pl-5 mt-2 text-foreground">
                       <li><strong>Account Information:</strong> When you register, we collect your name, email, username, and password</li>
                       <li><strong>Profile Information:</strong> Your bio, profile picture, and any other details you choose to share</li>
                       <li><strong>Content:</strong> Your curated picks, descriptions, and any media you upload</li>
@@ -80,11 +80,11 @@ export function PrivacyPolicyPage() {
                       <li><strong>Device Information:</strong> IP address, browser type, device type, and operating system</li>
                     </ul>
                     
-                    <h3 className="font-semibold mt-6 mb-2">2. How We Use Your Information</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">2. How We Use Your Information</h3>
+                    <p className="text-foreground">
                       We use your information to:
                     </p>
-                    <ul className="list-disc pl-5 mt-2 text-gray-700">
+                    <ul className="list-disc pl-5 mt-2 text-foreground">
                       <li>Provide and improve ThreesBy's features and functionality</li>
                       <li>Create and maintain your account</li>
                       <li>Display your profile and content to other users based on your settings</li>
@@ -94,61 +94,61 @@ export function PrivacyPolicyPage() {
                       <li>Ensure the security and integrity of our platform</li>
                     </ul>
                     
-                    <h3 className="font-semibold mt-6 mb-2">3. Information Sharing</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">3. Information Sharing</h3>
+                    <p className="text-foreground">
                       We share your information in limited circumstances:
                     </p>
-                    <ul className="list-disc pl-5 mt-2 text-gray-700">
+                    <ul className="list-disc pl-5 mt-2 text-foreground">
                       <li><strong>Public Content:</strong> Your profile and picks are visible to other users according to your privacy settings</li>
                       <li><strong>Service Providers:</strong> We work with trusted third parties who help us operate ThreesBy (hosting, analytics, email delivery)</li>
                       <li><strong>Legal Requirements:</strong> When required by law or to protect rights and safety</li>
                     </ul>
-                    <p className="text-gray-700 mt-2">
+                    <p className="text-foreground mt-2">
                       We do not sell your personal information to advertisers or other third parties.
                     </p>
                     
-                    <h3 className="font-semibold mt-6 mb-2">4. Your Choices & Rights</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">4. Your Choices & Rights</h3>
+                    <p className="text-foreground">
                       You have several rights regarding your information:
                     </p>
-                    <ul className="list-disc pl-5 mt-2 text-gray-700">
+                    <ul className="list-disc pl-5 mt-2 text-foreground">
                       <li>Access and update your account information at any time</li>
                       <li>Control your privacy settings to determine what others can see</li>
                       <li>Request a copy of your data</li>
                       <li>Request deletion of your account and associated data</li>
                       <li>Opt out of promotional communications</li>
                     </ul>
-                    <p className="text-gray-700 mt-2">
+                    <p className="text-foreground mt-2">
                       To exercise these rights, visit your account settings or contact us directly.
                     </p>
                     
-                    <h3 className="font-semibold mt-6 mb-2">5. Data Security</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">5. Data Security</h3>
+                    <p className="text-foreground">
                       We implement appropriate security measures to protect your information. However, no online service is completely secure. We encourage you to use strong passwords and be cautious about the information you share.
                     </p>
                     
-                    <h3 className="font-semibold mt-6 mb-2">6. International Data Transfers</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">6. International Data Transfers</h3>
+                    <p className="text-foreground">
                       ThreesBy operates globally. Your information may be processed in countries with different data protection laws. When we transfer data internationally, we take steps to ensure adequate protection of your information.
                     </p>
                     
-                    <h3 className="font-semibold mt-6 mb-2">7. Children's Privacy</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">7. Children's Privacy</h3>
+                    <p className="text-foreground">
                       ThreesBy is not intended for children under 16. We do not knowingly collect information from children under 16. If we discover we have collected information from a child under 16, we will delete it.
                     </p>
                     
-                    <h3 className="font-semibold mt-6 mb-2">8. Changes to This Policy</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">8. Changes to This Policy</h3>
+                    <p className="text-foreground">
                       We may update this Privacy Policy periodically. We'll notify you of significant changes through the platform or by email. Your continued use of ThreesBy after changes indicates your acceptance of the updated policy.
                     </p>
                     
-                    <h3 className="font-semibold mt-6 mb-2">9. Contact Us</h3>
-                    <p className="text-gray-700">
+                    <h3 className="font-semibold mt-6 mb-2 text-foreground">9. Contact Us</h3>
+                    <p className="text-foreground">
                       If you have questions about this Privacy Policy or your data, please contact us at privacy@threesby.com.
                     </p>
                     
-                    <p className="text-gray-700 mt-6">
-                      For more information about how we operate, please see our <Link to="/terms" className="text-blue-600 hover:underline">Terms and Conditions</Link>.
+                    <p className="text-foreground mt-6">
+                      For more information about how we operate, please see our <Link to="/terms" className="text-blue-600 dark:text-blue-400 hover:underline">Terms and Conditions</Link>.
                     </p>
                   </div>
                 </div>

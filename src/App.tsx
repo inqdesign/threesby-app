@@ -41,6 +41,8 @@ import { MainNav } from './components/MainNav';
 import { ScrollToTop } from './components/ScrollToTop';
 // import LexicalEditorTest from './components/LexicalEditorTest'; // Component not found
 import { PickModalWrapper } from './components/PickModalWrapper';
+import { ThemeProvider } from './components/ThemeProvider';
+import { UserSettingsPage } from './pages/SettingsPage';
 
 import type { Pick } from './types';
 
@@ -462,12 +464,13 @@ return (
 
 return (
   <ErrorBoundary>
-    <PickModalWrapper>
-      <div className="min-h-screen bg-[#F4F4F4]">
+    <ThemeProvider>
+      <PickModalWrapper>
+      <div className="min-h-screen bg-background text-foreground">
       <ScrollToTop />
       <header
         className={`relative md:fixed w-full top-0 z-50 transition-colors duration-300 ${
-          isCreatorLanding ? 'bg-[var(--nav-bg,transparent)]' : 'bg-[#F4F4F4] border-b border-gray-200'
+          isCreatorLanding ? 'bg-[var(--nav-bg,transparent)]' : 'bg-background border-b border-border'
         }`}
       >
         {/* Use our updated MainNav component with all the required menu items */}
@@ -497,6 +500,7 @@ return (
           <Route path="/account-setup" element={<ProtectedRoute isAllowed={!!user}><AccountSetupPage /></ProtectedRoute>} />
           <Route path="/security" element={<ProtectedRoute isAllowed={!!user}><SecurityPage /></ProtectedRoute>} />
           <Route path="/email-settings" element={<ProtectedRoute isAllowed={!!user}><EmailSettingsPage /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute isAllowed={!!user}><UserSettingsPage /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route
@@ -649,8 +653,7 @@ return (
           isOpen={useSettingsModalStore(state => state.isOpen)}
           onClose={useSettingsModalStore(state => state.closeModal)}
         />
-        
-
+      </ThemeProvider>
     </ErrorBoundary>
   );
 

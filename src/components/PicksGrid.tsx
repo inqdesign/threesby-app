@@ -38,8 +38,8 @@ export function PicksGrid({
           
           return (
             <div key={`empty-${index}`} className="relative">
-              <div className="aspect-square rounded-[4px] bg-gray-50 border border-gray-100 relative">
-                <div className="absolute bottom-2 right-2 text-gray-300">
+              <div className="aspect-square rounded-[4px] bg-muted border border-border relative">
+                <div className="absolute bottom-2 right-2 text-muted-foreground">
                   <CategoryIcon className="w-5 h-5" />
                 </div>
               </div>

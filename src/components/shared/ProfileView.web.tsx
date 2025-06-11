@@ -151,13 +151,13 @@ export function ProfileView() {
           {/* Picks Column */}
           <div className="w-3/4">
             <div className="mb-6">
-              <div className="flex space-x-4 border-b border-gray-200">
+                              <div className="flex space-x-4 border-b border-border">
                 <button
                   onClick={() => setActiveTab('all')}
                   className={`py-2 px-4 text-sm font-medium ${
                     activeTab === 'all'
-                      ? 'border-b-2 border-blue-500 text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'border-b-2 border-foreground text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   All
@@ -166,8 +166,8 @@ export function ProfileView() {
                   onClick={() => setActiveTab('books')}
                   className={`py-2 px-4 text-sm font-medium ${
                     activeTab === 'books'
-                      ? 'border-b-2 border-blue-500 text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'border-b-2 border-foreground text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   Books
@@ -176,8 +176,8 @@ export function ProfileView() {
                   onClick={() => setActiveTab('places')}
                   className={`py-2 px-4 text-sm font-medium ${
                     activeTab === 'places'
-                      ? 'border-b-2 border-blue-500 text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'border-b-2 border-foreground text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   Places
@@ -186,8 +186,8 @@ export function ProfileView() {
                   onClick={() => setActiveTab('products')}
                   className={`py-2 px-4 text-sm font-medium ${
                     activeTab === 'products'
-                      ? 'border-b-2 border-blue-500 text-blue-600'
-                      : 'text-gray-500 hover:text-gray-700'
+                      ? 'border-b-2 border-foreground text-foreground'
+                      : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
                   Products
@@ -264,13 +264,13 @@ export function ProfileView() {
             </div>
           </div>
           
-          <div className="flex space-x-1 border-b border-gray-200 mb-6">
+          <div className="flex space-x-1 border-b border-border mb-6">
             <button
               onClick={() => setActiveTab('all')}
               className={`flex-1 py-3 text-xs font-medium ${
                 activeTab === 'all'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500'
+                  ? 'border-b-2 border-foreground text-foreground'
+                  : 'text-muted-foreground'
               }`}
             >
               All
@@ -279,8 +279,8 @@ export function ProfileView() {
               onClick={() => setActiveTab('books')}
               className={`flex-1 py-3 text-xs font-medium ${
                 activeTab === 'books'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500'
+                  ? 'border-b-2 border-foreground text-foreground'
+                  : 'text-muted-foreground'
               }`}
             >
               Books
@@ -289,8 +289,8 @@ export function ProfileView() {
               onClick={() => setActiveTab('places')}
               className={`flex-1 py-3 text-xs font-medium ${
                 activeTab === 'places'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500'
+                  ? 'border-b-2 border-foreground text-foreground'
+                  : 'text-muted-foreground'
               }`}
             >
               Places
@@ -299,8 +299,8 @@ export function ProfileView() {
               onClick={() => setActiveTab('products')}
               className={`flex-1 py-3 text-xs font-medium ${
                 activeTab === 'products'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500'
+                  ? 'border-b-2 border-foreground text-foreground'
+                  : 'text-muted-foreground'
               }`}
             >
               Products

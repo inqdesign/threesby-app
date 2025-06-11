@@ -88,7 +88,7 @@ export function AccountSetupPage() {
       leaveFrom="opacity-100"
       leaveTo="opacity-0"
     >
-      <div className="fixed inset-0 z-50 bg-white overflow-auto">
+      <div className="fixed inset-0 z-50 bg-background overflow-auto">
         <div className="relative w-full h-full">
           <Transition
             show={show && !isExiting}
@@ -100,7 +100,7 @@ export function AccountSetupPage() {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-background pb-20">
               {/* App Bar */}
               <AppBar 
                 title="Account Setup" 
@@ -109,24 +109,24 @@ export function AccountSetupPage() {
               />
               
               <div className="p-4 md:p-8">
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                  <h2 className="text-xl font-semibold mb-4">Account Information</h2>
+                <div className="bg-card rounded-xl shadow-sm p-6 mb-6">
+                  <h2 className="text-xl font-semibold mb-4 text-foreground">Account Information</h2>
                   
                   {error && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">
                       {error}
                     </div>
                   )}
                   
                   {successMessage && (
-                    <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg">
+                    <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg">
                       {successMessage}
                     </div>
                   )}
                   
                   <form onSubmit={handleSubmit}>
                     <div className="mb-4">
-                      <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="fullName" className="block text-sm font-medium text-foreground mb-1">
                         Full Name
                       </label>
                       <input
@@ -134,13 +134,13 @@ export function AccountSetupPage() {
                         id="fullName"
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Your full name"
                       />
                     </div>
                     
                     <div className="mb-4">
-                      <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="username" className="block text-sm font-medium text-foreground mb-1">
                         Username
                       </label>
                       <input
@@ -148,13 +148,13 @@ export function AccountSetupPage() {
                         id="username"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Choose a username"
                       />
                     </div>
                     
                     <div className="mb-6">
-                      <label htmlFor="avatarUrl" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="avatarUrl" className="block text-sm font-medium text-foreground mb-1">
                         Profile Picture URL
                       </label>
                       <input
@@ -162,7 +162,7 @@ export function AccountSetupPage() {
                         id="avatarUrl"
                         value={avatarUrl}
                         onChange={(e) => setAvatarUrl(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="https://example.com/your-image.jpg"
                       />
                       {avatarUrl && (
@@ -191,11 +191,11 @@ export function AccountSetupPage() {
                   </form>
                 </div>
                 
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-semibold mb-4">Email Address</h2>
-                  <p className="text-gray-500 mb-2">Your current email address:</p>
-                  <p className="font-medium">{user?.email}</p>
-                  <p className="text-sm text-gray-500 mt-2">
+                <div className="bg-card rounded-xl shadow-sm p-6">
+                  <h2 className="text-xl font-semibold mb-4 text-foreground">Email Address</h2>
+                  <p className="text-muted-foreground mb-2">Your current email address:</p>
+                  <p className="font-medium text-foreground">{user?.email}</p>
+                  <p className="text-sm text-muted-foreground mt-2">
                     To change your email address, please contact support.
                   </p>
                 </div>

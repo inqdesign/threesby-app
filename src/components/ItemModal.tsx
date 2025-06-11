@@ -463,22 +463,22 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
               leaveTo="translate-x-full"
             >
               <Dialog.Panel className={`pointer-events-auto fixed inset-y-0 ${isFullScreen ? 'inset-x-0' : 'inset-x-0 md:right-0 md:left-auto md:w-[700px]'} flex ${isFullScreen ? '' : 'md:pl-10'} transform-gpu`}>
-                <div className={`flex h-full w-full flex-col overflow-y-auto bg-white shadow-xl`}>
+                <div className={`flex h-full w-full flex-col overflow-y-auto bg-card shadow-xl`}>
                   {/* Top bar (sticky) */}
                   <div className={isFullScreen ? 'max-w-[700px] mx-auto w-full' : 'w-full'}>
-                    <div className="sticky top-0 z-10 bg-white px-6 py-4">
+                    <div className="sticky top-0 z-10 bg-card px-6 py-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <button
                             type="button"
                             onClick={onClose}
-                            className="px-3 py-1.5 text-[#585757] bg-[#F4F4F4] rounded-md hover:bg-gray-200 transition-colors text-sm"
+                            className="px-3 py-1.5 text-muted-foreground bg-secondary rounded-md hover:bg-secondary/80 transition-colors text-sm"
                           >
                             Cancel
                           </button>
                           <button
                             type="button"
-                            className="text-gray-600 hover:text-gray-900 transition-colors hidden md:block ml-2"
+                            className="text-muted-foreground hover:text-foreground transition-colors hidden md:block ml-2"
                             onClick={() => setIsFullScreen(!isFullScreen)}
                             aria-label={isFullScreen ? "Exit full screen" : "Enter full screen"}
                           >
@@ -498,7 +498,7 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                                 e.stopPropagation();
                                 onDelete();
                               }}
-                              className="text-red-600 hover:text-red-800 transition-colors"
+                              className="text-destructive hover:text-destructive/80 transition-colors"
                               aria-label="Delete"
                             >
                               <Trash2 className="w-5 h-5" />
@@ -508,7 +508,7 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                             type="submit"
                             form="item-form"
                             disabled={saving}
-                            className="px-3 py-1.5 bg-[#252525] text-white rounded-md hover:bg-[#111111] transition-colors disabled:opacity-50 text-sm"
+                            className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 text-sm"
                           >
                             {saving ? 'Saving...' : 'Save'}
                           </button>
@@ -517,12 +517,12 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                     </div>
                   </div>
                   {/* Full-width border line below top bar */}
-                  <div className="border-b border-gray-200 w-full" />
+                  <div className="border-b border-border w-full" />
                   {/* Content wrapper for max width and centering in fullscreen */}
                   <div className={isFullScreen ? 'max-w-[700px] mx-auto w-full' : 'w-full'}>
                     <form id="item-form" ref={formContainerRef} onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
                       <div>
-                        <label className="block text-sm font-medium text-[#585757] mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           {formData.category === 'places' ? 'Name of the place' : 
                            formData.category === 'products' ? 'Product name' : 
                            'Title'}
@@ -531,34 +531,34 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                           type="text"
                           value={formData.title}
                           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                          className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 p-3"
+                          className="w-full rounded-lg bg-secondary border-0 shadow-none focus:ring-0 p-3 text-foreground placeholder:text-muted-foreground"
                           placeholder={formData.category === 'places' ? 'Enter place name...' : formData.category === 'products' ? 'Enter product name...' : 'Enter book title...'}
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-[#585757] mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           {getReferenceLabel()}
                         </label>
                         <input
                           type="text"
                           value={formData.reference}
                           onChange={(e) => setFormData({ ...formData, reference: e.target.value })}
-                          className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 p-3"
+                          className="w-full rounded-lg bg-secondary border-0 shadow-none focus:ring-0 p-3 text-foreground placeholder:text-muted-foreground"
                           placeholder={formData.category === 'places' ? 'Enter city or location...' : formData.category === 'products' ? 'Enter brand name...' : 'Enter author name...'}
                           required
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-[#585757] mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           Image
                         </label>
                         {imageError && (
-                          <p className="text-red-500 text-sm mb-2">{imageError}</p>
+                          <p className="text-destructive text-sm mb-2">{imageError}</p>
                         )}
-                        <div className="relative w-full h-64 flex items-center justify-center bg-gray-100 p-4 rounded-lg">
+                        <div className="relative w-full h-64 flex items-center justify-center bg-secondary p-4 rounded-lg">
                           <SimpleImageUpload
                             onImageSelected={handleImageSelected}
                             currentUrl={formData.imageUrl}
@@ -568,19 +568,19 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-[#585757] mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           {formData.category === 'books' ? 'Book Tags' : 
                            formData.category === 'places' ? 'Place Tags' : 
                            'Product Tags'} (comma separated)
                         </label>
-                        <div className="flex flex-wrap items-center gap-2 w-full rounded-lg bg-gray-100 border-0 shadow-none p-3">
+                        <div className="flex flex-wrap items-center gap-2 w-full rounded-lg bg-secondary border-0 shadow-none p-3">
                           {/* Display existing tags as pills */}
                           {formData.tags.map((tag: string, index: number) => (
-                            <div key={index} className="flex items-center bg-gray-200 rounded-lg px-3 py-1.5 text-sm h-10">
-                              <span>{tag}</span>
+                            <div key={index} className="flex items-center bg-secondary border border-border rounded-lg px-3 py-1.5 text-sm h-10">
+                              <span className="text-foreground">{tag}</span>
                               <button
                                 type="button"
-                                className="ml-2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                className="ml-2 text-muted-foreground hover:text-foreground focus:outline-none"
                                 onClick={() => {
                                   const newTags = [...formData.tags];
                                   newTags.splice(index, 1);
@@ -636,7 +636,7 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                                     }
                                   }
                                 }}
-                                className="flex-grow bg-transparent border-0 shadow-none focus:ring-0 outline-none min-w-[120px]"
+                                className="flex-grow bg-transparent border-0 shadow-none focus:ring-0 outline-none min-w-[120px] text-foreground placeholder:text-muted-foreground"
                                 placeholder={formData.tags.length === 0 ? `Enter tags (e.g. ${formData.category === 'books' ? 'fiction, mystery' : 
                                   formData.category === 'places' ? 'beach, mountain' : 
                                   'tech, kitchen'})` : ''}
@@ -644,7 +644,7 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                               {tagsInput.trim() !== '' && (
                                 <button
                                   type="button"
-                                  className="ml-2 px-2 py-2 bg-gray-200 rounded-md text-xs text-gray-700 hover:bg-gray-300 focus:outline-none"
+                                  className="ml-2 px-2 py-2 bg-secondary border border-border rounded-md text-xs text-foreground hover:bg-secondary/80 focus:outline-none"
                                   onClick={() => {
                                     addTag();
                                     // Hide input after adding tag if there are already tags
@@ -663,7 +663,7 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                           {formData.tags.length > 0 && !isAddingTag && (
                             <button
                               type="button"
-                              className="text-xs text-gray-500 hover:text-gray-700 focus:outline-none flex items-center px-2 py-2"
+                              className="text-xs text-muted-foreground hover:text-foreground focus:outline-none flex items-center px-2 py-2"
                               onClick={() => {
                                 setIsAddingTag(true);
                                 setTagsInput('');
@@ -676,15 +676,15 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
                       </div>
 
                       <div className="mb-6">
-                        <label className="block text-sm font-medium text-[#585757] mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           Your Story
                         </label>
-                        <div className="bg-gray-100 rounded-lg border-0 shadow-none relative">
+                        <div className="bg-secondary rounded-lg border-0 shadow-none relative">
                           {isUploading && (
-                            <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-70 z-10">
+                            <div className="absolute inset-0 flex items-center justify-center bg-card/70 z-10">
                               <div className="flex flex-col items-center">
-                                <div className="w-8 h-8 border-4 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-                                <p className="mt-2 text-sm text-gray-600">Uploading image...</p>
+                                <div className="w-8 h-8 border-4 border-border border-t-foreground rounded-full animate-spin"></div>
+                                <p className="mt-2 text-sm text-muted-foreground">Uploading image...</p>
                               </div>
                             </div>
                           )}

@@ -5,6 +5,7 @@ export type Profile = {
   email: string;
   full_name: string | null;
   title: string | null;
+  username?: string | null;
   social_links: {
     twitter?: string;
     instagram?: string;

@@ -3,6 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X, Heart, ChevronLeft, ChevronRight, User, MessageCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PickImage } from './PickImage';
+import { FollowButton } from './FollowButton';
 import type { Pick } from '../types';
 import DOMPurify from 'dompurify';
 import { Link, useNavigate } from 'react-router-dom';
@@ -376,9 +377,11 @@ export function PickDetailModal({ isOpen, onClose, pickId, onNavigate }: PickDet
                                   </div>
                                 </div>
                               </Link>
-                              <button className="inline-flex items-center justify-center px-4 py-1.5 text-xs font-medium rounded-full transition-colors border border-gray-200 text-gray-700 bg-white hover:bg-gray-50">
-                                <span>Follow</span>
-                              </button>
+                              {pick.profile && (
+                                <div onClick={(e) => e.stopPropagation()}>
+                                  <FollowButton userId={pick.profile.id} />
+                                </div>
+                              )}
                             </div>
                             
                             {/* Grey divider */}

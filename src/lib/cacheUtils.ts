@@ -100,7 +100,7 @@ export function getFromCache<T>(key: string): T | null {
     
     const cacheData = JSON.parse(cachedItem);
     
-        // Handle old cache format (without timestamp wrapper)
+    // Handle old cache format (without timestamp wrapper)
     if (!cacheData.timestamp) {
       localStorage.removeItem(key);
       return null;
@@ -113,7 +113,7 @@ export function getFromCache<T>(key: string): T | null {
       localStorage.removeItem(key);
       return null;
     }
-
+    
     return cacheData.data as T;
   } catch (error) {
     console.error(`Error retrieving from cache (${key}):`, error);

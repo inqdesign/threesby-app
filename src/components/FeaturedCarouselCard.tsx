@@ -70,7 +70,7 @@ export function FeaturedCarouselCard({ type, title, items, className = '' }: Fea
                 <div className="py-4 pick-card-info">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-base font-medium text-[#252525] truncate" style={{ fontSize: '1rem' }}>
+                      <h3 className="text-base font-medium text-[#252525] dark:text-white truncate" style={{ fontSize: '1rem' }}>
                         {(item as Profile).full_name || 'Anonymous'}
                       </h3>
                       <div className="uppercase text-xs font-mono text-[#9d9b9b] line-clamp-1">

@@ -270,8 +270,8 @@ const PickCardInternal = memo(
                   />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-base font-medium text-[#252525] truncate">{pick.title}</h3>
-                  <p className="text-sm text-gray-500 truncate">{pick.reference || 'No reference'}</p>
+                  <h3 className="text-base font-medium text-[#252525] dark:text-white truncate">{pick.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{pick.reference || 'No reference'}</p>
                 </div>
               </>
             )
@@ -324,8 +324,8 @@ const PickCardInternal = memo(
                   <div className="py-4 pick-card-info">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-base font-medium text-[#252525] truncate" style={{ fontSize: '1rem' }}>{pick?.title}</h3>
-                        <div className="uppercase text-xs font-mono text-[#9d9b9b] line-clamp-1">{pick?.reference || 'No reference'}</div>
+                        <h3 className="text-base font-medium text-[#252525] dark:text-white truncate" style={{ fontSize: '1rem' }}>{pick?.title}</h3>
+                        <div className="uppercase text-xs font-mono text-[#9d9b9b] dark:text-gray-400 line-clamp-1">{pick?.reference || 'No reference'}</div>
                       </div>
                       
                       {showSaveAndFollow && (
@@ -367,8 +367,8 @@ const PickCardInternal = memo(
                   />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-base font-medium text-[#252525] truncate">{pick.title}</h3>
-                  <p className="text-sm text-gray-500 truncate">{pick.reference || 'No reference'}</p>
+                  <h3 className="text-base font-medium text-[#252525] dark:text-white truncate">{pick.title}</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{pick.reference || 'No reference'}</p>
                 </div>
               </>
             )

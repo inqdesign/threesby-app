@@ -230,7 +230,6 @@ export function CuratorsPage() {
         align-self: flex-start;
         z-index: 10;
         padding: 1rem;
-        background-color: #F4F4F4;
         border-radius: 0.5rem;
         /* Use hardware acceleration but avoid transitions that could cause flickering */
         transform: translate3d(0, 0, 0);
@@ -257,7 +256,7 @@ export function CuratorsPage() {
 
   if (curatorsLoading) {
     return (
-      <div className="min-h-screen bg-[#F4F4F4] p-8">
+      <div className="min-h-screen bg-background p-8">
         <div className="w-full mx-auto">
           <div ref={loadingContainerRef} className="flex flex-col md:flex-row gap-[60px] sticky-container">
             {/* Profile Section Skeleton */}
@@ -278,7 +277,7 @@ export function CuratorsPage() {
             <div className="flex-1">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {[...Array(9)].map((_, i) => (
-                  <div key={i} className="aspect-square bg-gray-200 rounded"></div>
+                                      <div key={i} className="aspect-square bg-muted rounded"></div>
                 ))}
               </div>
             </div>
@@ -290,10 +289,10 @@ export function CuratorsPage() {
 
   if (processedCurators.length === 0) {
     return (
-      <div className="min-h-screen bg-[#F4F4F4] p-4">
+      <div className="min-h-screen bg-background p-4">
         <div className="max-w-6xl mx-auto text-center py-12">
-          <h2 className="text-xl font-medium text-gray-700">No curators found</h2>
-          <p className="text-gray-500 mt-2">Check back later for featured curators</p>
+                          <h2 className="text-xl font-medium text-muted-foreground">No curators found</h2>
+                <p className="text-muted-foreground mt-2">Check back later for featured curators</p>
         </div>
       </div>
     );
@@ -304,7 +303,7 @@ export function CuratorsPage() {
   // No tabs header
   
   return (
-    <div className="min-h-screen bg-[#F4F4F4] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       <div className="w-full mx-auto p-4 md:p-8">
         {selectedCurator && (
           <div ref={mainContainerRef} className="flex flex-col md:flex-row gap-[60px] sticky-container">

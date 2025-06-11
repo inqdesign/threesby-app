@@ -212,13 +212,13 @@ export function ContentPage() {
       {/* Search and Filter */}
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-2.5 w-5 h-5 text-muted-foreground" />
           <input
             type="text"
             placeholder="Search content..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
           />
         </div>
         <div className="flex gap-2">
@@ -226,8 +226,8 @@ export function ContentPage() {
             onClick={() => setActiveFilter('all')}
             className={`px-4 py-2 rounded-lg ${
               activeFilter === 'all'
-                ? 'bg-[#252525] text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-secondary text-secondary-foreground hover:bg-muted'
             }`}
           >
             All
@@ -237,7 +237,7 @@ export function ContentPage() {
             className={`px-4 py-2 rounded-lg flex items-center gap-1 ${
               activeFilter === 'books'
                 ? 'bg-rose-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-secondary text-secondary-foreground hover:bg-muted'
             }`}
           >
             <BookOpen className="w-4 h-4" />
@@ -248,7 +248,7 @@ export function ContentPage() {
             className={`px-4 py-2 rounded-lg flex items-center gap-1 ${
               activeFilter === 'products'
                 ? 'bg-indigo-500 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-secondary text-secondary-foreground hover:bg-muted'
             }`}
           >
             <Package className="w-4 h-4" />

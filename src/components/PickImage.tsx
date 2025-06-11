@@ -108,7 +108,7 @@ export const PickImage = memo(({
   if (!isLoaded) {
     return (
       <div className={containerClass} style={containerStyle}>
-        <div className={`w-full h-full bg-gray-200 animate-pulse ${className}`}></div>
+        <div className={`w-full h-full bg-muted animate-pulse ${className}`}></div>
       </div>
     );
   }

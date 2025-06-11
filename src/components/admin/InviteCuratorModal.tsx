@@ -86,7 +86,7 @@ export function InviteCuratorModal({ isOpen, onClose }: InviteCuratorModalProps)
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl bg-white shadow-xl transition-all">
+                              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl bg-card shadow-xl transition-all">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
                     <Dialog.Title className="text-xl font-semibold text-[#252525]">

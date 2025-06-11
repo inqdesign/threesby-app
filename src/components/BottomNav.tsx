@@ -48,12 +48,12 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
 
   if (!user) {
     return (
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
         <div className="flex justify-around items-center h-16">
           <Link
             to="/discover"
             className={`flex flex-col items-center justify-center flex-1 h-full ${
-              isActive('/discover') ? 'text-[#252525]' : 'text-[#9d9b9b]'
+              isActive('/discover') ? 'text-foreground' : 'text-muted-foreground'
             }`}
           >
             <Home className="w-6 h-6" />
@@ -62,7 +62,7 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
           <Link
             to="/curators"
             className={`flex flex-col items-center justify-center flex-1 h-full ${
-              isActive('/curators') ? 'text-[#252525]' : 'text-[#9d9b9b]'
+              isActive('/curators') ? 'text-foreground' : 'text-muted-foreground'
             }`}
           >
             <Users className="w-6 h-6" />
@@ -71,7 +71,7 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
           <Link
             to="/collections"
             className={`flex flex-col items-center justify-center flex-1 h-full ${
-              isActive('/collections') ? 'text-[#252525]' : 'text-[#9d9b9b]'
+              isActive('/collections') ? 'text-foreground' : 'text-muted-foreground'
             }`}
           >
             <BookOpen className="w-6 h-6" />
@@ -79,7 +79,7 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
 
           <button
             onClick={() => setShowLoginModal(true)}
-            className="flex flex-col items-center justify-center flex-1 h-full text-[#9d9b9b]"
+            className="flex flex-col items-center justify-center flex-1 h-full text-muted-foreground"
           >
             <User className="w-6 h-6" />
           </button>
@@ -89,12 +89,12 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
   }
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background border-t border-border z-50">
       <div className="flex justify-around items-center h-16">
         <Link
           to="/discover"
           className={`flex flex-col items-center justify-center flex-1 h-full ${
-            isActive('/discover') ? 'text-[#252525]' : 'text-[#9d9b9b]'
+            isActive('/discover') ? 'text-foreground' : 'text-muted-foreground'
           }`}
         >
           <Home className="w-6 h-6" />
@@ -103,7 +103,7 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
         <Link
           to="/curators"
           className={`flex flex-col items-center justify-center flex-1 h-full ${
-            isActive('/curators') ? 'text-[#252525]' : 'text-[#9d9b9b]'
+            isActive('/curators') ? 'text-foreground' : 'text-muted-foreground'
           }`}
         >
           <Users className="w-6 h-6" />
@@ -112,7 +112,7 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
         <Link
           to="/collections"
           className={`flex flex-col items-center justify-center flex-1 h-full ${
-            isActive('/collections') ? 'text-[#252525]' : 'text-[#9d9b9b]'
+            isActive('/collections') ? 'text-foreground' : 'text-muted-foreground'
           }`}
         >
           <BookOpen className="w-6 h-6" />
@@ -121,7 +121,7 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
         <Link
           to="/favorites"
           className={`flex flex-col items-center justify-center flex-1 h-full ${
-            isActive('/favorites') ? 'text-[#252525]' : 'text-[#9d9b9b]'
+            isActive('/favorites') ? 'text-foreground' : 'text-muted-foreground'
           }`}
         >
           <Heart className="w-6 h-6" />
@@ -130,7 +130,7 @@ export function BottomNav({ setShowLoginModal }: BottomNavProps) {
         <Link
           to="/my-threes"
           className={`flex flex-col items-center justify-center flex-1 h-full ${
-            isActive('/my-threes') ? 'text-[#252525]' : 'text-[#9d9b9b]'
+            isActive('/my-threes') ? 'text-foreground' : 'text-muted-foreground'
           }`}
         >
           <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center" data-component-name="LinkWithRef">

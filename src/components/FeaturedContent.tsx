@@ -142,11 +142,11 @@ export function FeaturedContent({ type, className = '' }: FeaturedContentProps) 
       <div className={`space-y-4 ${className}`}>
         <div className="pick-card-container overflow-hidden">
           {/* Image skeleton */}
-          <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+          <div className="w-full aspect-square bg-muted animate-pulse" />
           {/* Info section skeleton */}
           <div className="py-4 px-3 space-y-2">
-            <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
-            <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+            <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
           </div>
         </div>
       </div>
@@ -217,10 +217,10 @@ export function FeaturedContent({ type, className = '' }: FeaturedContentProps) 
                   <div className="py-4 pick-card-info">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="text-base font-medium text-[#252525] truncate" style={{ fontSize: '1rem' }}>
+                        <h3 className="text-base font-medium text-foreground truncate" style={{ fontSize: '1rem' }}>
                           {featuredCurators[currentIndex].full_name || 'Anonymous'}
                         </h3>
-                        <div className="uppercase text-xs font-mono text-[#9d9b9b] line-clamp-1">
+                        <div className="uppercase text-xs font-mono text-muted-foreground line-clamp-1">
                           {featuredCurators[currentIndex].title || 'Curator'}
                         </div>
                       </div>

@@ -8,16 +8,22 @@ import { Skeleton } from '../components/ui/skeleton';
 
 export function ProfilePage() {
   const { user } = useAuth();
-  const { id } = useParams<{ id: string }>();
+  const { id, username } = useParams<{ id?: string; username?: string }>();
+  
+  // Determine if we're looking up by username or ID
+  const profileIdentifier = username || id;
+  const isUsernameRoute = !!username;
+  
   const { profile, picks, loading, error } = useProfileData(
-    id, 
+    profileIdentifier, 
     user?.id, 
-    user?.app_metadata?.role
+    user?.app_metadata?.role,
+    isUsernameRoute
   );
   
   if (loading || !profile) {
     return (
-      <div className="min-h-screen bg-[#F4F4F4] flex justify-center items-center">
+              <div className="min-h-screen bg-background flex justify-center items-center">
         <Skeleton className="h-32 w-32" />
       </div>
     );
@@ -25,10 +31,10 @@ export function ProfilePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#F4F4F4] px-8 py-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow p-6">
+              <div className="min-h-screen bg-background px-8 py-8">
+        <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold text-red-600 mb-2">Error</h2>
-          <p className="text-gray-700 mb-4">{error}</p>
+          <p className="text-gray-700 dark:text-gray-300 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"

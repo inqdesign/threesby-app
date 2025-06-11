@@ -87,16 +87,16 @@ export function CollectionsSection({ userId, onCreateCollection, onEditCollectio
   };
 
   return (
-    <div style={{ padding: '1.5rem', backgroundColor: 'white', borderRadius: '0.75rem', marginBottom: '1rem', marginTop: '0' }} className="flex flex-col md:flex-row w-full gap-4 md:rounded-none" data-component-name="CollectionsSection">
+    <div className="flex flex-col md:flex-row w-full gap-4 md:rounded-xl bg-card p-6 rounded-none md:rounded-xl mb-4 mt-0" data-component-name="CollectionsSection">
       {/* Left column - Section header, text and count */}
       <div className="w-full md:w-1/3 md:pr-9">
         <div className="flex items-center justify-between" data-component-name="CollectionsSection">
-          <h2 className="text-base md:text-lg font-semibold text-[#252525] font-mono">Collections</h2>
-          <span className="text-sm font-mono text-gray-500">
+          <h2 className="text-base md:text-lg font-semibold text-foreground font-mono">Collections</h2>
+          <span className="text-sm font-mono text-muted-foreground">
             ({collections.length})
           </span>
         </div>
-        <p className="text-[#585757] text-sm">
+        <p className="text-muted-foreground text-sm">
           Curate your own way to share your picks.
         </p>
       </div>
@@ -111,7 +111,7 @@ export function CollectionsSection({ userId, onCreateCollection, onEditCollectio
               className="w-full h-full"
               disabled={isCreatingCollection}
             >
-              <div className="w-full h-full aspect-[5/7] bg-[#f5ffde] relative">
+              <div className="w-full h-full aspect-[5/7] bg-[#f5ffde] relative rounded-lg">
                 <div className="flex items-end justify-between w-full h-full p-4">
                   <span className="text-base text-[#252525] font-medium">Add</span>
                   <div className="flex items-center justify-center min-w-[24px]">
@@ -125,7 +125,7 @@ export function CollectionsSection({ userId, onCreateCollection, onEditCollectio
           {loading && !collections.length ? (
             // Loading skeleton when no collections are loaded yet
             Array.from({ length: 3 }).map((_, index) => (
-              <div key={`skeleton-${index}`} className="flex-shrink-0 w-[7.5rem] md:w-[14rem] h-[10.5rem] md:h-auto mr-2 bg-gray-100 rounded-lg animate-pulse aspect-[5/7]"></div>
+              <div key={`skeleton-${index}`} className="flex-shrink-0 w-[7.5rem] md:w-[14rem] h-[10.5rem] md:h-auto mr-2 bg-secondary rounded-lg animate-pulse aspect-[5/7]"></div>
             ))
           ) : collections.length > 0 ? (
             // Collection cards
@@ -140,17 +140,17 @@ export function CollectionsSection({ userId, onCreateCollection, onEditCollectio
                 >
                   {isPlaceholder ? (
                     // Placeholder for newly created collection
-                    <div className="relative overflow-hidden rounded-lg bg-gray-50 border border-gray-200 w-full aspect-[5/7] animate-pulse">
-                      <div className="absolute top-2 left-2 text-[10px] text-gray-400 font-medium bg-gray-100 px-1 rounded">
+                    <div className="relative overflow-hidden rounded-lg bg-secondary border border-border w-full aspect-[5/7] animate-pulse">
+                      <div className="absolute top-2 left-2 text-[10px] text-muted-foreground font-medium bg-secondary px-1 rounded">
                         ISSUE #{String(index + 1).padStart(2, '0')}
                       </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-gray-100 to-transparent">
-                        <h3 className="text-gray-500 font-bold text-sm leading-tight">
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-secondary to-transparent">
+                        <h3 className="text-muted-foreground font-bold text-sm leading-tight">
                           {collection.title}
                         </h3>
                       </div>
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-gray-300 text-sm">Creating...</span>
+                        <span className="text-muted-foreground text-sm">Creating...</span>
                       </div>
                     </div>
                   ) : (
@@ -167,8 +167,8 @@ export function CollectionsSection({ userId, onCreateCollection, onEditCollectio
           ) : (
             // Empty state placeholders
             Array.from({ length: 3 }).map((_, index) => (
-              <div key={`empty-${index}`} className="flex-shrink-0 w-[7.5rem] md:w-[14rem] h-[10.5rem] md:h-auto mr-2 bg-gray-100 rounded-lg flex items-center justify-center aspect-[5/7]">
-                <span className="text-sm text-gray-400">Empty</span>
+              <div key={`empty-${index}`} className="flex-shrink-0 w-[7.5rem] md:w-[14rem] h-[10.5rem] md:h-auto mr-2 bg-secondary rounded-lg flex items-center justify-center aspect-[5/7]">
+                <span className="text-sm text-muted-foreground">Empty</span>
               </div>
             ))
           )}

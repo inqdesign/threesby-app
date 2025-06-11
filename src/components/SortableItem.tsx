@@ -115,21 +115,21 @@ export const SortableItem = React.memo(({
     // Empty tile - Updated design based on Image 2, with layout matching Add tile (non-clickable)
     content = (
       <div 
-        className="aspect-square rounded-[4px] bg-[#f8f8f6] border border-[#e0e0e0] relative"
+        className="aspect-square bg-secondary border border-border relative"
         aria-label={`Empty slot ${rank}`}
       >
         {/* Repositioned layout with empty text area at bottom left and icon at bottom right */}
         <div className="flex items-end justify-between w-full h-full p-4">
           {/* Empty text area at the bottom left */}
-          <span className="text-base text-[#cccccc] font-medium">
+          <span className="text-base text-muted-foreground font-medium">
             &nbsp;
           </span>
           
           {/* Icon at the bottom right - fixed size for mobile */}
           <div className="flex items-center justify-center min-w-[24px]">
-            {category === 'places' && <MapPin className="w-5 h-5 md:w-6 md:h-6 text-[#cccccc]" strokeWidth={1.5} />}
-            {category === 'products' && <Package className="w-5 h-5 md:w-6 md:h-6 text-[#cccccc]" strokeWidth={1.5} />}
-            {category === 'books' && <Book className="w-5 h-5 md:w-6 md:h-6 text-[#cccccc]" strokeWidth={1.5} />}
+            {category === 'places' && <MapPin className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground" strokeWidth={1.5} />}
+            {category === 'products' && <Package className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground" strokeWidth={1.5} />}
+            {category === 'books' && <Book className="w-5 h-5 md:w-6 md:h-6 text-muted-foreground" strokeWidth={1.5} />}
           </div>
         </div>
       </div>

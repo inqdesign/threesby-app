@@ -212,7 +212,7 @@ export function SubNav({
   return (
     <>
       <div
-        className={`flex w-full items-center p-4 bg-white md:rounded-xl md:mt-6 ${className}`}
+        className={`flex w-full items-center p-4 bg-card md:rounded-xl md:mt-6 ${className}`}
       >
         {/* Profile Image - Moved outside of button container */}
         {effectiveProfile?.avatar_url && shouldShowButtons && (
@@ -221,7 +221,7 @@ export function SubNav({
               await fetchLatestPicks();
               setIsPreviewModalOpen(true);
             }}
-            className="w-12 h-12 rounded-full border border-neutral-200 hover:bg-gray-50 overflow-hidden flex items-center justify-center p-0 cursor-pointer mr-3"
+                            className="w-12 h-12 rounded-full border border-border hover:bg-muted overflow-hidden flex items-center justify-center p-0 cursor-pointer mr-3"
             title="Preview Profile"
           >
             <img 
@@ -280,7 +280,7 @@ export function SubNav({
                     }
                     setIsEditModalOpen(true);
                   }}
-                  className="px-4 py-2 rounded-[100px] border border-[#252525] text-[#252525] hover:bg-gray-50"
+                  className="px-2 py-1 md:px-4 md:py-2 rounded-[100px] border border-foreground text-foreground hover:bg-muted text-sm"
                   title="Edit Profile"
                 >
                   Edit Profile
@@ -329,13 +329,14 @@ export function SubNav({
             try {
               if (!user) throw new Error('No user');
               
+              console.log('Submitting profile update with data:', data);
+              
               // Save bio to localStorage if available
               if (data.bio) {
                 localStorage.setItem(`bio_${effectiveProfile.id}`, data.bio);
               }
               
               // Save location to localStorage if available
-              // Use type assertion since location is not in the Profile type yet
               const locationValue = (data as any).location;
               if (locationValue) {
                 localStorage.setItem(`location_${effectiveProfile.id}`, locationValue);
@@ -347,27 +348,50 @@ export function SubNav({
               }
               
               // Create a copy of the data object for database update
-              // Exclude fields that don't exist in the database schema
-              const updateData = {
+              // Only include fields that exist in the database schema
+              const updateData: any = {
                 id: effectiveProfile.id,
-                full_name: data.full_name,
-                title: data.title,
-                avatar_url: data.avatar_url,
-                shelf_image_url: data.shelf_image_url,
-                bio: data.bio,
-                location: data.location,
-                tags: data.tags,
-                social_links: data.social_links,
                 updated_at: new Date().toISOString()
               };
               
-              // Update profile in the database
-              const { error } = await supabase
+              // Add fields that definitely exist in the database
+              if (data.full_name !== undefined) updateData.full_name = data.full_name;
+              if (data.title !== undefined) updateData.title = data.title;
+              if (data.username !== undefined) updateData.username = data.username;
+              if (data.avatar_url !== undefined) updateData.avatar_url = data.avatar_url;
+              
+              // Try to update standard profile fields first
+              const { error: profileError } = await supabase
                 .from('profiles')
                 .update(updateData)
                 .eq('id', effectiveProfile.id);
                 
-              if (error) throw error;
+              if (profileError) {
+                console.error('Error updating basic profile:', profileError);
+                throw profileError;
+              }
+              
+              // Try to update additional fields (if they exist in the schema)
+              const additionalData: any = {};
+              if (data.shelf_image_url !== undefined) additionalData.shelf_image_url = data.shelf_image_url;
+              if ((data as any).bio !== undefined) additionalData.message = (data as any).bio; // bio maps to message field
+              if ((data as any).location !== undefined) additionalData.current_city = (data as any).location; // location maps to current_city field
+              if ((data as any).tags !== undefined) additionalData.interests = (data as any).tags; // tags maps to interests field
+              if (data.social_links !== undefined) additionalData.social_links = data.social_links;
+              
+              if (Object.keys(additionalData).length > 0) {
+                const { error: additionalError } = await supabase
+                  .from('profiles')
+                  .update(additionalData)
+                  .eq('id', effectiveProfile.id);
+                  
+                if (additionalError) {
+                  console.warn('Error updating additional profile fields:', additionalError);
+                  // Don't throw here - basic profile update succeeded
+                }
+              }
+              
+              console.log('Profile updated successfully');
               
               // Refresh profile data
               await fetchProfile(user?.id);
@@ -375,14 +399,15 @@ export function SubNav({
               // Close modal
               setIsEditModalOpen(false);
               
-              console.log('Profile updated successfully');
             } catch (error) {
               console.error('Error updating profile:', error);
+              alert('Error saving profile. Please try again.');
             }
           }}
           initialData={{
             full_name: effectiveProfile.full_name || '',
             title: effectiveProfile.title || '',
+            username: effectiveProfile.username || '',
             avatar_url: effectiveProfile.avatar_url || '',
             shelf_image_url: effectiveProfile.shelf_image_url || '',
             bio: effectiveProfile.message || '',

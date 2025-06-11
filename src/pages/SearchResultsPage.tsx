@@ -70,7 +70,7 @@ export function SearchResultsPage() {
   }, {} as Record<string, number>);
   
   return (
-    <div className="min-h-screen bg-[#F4F4F4] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       <div className="w-full mx-auto p-4 md:p-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
           {/* Main Content */}
@@ -96,19 +96,19 @@ export function SearchResultsPage() {
                 {[...Array(12)].map((_, i) => (
                   <div key={i} className="space-y-4 pick-card-container overflow-hidden">
                     {/* Image skeleton */}
-                    <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                    <div className="w-full aspect-square bg-muted animate-pulse" />
                     {/* Info section skeleton */}
                     <div className="py-4 px-3 space-y-2">
-                      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
-                      <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : searchResults.length === 0 ? (
               <div className="text-center py-12">
-                <p className="text-xl text-gray-500">No results found for "{searchQuery}"</p>
-                <p className="text-gray-400 mt-2">Try a different search term or browse categories</p>
+                <p className="text-xl text-muted-foreground">No results found for "{searchQuery}"</p>
+                <p className="text-muted-foreground mt-2">Try a different search term or browse categories</p>
               </div>
             ) : (
               <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-12">

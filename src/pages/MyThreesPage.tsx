@@ -1183,28 +1183,28 @@ export function MyThreesPage({
         
         {/* Mobile Tabs - More modern with smooth transition */}
         <div className="md:hidden w-full mb-6" style={{ marginTop: '0.25rem' }} data-component-name="MyThreesPage">
-          <div className="flex relative border-b border-gray-200 overflow-hidden">
+          <div className="flex relative border-b border-border overflow-hidden">
             <button
               onClick={() => setActiveTab('books')}
-              className={`flex-1 py-3 font-medium text-sm ${activeTab === 'books' ? 'text-[#252525]' : 'text-gray-400'} flex items-center justify-center`}
+              className={`flex-1 py-3 font-medium text-sm ${activeTab === 'books' ? 'text-foreground' : 'text-muted-foreground'} flex items-center justify-center`}
             >
               <Book size={20} />
             </button>
             <button
               onClick={() => setActiveTab('products')}
-              className={`flex-1 py-3 font-medium text-sm ${activeTab === 'products' ? 'text-[#252525]' : 'text-gray-400'} flex items-center justify-center`}
+              className={`flex-1 py-3 font-medium text-sm ${activeTab === 'products' ? 'text-foreground' : 'text-muted-foreground'} flex items-center justify-center`}
             >
               <Package size={20} />
             </button>
             <button
               onClick={() => setActiveTab('places')}
-              className={`flex-1 py-3 font-medium text-sm ${activeTab === 'places' ? 'text-[#252525]' : 'text-gray-400'} flex items-center justify-center`}
+              className={`flex-1 py-3 font-medium text-sm ${activeTab === 'places' ? 'text-foreground' : 'text-muted-foreground'} flex items-center justify-center`}
             >
               <MapPin size={20} />
             </button>
             {/* Animated indicator */}
             <div 
-              className="absolute bottom-0 h-0.5 bg-[#252525] transition-all duration-300 ease-in-out" 
+              className="absolute bottom-0 h-0.5 bg-foreground transition-all duration-300 ease-in-out" 
               style={{
                 left: activeTab === 'books' ? '0%' : activeTab === 'products' ? '33.333%' : '66.666%',
                 width: '33.333%'
@@ -1223,10 +1223,10 @@ export function MyThreesPage({
             >
               <div className="md:mb-6 p-6" data-component-name="MyThreesPage">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base md:text-lg font-semibold text-[#252525] font-mono">Books</h2>
-                  <span className="text-sm font-mono text-gray-500">({picks['books'].length})</span>
+                  <h2 className="text-base md:text-lg font-semibold text-foreground font-mono">Books</h2>
+                  <span className="text-sm font-mono text-muted-foreground">({picks['books'].length})</span>
                 </div>
-                <p className="text-[#585757] text-sm mb-6">Share your favorite books that have influenced you.</p>
+                <p className="text-muted-foreground text-sm mb-6">Share your favorite books that have influenced you.</p>
               </div>
               <div className="w-full md:p-6 p-0" data-component-name="MyThreesPage">
                 {renderGrid('books')}
@@ -1240,10 +1240,10 @@ export function MyThreesPage({
             >
               <div className="md:mb-6 p-6" data-component-name="MyThreesPage">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base md:text-lg font-semibold text-[#252525] font-mono">Products</h2>
-                  <span className="text-sm font-mono text-gray-500">({picks['products'].length})</span>
+                  <h2 className="text-base md:text-lg font-semibold text-foreground font-mono">Products</h2>
+                  <span className="text-sm font-mono text-muted-foreground">({picks['products'].length})</span>
                 </div>
-                <p className="text-[#585757] text-sm mb-6">Curate your favorite products that you can't live without.</p>
+                <p className="text-muted-foreground text-sm mb-6">Curate your favorite products that you can't live without.</p>
               </div>
               <div className="w-full md:p-6 p-0" data-component-name="MyThreesPage">
                 {renderGrid('products')}
@@ -1257,10 +1257,10 @@ export function MyThreesPage({
             >
               <div className="md:mb-6 p-6" data-component-name="MyThreesPage">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-base md:text-lg font-semibold text-[#252525] font-mono">Places</h2>
-                  <span className="text-sm font-mono text-gray-500">({picks['places'].length})</span>
+                  <h2 className="text-base md:text-lg font-semibold text-foreground font-mono">Places</h2>
+                  <span className="text-sm font-mono text-muted-foreground">({picks['places'].length})</span>
                 </div>
-                <p className="text-[#585757] text-sm mb-6">Showcase your favorite places that hold special meaning.</p>
+                <p className="text-muted-foreground text-sm mb-6">Showcase your favorite places that hold special meaning.</p>
               </div>
               <div className="w-full md:p-6 p-0" data-component-name="MyThreesPage">
                 {renderGrid('places')}
@@ -1274,46 +1274,46 @@ export function MyThreesPage({
           {/* Books Column */}
           <div className="flex-1 pb-8" style={{ padding: '1.5rem' }}>
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-base md:text-lg font-semibold text-[#252525] font-mono">Books</h2>
-              <span className="text-sm font-mono text-gray-500">
+              <h2 className="text-base md:text-lg font-semibold text-foreground font-mono">Books</h2>
+              <span className="text-sm font-mono text-muted-foreground">
                 ({picks['books'].length})
               </span>
             </div>
-            <p className="text-[#585757] text-sm mb-6">Share your favorite books that have influenced you.</p>
+            <p className="text-muted-foreground text-sm mb-6">Share your favorite books that have influenced you.</p>
             <div className="w-full">
               {renderGrid('books')}
             </div>
           </div>
           
           {/* Divider between Books and Products */}
-          <div className="w-px bg-[#e0e0e0] mx-6" style={{ marginLeft: '2rem', marginRight: '2rem' }}></div>
+          <div className="w-px bg-border mx-6" style={{ marginLeft: '2rem', marginRight: '2rem' }}></div>
           
           {/* Products Column */}
           <div className="flex-1 pb-8" style={{ padding: '1.5rem' }}>
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-base md:text-lg font-semibold text-[#252525] font-mono">Products</h2>
-              <span className="text-sm font-mono text-gray-500">
+              <h2 className="text-base md:text-lg font-semibold text-foreground font-mono">Products</h2>
+              <span className="text-sm font-mono text-muted-foreground">
                 ({picks['products'].length})
               </span>
             </div>
-            <p className="text-[#585757] text-sm mb-6">Curate your favorite products that you can't live without.</p>
+            <p className="text-muted-foreground text-sm mb-6">Curate your favorite products that you can't live without.</p>
             <div className="w-full">
               {renderGrid('products')}
             </div>
           </div>
           
           {/* Divider between Products and Places */}
-          <div className="w-px bg-[#e0e0e0] mx-6" style={{ marginLeft: '2rem', marginRight: '2rem' }}></div>
+          <div className="w-px bg-border mx-6" style={{ marginLeft: '2rem', marginRight: '2rem' }}></div>
           
           {/* Places Column */}
           <div className="flex-1 pb-8" style={{ padding: '1.5rem' }}>
             <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-base md:text-lg font-semibold text-[#252525] font-mono">Places</h2>
-              <span className="text-sm font-mono text-gray-500">
+              <h2 className="text-base md:text-lg font-semibold text-foreground font-mono">Places</h2>
+              <span className="text-sm font-mono text-muted-foreground">
                 ({picks['places'].length})
               </span>
             </div>
-            <p className="text-[#585757] text-sm mb-6">Showcase your favorite places that hold special meaning.</p>
+            <p className="text-muted-foreground text-sm mb-6">Showcase your favorite places that hold special meaning.</p>
             <div className="w-full">
               {renderGrid('places')}
             </div>
@@ -1383,15 +1383,15 @@ export function MyThreesPage({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all relative z-[10002]">
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-card p-6 text-left align-middle shadow-xl transition-all relative z-[10002]">
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
+                    className="text-lg font-medium leading-6 text-foreground"
                   >
                     Delete Pick
                   </Dialog.Title>
                   <div className="mt-2">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                       Are you sure you want to delete this pick? This action cannot be undone.
                     </p>
                   </div>
@@ -1399,14 +1399,14 @@ export function MyThreesPage({
                   <div className="mt-4 flex justify-end gap-2">
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-gray-100 px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-2"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-secondary px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                       onClick={() => setShowDeleteConfirm(false)}
                     >
                       Cancel
                     </button>
                     <button
                       type="button"
-                      className="inline-flex justify-center rounded-md border border-transparent bg-red-100 px-4 py-2 text-sm font-medium text-red-900 hover:bg-red-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground hover:bg-destructive/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-destructive focus-visible:ring-offset-2"
                       onClick={() => {
                         if (pickToDelete) {
                           handleDelete(pickToDelete);

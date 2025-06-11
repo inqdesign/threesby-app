@@ -275,19 +275,19 @@ export const PickDetailPage = () => {
         <div className="hidden md:block md:w-20">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="mb-4">
-              <div className="w-16 h-16 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div className="w-16 h-16 bg-muted rounded-lg animate-pulse"></div>
             </div>
           ))}
         </div>
         
         {/* Main image */}
         <div className="w-full md:w-auto md:flex-1 flex-shrink-0">
-          <div className="aspect-square bg-gray-200 rounded-lg animate-pulse"></div>
+          <div className="aspect-square bg-muted rounded-lg animate-pulse"></div>
           
           {/* Mobile thumbnails - horizontal below main image */}
           <div className="flex md:hidden overflow-x-auto space-x-2 mt-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="w-16 h-16 bg-gray-200 rounded-lg animate-pulse"></div>
+              <div key={i} className="w-16 h-16 bg-muted rounded-lg animate-pulse"></div>
             ))}
           </div>
         </div>
@@ -295,21 +295,21 @@ export const PickDetailPage = () => {
         {/* Details */}
         <div className="w-full md:w-1/2 md:pl-8 md:pr-8 max-w-prose">
           {/* Title */}
-          <div className="h-8 bg-gray-200 rounded-md w-3/4 mb-2 animate-pulse"></div>
+          <div className="h-8 bg-muted rounded-md w-3/4 mb-2 animate-pulse"></div>
           
           {/* Reference */}
-          <div className="h-4 bg-gray-200 rounded w-1/2 mb-4 animate-pulse"></div>
+          <div className="h-4 bg-muted rounded w-1/2 mb-4 animate-pulse"></div>
           
           {/* Curator information */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-gray-200 animate-pulse"></div>
+              <div className="w-9 h-9 rounded-full bg-muted animate-pulse"></div>
               <div>
-                <div className="h-3 bg-gray-200 rounded w-20 mb-1 animate-pulse"></div>
-                <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                <div className="h-3 bg-muted rounded w-20 mb-1 animate-pulse"></div>
+                <div className="h-4 bg-muted rounded w-32 animate-pulse"></div>
               </div>
             </div>
-            <div className="h-8 w-20 bg-gray-200 rounded-full animate-pulse"></div>
+            <div className="h-8 w-20 bg-muted rounded-full animate-pulse"></div>
           </div>
           
           {/* Grey divider */}
@@ -317,8 +317,8 @@ export const PickDetailPage = () => {
           
           {/* Action buttons */}
           <div className="flex items-center space-x-4 mb-8">
-            <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-6 w-16 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-6 w-16 bg-muted rounded animate-pulse"></div>
+            <div className="h-6 w-16 bg-muted rounded animate-pulse"></div>
           </div>
           
           {/* Grey divider */}
@@ -326,13 +326,13 @@ export const PickDetailPage = () => {
           
           {/* Content */}
           <div className="mb-8">
-            <div className="h-6 bg-gray-200 rounded w-1/3 mb-4 animate-pulse"></div>
+            <div className="h-6 bg-muted rounded w-1/3 mb-4 animate-pulse"></div>
             <div className="space-y-3">
-              <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-5/6 animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
-              <div className="h-4 bg-gray-200 rounded w-4/5 animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-full animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-full animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-5/6 animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-full animate-pulse"></div>
+              <div className="h-4 bg-muted rounded w-4/5 animate-pulse"></div>
             </div>
           </div>
         </div>
@@ -376,8 +376,8 @@ export const PickDetailPage = () => {
     return (
       <div className="container mx-auto px-4 py-12 max-w-full" style={{ padding: '3rem' }}>
         <div className="flex flex-col items-center justify-center w-full py-12">
-          <div className="w-12 h-12 border-4 border-gray-300 border-t-black rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-600">Loading pick details...</p>
+                      <div className="w-12 h-12 border-4 border-border border-t-foreground rounded-full animate-spin mb-4"></div>
+            <p className="text-muted-foreground">Loading pick details...</p>
         </div>
       </div>
     );

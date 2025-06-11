@@ -54,6 +54,16 @@
   border-radius: 4px;
 }
 
+/* Dark theme skeleton */
+:root.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(26, 26, 26, 0.6) 25%,
+    rgba(26, 26, 26, 0.9) 37%,
+    rgba(26, 26, 26, 0.6) 63%
+  );
+}
+
 .skeleton-circle {
   border-radius: 50%;
 }

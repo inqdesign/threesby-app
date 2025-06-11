@@ -62,7 +62,7 @@ export function MasterLayout({
           <ProfileSection profile={profile} isOwnProfile={isOwnProfile} onEditProfile={onEditProfile} />
 
           {leftSideActions && (
-            <div className="mt-6 pt-6 border-t border-gray-200">{leftSideActions}</div>
+            <div className="mt-6 pt-6 border-t border-border">{leftSideActions}</div>
           )}
         </div>
       </div>
@@ -70,7 +70,7 @@ export function MasterLayout({
       {/* Main Content Area */}
       <div className="flex-1">
         {rightSideHeader && (
-          <div className="sticky top-[65px] bg-[#F4F4F4] z-20 py-4 border-b border-gray-200 mb-8">
+          <div className="sticky top-[65px] bg-background z-20 py-4 border-b border-border mb-8">
             {rightSideHeader}
           </div>
         )}

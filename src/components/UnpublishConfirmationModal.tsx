@@ -39,7 +39,7 @@ export function UnpublishConfirmationModal({
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl bg-white shadow-xl transition-all">
+                              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-xl bg-card shadow-xl transition-all">
                 <div className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="flex-shrink-0 bg-amber-100 p-2 rounded-full">

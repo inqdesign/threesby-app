@@ -29,7 +29,7 @@ export function CreatorLandingPage() {
   }, [isFeaturesInView]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div ref={heroRef} className="relative h-screen flex items-center justify-center overflow-hidden">
         {/* Video Background */}

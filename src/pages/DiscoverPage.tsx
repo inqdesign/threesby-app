@@ -234,10 +234,10 @@ export function DiscoverPage({}: DiscoverPageProps) {
     }) : [];
 
   return (
-    <div className="min-h-screen bg-[#F4F4F4] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Sticky Header Container - This will stay fixed at the top while scrolling */}
       <div 
-        className={`filter-container ${isSticky ? 'is-sticky' : ''} sticky top-0 z-30 bg-[#F4F4F4] p-4 md:p-8`}
+        className={`filter-container ${isSticky ? 'is-sticky' : ''} sticky top-0 z-30 bg-background p-4 md:p-8`}
       >
         <div className="discover-page-header">
           {/* Header is now handled by the CategoryFilter component */}
@@ -252,11 +252,11 @@ export function DiscoverPage({}: DiscoverPageProps) {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search picks..."
-                className="w-full pl-10 pr-4 py-2.5 bg-white rounded-full text-xs md:text-sm outline-none"
+                className="w-full pl-10 pr-4 py-2.5 bg-input text-foreground rounded-full text-xs md:text-sm outline-none border-0"
                 autoFocus
                 style={{ fontSize: '16px' }} /* Prevents zoom on iOS */
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             </div>
           )}
           <CategoryFilter
@@ -288,29 +288,29 @@ export function DiscoverPage({}: DiscoverPageProps) {
                 <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-12">
                   {/* Featured Picks Skeleton */}
                   <div className="space-y-4 pick-card-container overflow-hidden">
-                    <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                    <div className="w-full aspect-square bg-muted animate-pulse" />
                     <div className="py-4 px-3 space-y-2">
-                      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
-                      <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
                     </div>
                   </div>
                   
                   {/* Featured Curators Skeleton */}
                   <div className="space-y-4 pick-card-container overflow-hidden">
-                    <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                    <div className="w-full aspect-square bg-muted animate-pulse" />
                     <div className="py-4 px-3 space-y-2">
-                      <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
-                      <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                      <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
                     </div>
                   </div>
                   
                   {/* Regular feed picks skeletons */}
                   {[...Array(10)].map((_, i) => (
                     <div key={i} className="space-y-4 pick-card-container overflow-hidden">
-                      <div className="w-full aspect-square bg-gray-200 animate-pulse" />
+                      <div className="w-full aspect-square bg-muted animate-pulse" />
                       <div className="py-4 px-3 space-y-2">
-                        <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse" />
-                        <div className="h-3 w-1/2 bg-gray-200 rounded animate-pulse" />
+                        <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                        <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
                       </div>
                     </div>
                   ))}

@@ -69,7 +69,7 @@ export function LocationSelect({ value, onChange, placeholder = 'Select a locati
     <div className={`relative w-full ${className}`} ref={dropdownRef}>
       <div className="relative">
         <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-          <Search size={16} className="text-gray-400" />
+          <Search size={16} className="text-muted-foreground" />
         </div>
         <input
           ref={inputRef}
@@ -78,37 +78,37 @@ export function LocationSelect({ value, onChange, placeholder = 'Select a locati
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 pl-10 pr-10 p-3 h-10"
+          className="w-full rounded-lg bg-secondary border-0 shadow-none focus:ring-0 pl-10 pr-10 p-3 h-10 text-foreground placeholder:text-muted-foreground"
         />
         {value && !isOpen && (
           <button 
             onClick={handleClear}
             className="absolute inset-y-0 right-3 flex items-center"
           >
-            <X size={16} className="text-gray-400 hover:text-gray-600" />
+            <X size={16} className="text-muted-foreground hover:text-foreground" />
           </button>
         )}
       </div>
       
       {isOpen && (
-        <div className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg max-h-60 overflow-auto">
+        <div className="absolute z-10 mt-1 w-full bg-card rounded-md shadow-lg max-h-60 overflow-auto border border-border">
           <div className="py-1">
             {filteredLocations.length > 0 ? (
               filteredLocations.map((location, index) => (
                 <div
                   key={index}
                   onClick={() => handleSelectLocation(location)}
-                  className="px-4 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                  className="px-4 py-2 text-sm hover:bg-muted cursor-pointer text-foreground"
                 >
                   {location}
                 </div>
               ))
             ) : (
-              <div className="px-4 py-2 text-sm text-gray-500">
+              <div className="px-4 py-2 text-sm text-muted-foreground">
                 No locations found. 
                 <button 
                   onClick={handleCustomLocation}
-                  className="ml-1 text-blue-500 hover:text-blue-700"
+                  className="ml-1 text-primary hover:text-primary/80"
                 >
                   Add "{searchTerm}"
                 </button>

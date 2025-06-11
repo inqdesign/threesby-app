@@ -1,22 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Loader2 } from 'lucide-react';
+import { X, Loader2, Eye, EyeOff, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
 
 type AuthModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  mode: 'login' | 'signup'; // Add mode prop
+  mode: 'login' | 'signup';
 };
+
+interface PasswordRequirement {
+  label: string;
+  test: (password: string) => boolean;
+}
+
+const passwordRequirements: PasswordRequirement[] = [
+  { label: 'At least 8 characters', test: (pwd: string) => pwd.length >= 8 },
+  { label: 'Contains uppercase letter', test: (pwd: string) => /[A-Z]/.test(pwd) },
+  { label: 'Contains lowercase letter', test: (pwd: string) => /[a-z]/.test(pwd) },
+  { label: 'Contains number', test: (pwd: string) => /\d/.test(pwd) },
+  { label: 'Contains special character', test: (pwd: string) => /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(pwd) }
+];
 
 export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
   const [isSignUp, setIsSignUp] = useState(mode === 'signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
   const navigate = useNavigate();
   
   // Create a div for the portal if it doesn't exist
@@ -28,7 +45,6 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
     }
     
     return () => {
-      // Clean up only if component is unmounted completely
       if (!isOpen) {
         const modalRoot = document.getElementById('auth-modal-root');
         if (modalRoot && modalRoot.childNodes.length === 0) {
@@ -45,12 +61,56 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
       // Reset form fields when modal opens
       setEmail('');
       setPassword('');
+      setConfirmPassword('');
       setFullName('');
       setError('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+      setPasswordFocused(false);
     }
   }, [isOpen, mode]);
 
   if (!isOpen) return null;
+
+  // Email validation
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Password strength calculation
+  const getPasswordStrength = () => {
+    const passedRequirements = passwordRequirements.filter(req => req.test(password));
+    return (passedRequirements.length / passwordRequirements.length) * 100;
+  };
+
+  const passwordStrength = getPasswordStrength();
+  const strongPassword = passwordStrength >= 80;
+
+  // Validation messages
+  const getValidationErrors = () => {
+    const errors: string[] = [];
+    
+    if (isSignUp) {
+      if (!fullName.trim()) errors.push('Full name is required');
+      if (fullName.trim().length < 2) errors.push('Full name must be at least 2 characters');
+    }
+    
+    if (!email) errors.push('Email is required');
+    else if (!isValidEmail(email)) errors.push('Please enter a valid email address');
+    
+    if (!password) errors.push('Password is required');
+    else if (isSignUp && password.length < 8) errors.push('Password must be at least 8 characters');
+    
+    if (isSignUp && password !== confirmPassword) errors.push('Passwords do not match');
+    
+    return errors;
+  };
+
+  const validationErrors = getValidationErrors();
+  const canSubmit = isSignUp 
+    ? validationErrors.length === 0 && strongPassword
+    : validationErrors.length === 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,20 +119,16 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
 
     try {
       if (isSignUp) {
-        if (!email || !password || !fullName) {
-          throw new Error('All fields are required');
-        }
-
-        if (password.length < 6) {
-          throw new Error('Password must be at least 6 characters');
+        if (!canSubmit) {
+          throw new Error(validationErrors[0] || 'Please complete all required fields');
         }
 
         const { error } = await supabase.auth.signUp({
-          email,
+          email: email.trim(),
           password,
           options: {
             data: {
-              full_name: fullName
+              full_name: fullName.trim()
             }
           }
         });
@@ -88,7 +144,7 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
         }
 
         const { error } = await supabase.auth.signInWithPassword({
-          email,
+          email: email.trim(),
           password
         });
 
@@ -100,7 +156,21 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
       }
     } catch (error) {
       console.error('Auth error:', error);
-      setError(error instanceof Error ? error.message : 'Authentication failed');
+      let errorMessage = 'Authentication failed';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password';
+        } else if (error.message.includes('Email rate limit exceeded')) {
+          errorMessage = 'Too many attempts. Please try again later';
+        } else if (error.message.includes('User already registered')) {
+          errorMessage = 'An account with this email already exists';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -111,145 +181,273 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
     setLoading(true);
     
     try {
-      // Simplest possible implementation
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: isSignUp 
-            ? `${window.location.origin}/onboarding` 
-            : `${window.location.origin}/discover`
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
         }
       });
       
       if (error) {
-        console.error('Supabase OAuth error details:', error);
+        console.error('Google OAuth error:', error);
         throw error;
       }
       
-      // No need to close modal here as the page will redirect to Google
+      // Close modal since user will be redirected
+      onClose();
     } catch (error) {
       console.error('Google auth error:', error);
-      setError(error instanceof Error ? 
-        `Google authentication failed: ${error.message}` : 
-        'Google authentication failed. Check console for details.');
+      let errorMessage = 'Google authentication failed. Please try again or use email signup.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('popup_closed_by_user')) {
+          errorMessage = 'Google sign-in was cancelled. Please try again.';
+        } else if (error.message.includes('OAuth') || error.message.includes('disabled_client')) {
+          errorMessage = 'Google sign-in configuration error. Please contact support.';
+        }
+      }
+      
+      setError(errorMessage);
       setLoading(false);
     }
   };
 
   const modalContent = (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" style={{ zIndex: 99999 }}>
-      <div className="bg-white rounded-lg p-8 max-w-md w-full relative">
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
-        >
-          <X className="w-5 h-5" />
-        </button>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" style={{ zIndex: 99999 }}>
+              <div className="bg-card rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <h2 className="text-2xl font-bold text-foreground">
+            {isSignUp ? 'Join Our Community' : 'Welcome Back'}
+          </h2>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
 
-        <h2 className="text-2xl font-bold mb-6">
-          {isSignUp ? 'Create Your Account' : 'Welcome Back'}
-        </h2>
+        <div className="p-6">
+          {/* Subtitle */}
+          <p className="text-muted-foreground mb-6">
+            {isSignUp 
+              ? 'Create your account and start curating amazing picks' 
+              : 'Sign in to access your curator dashboard'
+            }
+          </p>
 
-        {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <input
-                type="text"
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
+              <div className="text-red-700 text-sm">{error}</div>
             </div>
           )}
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              required
-              minLength={6}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                {isSignUp ? 'Creating Account...' : 'Signing In...'}
-              </>
-            ) : (
-              isSignUp ? 'Create Account' : 'Sign In'
-            )}
-          </button>
-          
-          <div className="relative my-4">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">Or continue with</span>
-            </div>
-          </div>
-          
+          {/* Google Sign In */}
           <button
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-3 bg-card border-2 border-border text-foreground py-3 px-4 rounded-lg hover:bg-secondary hover:border-border/80 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed mb-6"
           >
-            <svg viewBox="0 0 24 24" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
-              <g transform="matrix(1, 0, 0, 1, 27.009001, -39.238998)">
-                <path fill="#4285F4" d="M -3.264 51.509 C -3.264 50.719 -3.334 49.969 -3.454 49.239 L -14.754 49.239 L -14.754 53.749 L -8.284 53.749 C -8.574 55.229 -9.424 56.479 -10.684 57.329 L -10.684 60.329 L -6.824 60.329 C -4.564 58.239 -3.264 55.159 -3.264 51.509 Z"/>
-                <path fill="#34A853" d="M -14.754 63.239 C -11.514 63.239 -8.804 62.159 -6.824 60.329 L -10.684 57.329 C -11.764 58.049 -13.134 58.489 -14.754 58.489 C -17.884 58.489 -20.534 56.379 -21.484 53.529 L -25.464 53.529 L -25.464 56.619 C -23.494 60.539 -19.444 63.239 -14.754 63.239 Z"/>
-                <path fill="#FBBC05" d="M -21.484 53.529 C -21.734 52.809 -21.864 52.039 -21.864 51.239 C -21.864 50.439 -21.724 49.669 -21.484 48.949 L -21.484 45.859 L -25.464 45.859 C -26.284 47.479 -26.754 49.299 -26.754 51.239 C -26.754 53.179 -26.284 54.999 -25.464 56.619 L -21.484 53.529 Z"/>
-                <path fill="#EA4335" d="M -14.754 43.989 C -12.984 43.989 -11.404 44.599 -10.154 45.789 L -6.734 42.369 C -8.804 40.429 -11.514 39.239 -14.754 39.239 C -19.444 39.239 -23.494 41.939 -25.464 45.859 L -21.484 48.949 C -20.534 46.099 -17.884 43.989 -14.754 43.989 Z"/>
-              </g>
+            <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            <span>Sign {isSignUp ? 'up' : 'in'} with Google</span>
+                         <span className="font-medium">
+               {loading ? 'Connecting...' : `Continue with Google`}
+             </span>
           </button>
 
-          <div className="text-center text-sm text-gray-600">
+          {/* Divider */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-card text-muted-foreground font-medium">Or continue with email</span>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Full Name - Signup Only */}
+            {isSignUp && (
+              <div>
+                <label htmlFor="fullName" className="block text-sm font-medium text-foreground mb-2">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  id="fullName"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-card text-foreground"
+                  placeholder="Enter your full name"
+                  autoComplete="name"
+                />
+              </div>
+            )}
+
+            {/* Email */}
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+                Email Address *
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-card text-foreground"
+                placeholder="Enter your email"
+                autoComplete="email"
+                required
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+                Password *
+              </label>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onFocus={() => setPasswordFocused(true)}
+                  onBlur={() => setPasswordFocused(false)}
+                  className="w-full px-4 py-3 pr-12 border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-card text-foreground"
+                  placeholder={isSignUp ? 'Create a strong password' : 'Enter your password'}
+                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              
+              {/* Password Strength Indicator - Signup Only */}
+              {isSignUp && (passwordFocused || password) && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm text-gray-600">Password strength</span>
+                    <span className={`text-sm font-medium ${
+                      passwordStrength < 40 ? 'text-red-500' :
+                      passwordStrength < 80 ? 'text-yellow-500' : 'text-green-500'
+                    }`}>
+                      {passwordStrength < 40 ? 'Weak' :
+                       passwordStrength < 80 ? 'Good' : 'Strong'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
+                    <div 
+                      className={`h-2 rounded-full transition-all duration-300 ${
+                        passwordStrength < 40 ? 'bg-red-500' :
+                        passwordStrength < 80 ? 'bg-yellow-500' : 'bg-green-500'
+                      }`}
+                      style={{ width: `${passwordStrength}%` }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    {passwordRequirements.map((req, index) => {
+                      const passed = req.test(password);
+                      return (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          {passed ? (
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-gray-300" />
+                          )}
+                          <span className={passed ? 'text-green-700' : 'text-gray-500'}>
+                            {req.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Confirm Password - Signup Only */}
+            {isSignUp && (
+              <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-2">
+                  Confirm Password *
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    id="confirmPassword"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-all duration-200 bg-card text-foreground ${
+                      confirmPassword && password !== confirmPassword 
+                        ? 'border-red-300 bg-red-50' 
+                        : 'border-border'
+                    }`}
+                    placeholder="Confirm your password"
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
+                {confirmPassword && password !== confirmPassword && (
+                  <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
+                    <XCircle className="w-4 h-4" />
+                    Passwords do not match
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading || !canSubmit}
+              className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  {isSignUp ? 'Creating Account...' : 'Signing In...'}
+                </>
+              ) : (
+                isSignUp ? 'Create Account' : 'Sign In'
+              )}
+            </button>
+          </form>
+
+          {/* Toggle Mode */}
+          <div className="mt-6 text-center text-sm text-gray-600">
             {isSignUp ? (
               <>
                 Already have an account?{' '}
                 <button
                   type="button"
                   onClick={() => setIsSignUp(false)}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   Sign in
                 </button>
@@ -260,14 +458,28 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
                 <button
                   type="button"
                   onClick={() => setIsSignUp(true)}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-blue-600 hover:text-blue-800 font-medium"
                 >
                   Create one
                 </button>
               </>
             )}
           </div>
-        </form>
+
+          {/* Terms and Privacy - Signup Only */}
+          {isSignUp && (
+            <p className="mt-4 text-xs text-gray-500 text-center">
+              By creating an account, you agree to our{' '}
+              <a href="/terms" target="_blank" className="text-blue-600 hover:underline">
+                Terms of Service
+              </a>{' '}
+              and{' '}
+              <a href="/privacy-policy" target="_blank" className="text-blue-600 hover:underline">
+                Privacy Policy
+              </a>
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

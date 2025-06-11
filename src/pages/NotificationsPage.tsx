@@ -128,14 +128,14 @@ export function NotificationsPage() {
       case 'follow':
         return <User className="w-5 h-5 text-green-500" />;
       default:
-        return <Clock className="w-5 h-5 text-gray-500" />;
+        return <Clock className="w-5 h-5 text-muted-foreground" />;
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <p className="text-lg">Loading...</p>
+        <p className="text-lg text-foreground">Loading...</p>
       </div>
     );
   }
@@ -143,7 +143,7 @@ export function NotificationsPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-[#252525]">Activity</h1>
+        <h1 className="text-2xl font-bold text-foreground">Activity</h1>
         {notifications.some(n => !n.is_read) && (
           <button 
             className="text-sm text-blue-600 hover:text-blue-800"
@@ -157,17 +157,17 @@ export function NotificationsPage() {
         )}
       </div>
       
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+      <div className="bg-card rounded-lg shadow-sm overflow-hidden">
         {notifications.length === 0 ? (
           <div className="p-8 text-center">
-            <p className="text-gray-500">You don't have any notifications yet.</p>
+            <p className="text-muted-foreground">You don't have any notifications yet.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-gray-100">
+          <ul className="divide-y divide-border">
             {notifications.map((notification) => (
               <li 
                 key={notification.id} 
-                className={`p-4 hover:bg-gray-50 transition-colors ${!notification.is_read ? 'bg-blue-50' : ''}`}
+                className={`p-4 hover:bg-muted/50 transition-colors ${!notification.is_read ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
               >
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0">
@@ -178,13 +178,13 @@ export function NotificationsPage() {
                         className="w-10 h-10 rounded-full object-cover" 
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                         {getNotificationIcon(notification.type)}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-gray-900">
+                    <p className="text-sm text-foreground">
                       {notification.sender && <span className="font-medium">{notification.sender.full_name}</span>}
                       {' '}
                       {notification.content}
@@ -192,7 +192,7 @@ export function NotificationsPage() {
                         <span className="font-medium"> "{notification.pick.title}"</span>
                       )}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {formatDate(notification.created_at)}
                     </p>
                   </div>
@@ -201,7 +201,7 @@ export function NotificationsPage() {
                       <img 
                         src={notification.pick.image_url} 
                         alt={notification.pick.title}
-                        className="w-12 h-12 object-cover rounded" 
+                        className="w-12 h-12 rounded object-cover" 
                       />
                     </div>
                   )}

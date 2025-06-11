@@ -87,7 +87,7 @@ export function SecurityPage() {
       leaveFrom="opacity-100"
       leaveTo="opacity-0"
     >
-      <div className="fixed inset-0 z-50 bg-white overflow-auto">
+      <div className="fixed inset-0 z-50 bg-background overflow-auto">
         <div className="relative w-full h-full">
           <Transition
             show={show && !isExiting}
@@ -99,7 +99,7 @@ export function SecurityPage() {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-background pb-20">
               {/* App Bar */}
               <AppBar 
                 title="Password & Security" 
@@ -108,24 +108,24 @@ export function SecurityPage() {
               />
               
               <div className="p-4 md:p-8">
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                  <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+                <div className="bg-card rounded-xl shadow-sm p-6 mb-6">
+                  <h2 className="text-xl font-semibold mb-4 text-foreground">Change Password</h2>
                   
                   {error && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">
                       {error}
                     </div>
                   )}
                   
                   {successMessage && (
-                    <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg">
+                    <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg">
                       {successMessage}
                     </div>
                   )}
                   
                   <form onSubmit={handleUpdatePassword}>
                     <div className="mb-4">
-                      <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="currentPassword" className="block text-sm font-medium text-foreground mb-1">
                         Current Password
                       </label>
                       <input
@@ -133,14 +133,14 @@ export function SecurityPage() {
                         id="currentPassword"
                         value={currentPassword}
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Enter your current password"
                         required
                       />
                     </div>
                     
                     <div className="mb-4">
-                      <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="newPassword" className="block text-sm font-medium text-foreground mb-1">
                         New Password
                       </label>
                       <input
@@ -148,14 +148,14 @@ export function SecurityPage() {
                         id="newPassword"
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Enter new password"
                         required
                       />
                     </div>
                     
                     <div className="mb-6">
-                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground mb-1">
                         Confirm New Password
                       </label>
                       <input
@@ -163,7 +163,7 @@ export function SecurityPage() {
                         id="confirmPassword"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Confirm new password"
                         required
                       />
@@ -173,7 +173,7 @@ export function SecurityPage() {
                       type="submit"
                       disabled={isSubmitting}
                       className={`w-full py-3 rounded-lg text-white font-medium ${
-                        isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                        isSubmitting ? 'bg-gray-400' : 'bg-gray-600 hover:bg-gray-700'
                       }`}
                     >
                       {isSubmitting ? 'Updating...' : 'Update Password'}
@@ -181,31 +181,27 @@ export function SecurityPage() {
                   </form>
                 </div>
                 
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                  <h2 className="text-xl font-semibold mb-4">Two-Factor Authentication</h2>
-                  <p className="text-gray-500 mb-4">
+                <div className="bg-card rounded-xl shadow-sm p-6 mb-6">
+                  <h2 className="text-xl font-semibold mb-4 text-foreground">Two-Factor Authentication</h2>
+                  <p className="text-muted-foreground mb-4">
                     Add an extra layer of security to your account by enabling two-factor authentication.
                   </p>
                   <button
-                    className="w-full py-3 rounded-lg text-white font-medium bg-blue-600 hover:bg-blue-700"
+                    className="w-full py-3 rounded-lg text-white font-medium bg-gray-600 hover:bg-gray-700"
                     onClick={() => alert('Two-factor authentication will be implemented in a future update.')}
                   >
                     Set Up Two-Factor Authentication
                   </button>
                 </div>
                 
-                <div className="bg-white rounded-xl shadow-sm p-6">
+                <div className="bg-card rounded-xl shadow-sm p-6">
                   <h2 className="text-xl font-semibold mb-4 text-red-600">Danger Zone</h2>
-                  <p className="text-gray-500 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Permanently delete your account and all associated data. This action cannot be undone.
                   </p>
                   <button
                     className="w-full py-3 rounded-lg text-white font-medium bg-red-600 hover:bg-red-700"
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-                        alert('Account deletion will be implemented in a future update.');
-                      }
-                    }}
+                    onClick={() => alert('Account deletion will be implemented in a future update.')}
                   >
                     Delete Account
                   </button>

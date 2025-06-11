@@ -17,7 +17,7 @@ export function FollowButton({ userId, onFollowChange }: FollowButtonProps) {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
-    if (user && userId) {
+    if (user && userId && user.id !== userId) {
       checkFollowStatus();
     } else {
       setLoading(false);
@@ -58,6 +58,7 @@ export function FollowButton({ userId, onFollowChange }: FollowButtonProps) {
     }
   };
 
+  // Don't show button for current user
   if (user?.id === userId) {
     return null;
   }

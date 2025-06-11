@@ -1,7 +1,7 @@
 import { Link, useLocation } from 'react-router-dom';
 import { 
   User, LayoutDashboard, Mail, CheckCircle, 
-  Users, Flag, Bell, Shield, LogOut, Cog
+  Users, Flag, Bell, Shield, LogOut, Cog, CreditCard
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
@@ -35,7 +35,14 @@ export function SideNav({ isAdmin = false }: SideNavProps) {
       label: 'Profile', 
       icon: User, 
       path: '/account',
-      active: getActiveSection('/account') && !pathname.includes('/security') && !pathname.includes('/notifications')
+      active: getActiveSection('/account') && !pathname.includes('/security') && !pathname.includes('/notifications') && !pathname.includes('/billing')
+    },
+    { 
+      id: 'billing', 
+      label: 'Billing', 
+      icon: CreditCard, 
+      path: '/account/billing',
+      active: getActiveSection('/account/billing')
     },
     { 
       id: 'security', 

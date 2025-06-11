@@ -151,9 +151,9 @@ export const CollectionsPage: React.FC = () => {
   });
   
   return (
-    <div className="min-h-screen bg-[#F4F4F4] pb-24">
+    <div className="min-h-screen bg-background pb-24">
       {/* Filter component outside main content with proper background color, padding, and sticky position */}
-      <div className="sticky top-0 z-30 bg-[#F4F4F4] p-4 md:p-8" style={{ position: 'sticky' }}>
+      <div className="sticky top-0 z-30 bg-background p-4 md:p-8" style={{ position: 'sticky' }}>
         <CategoryFilter
           title="Filter by Category"
           categories={availableCategories}
@@ -175,7 +175,7 @@ export const CollectionsPage: React.FC = () => {
             // Loading state
             <div className="space-y-12">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="border-t border-gray-200 pt-6">
+                <div key={i} className="border-t border-border pt-6">
                   <div className="flex flex-col md:flex-row md:items-end md:gap-4">
                     <div className="md:w-[24%] mb-2 md:mb-0">
                       <Skeleton className="h-10 w-48" />
@@ -202,7 +202,7 @@ export const CollectionsPage: React.FC = () => {
             <div className="space-y-12">
               {Object.values(collectionsByCurator).length > 0 ? (
                 Object.values(collectionsByCurator).map((curator) => (
-                  <div key={curator.id} className="border-t border-gray-200" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem', paddingLeft: '0', paddingRight: '0' }}>
+                  <div key={curator.id} className="border-t border-border" style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem', paddingLeft: '0', paddingRight: '0' }}>
                     {/* Three-column layout with bottom alignment */}
                     <div className="flex flex-col md:flex-row md:items-end md:gap-4">
                       {/* Column 1: Curator name - 24% width on desktop */}

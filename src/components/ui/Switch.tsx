@@ -20,7 +20,7 @@ export function Switch({ defaultChecked = false, onChange }: SwitchProps) {
     <button
       type="button"
       className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-        checked ? 'bg-blue-600' : 'bg-gray-200'
+        checked ? 'bg-foreground' : 'bg-muted'
       }`}
       role="switch"
       aria-checked={checked}

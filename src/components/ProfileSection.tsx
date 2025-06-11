@@ -32,7 +32,7 @@ function BioWithReadMore({ message }: { message: string }) {
   
   // Only apply truncation on mobile
   if (!isMobile) {
-    return <p className="text-[#585757]">{message}</p>;
+    return <p className="text-[#585757] dark:text-gray-400">{message}</p>;
   }
   
   const maxLength = 100; // Characters to show before truncating
@@ -40,7 +40,7 @@ function BioWithReadMore({ message }: { message: string }) {
   
   return (
     <div>
-      <p className="text-[#585757]">
+      <p className="text-[#585757] dark:text-gray-400">
         {expanded ? message : shouldTruncate ? (
           <>
             {message.substring(0, maxLength)}
@@ -114,7 +114,7 @@ export function ProfileSection({ profile, isOwnProfile = false, onEditProfile }:
             {profile?.title || 'Creator'}
           </p>
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-medium text-[#252525]">
+            <h3 className="text-sm font-medium text-[#252525] dark:text-white">
               {profile?.full_name}
             </h3>
             <UserBadge 
@@ -138,7 +138,7 @@ export function ProfileSection({ profile, isOwnProfile = false, onEditProfile }:
       
       {/* Follow stats and button */}
       <div className="w-full">
-        <div className="h-px w-full bg-[rgb(235,235,235)] my-3"></div>
+        <div className="h-px w-full bg-border my-3"></div>
         <div className="flex items-center justify-between w-full">
           <FollowStats userId={profile?.id || ''} />
           
@@ -151,7 +151,7 @@ export function ProfileSection({ profile, isOwnProfile = false, onEditProfile }:
       {/* Bio with Read More functionality */}
       {profile?.message && (
         <>
-          <div className="h-px w-full bg-[rgb(235,235,235)] my-3"></div>
+          <div className="h-px w-full bg-border my-3"></div>
           <BioWithReadMore message={profile.message} />
         </>
       )}
@@ -159,8 +159,8 @@ export function ProfileSection({ profile, isOwnProfile = false, onEditProfile }:
       {/* Location */}
       {(profile as any)?.location && (
         <>
-          <div className="h-px w-full bg-[rgb(235,235,235)] my-3"></div>
-          <div className="flex items-center gap-2 text-[#585757] w-full">
+          <div className="h-px w-full bg-border my-3"></div>
+          <div className="flex items-center gap-2 text-muted-foreground w-full">
             <span className="text-sm">📍</span>
             <span>{(profile as any).location}</span>
           </div>
@@ -170,7 +170,7 @@ export function ProfileSection({ profile, isOwnProfile = false, onEditProfile }:
       {/* Interests */}
       {interests.length > 0 && (
         <>
-          <div className="h-px w-full bg-[rgb(235,235,235)] my-3"></div>
+          <div className="h-px w-full bg-border my-3"></div>
           <div className="flex flex-wrap gap-2">
             {interests.map((interest: string, index: number) => (
               <Tag key={index}>
@@ -184,7 +184,7 @@ export function ProfileSection({ profile, isOwnProfile = false, onEditProfile }:
       {/* Social links */}
       {(profile?.social_links?.twitter || profile?.social_links?.instagram || profile?.social_links?.linkedin || profile?.social_links?.website) && (
         <>
-          <div className="h-px w-full bg-[rgb(235,235,235)] my-3"></div>
+          <div className="h-px w-full bg-border my-3"></div>
           <div className="flex gap-4">
             {profile?.social_links?.twitter && (
               <a 

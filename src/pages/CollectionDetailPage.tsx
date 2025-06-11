@@ -316,7 +316,7 @@ export function CollectionDetailPage() {
           
           {/* MOBILE: Content that scrolls underneath the fixed header */}
           <div className="md:hidden mt-[286px] w-full" style={{ position: 'relative', zIndex: 50 }}>
-            <div className="w-full bg-white rounded-t-lg shadow-xl" style={{ position: 'relative', zIndex: 50 }}>
+            <div className="w-full bg-card rounded-t-lg shadow-xl" style={{ position: 'relative', zIndex: 50 }}>
               <div className="p-0 w-full flex flex-col h-full justify-between">
                 {/* Content for mobile */}
                 <div className="p-5 w-full">
@@ -324,31 +324,31 @@ export function CollectionDetailPage() {
                   <div className="flex flex-col gap-6 mb-8 w-full">
                     {/* Title and description */}
                     <div className="w-full">
-                      <h1 className="text-4xl font-bold mb-2">{collection?.title || 'Collection'}</h1>
-                      <p className="text-gray-600">{collection?.description || ''}</p>
+                      <h1 className="text-4xl font-bold mb-2 text-foreground">{collection?.title || 'Collection'}</h1>
+                      <p className="text-muted-foreground">{collection?.description || ''}</p>
                     </div>
                     
                     {/* Info table */}
                     <div className="w-full">
                       <div className="w-full font-mono text-xs md:text-sm">
-                        <div className="flex justify-between py-3 border-b border-gray-100">
-                          <div className="text-gray-500">ISSUE#</div>
-                          <div>{collection && curatorCollections ? curatorCollections.findIndex(c => c.id === collection.id) + 1 : '-'}</div>
+                        <div className="flex justify-between py-3 border-b border-border">
+                          <div className="text-muted-foreground">ISSUE#</div>
+                          <div className="text-foreground">{collection && curatorCollections ? curatorCollections.findIndex(c => c.id === collection.id) + 1 : '-'}</div>
                         </div>
-                        <div className="flex justify-between py-3 border-b border-gray-100">
-                          <div className="text-gray-500">DATE</div>
-                          <div>{collection?.created_at ? format(new Date(collection.created_at), 'dd. MM. yyyy') : '-'}</div>
+                        <div className="flex justify-between py-3 border-b border-border">
+                          <div className="text-muted-foreground">DATE</div>
+                          <div className="text-foreground">{collection?.created_at ? format(new Date(collection.created_at), 'dd. MM. yyyy') : '-'}</div>
                         </div>
-                        <div className="flex justify-between py-3 border-b border-gray-100">
-                          <div className="text-gray-500">COLLECTED BY</div>
-                          <div className="text-right">{curator?.name}</div>
+                        <div className="flex justify-between py-3 border-b border-border">
+                          <div className="text-muted-foreground">COLLECTED BY</div>
+                          <div className="text-right text-foreground">{curator?.name}</div>
                         </div>
-                        <div className="flex justify-between py-3 border-b border-gray-100">
-                          <div className="text-gray-500">CATEGORIES</div>
-                          <div className="text-right max-w-[60%]">{collection?.categories?.join(', ') || 'Music'}</div>
+                        <div className="flex justify-between py-3 border-b border-border">
+                          <div className="text-muted-foreground">CATEGORIES</div>
+                          <div className="text-right max-w-[60%] text-foreground">{collection?.categories?.join(', ') || 'Music'}</div>
                         </div>
                         <div className="flex justify-end py-3">
-                          <div className="inline-flex items-center gap-1">
+                          <div className="inline-flex items-center gap-1 text-foreground">
                             <Heart className="w-4 h-4" /> 
                             <span>1.4K</span>
                           </div>
@@ -359,7 +359,7 @@ export function CollectionDetailPage() {
                   
                   {/* Picks section */}
                   <div className="mt-8">
-                    <h3 className="text-lg font-mono mb-4">PICKS</h3>
+                    <h3 className="text-lg font-mono mb-4 text-foreground">PICKS</h3>
                     
                     {/* Picks grid and list */}
                     <div className="flex flex-col gap-6">
@@ -369,7 +369,7 @@ export function CollectionDetailPage() {
                           {picks.slice(0, 9).map((pick) => (
                             <div 
                               key={pick.id} 
-                              className="aspect-square bg-gray-100 rounded overflow-hidden cursor-pointer" 
+                              className="aspect-square bg-muted rounded overflow-hidden cursor-pointer" 
                               onClick={() => {
                                 const event = new CustomEvent('openPickModal', {
                                   detail: { pickId: pick.id }
@@ -385,7 +385,7 @@ export function CollectionDetailPage() {
                                   loading="lazy"
                                 />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm">
+                                <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground text-sm">
                                   No image
                                 </div>
                               )}
@@ -400,7 +400,7 @@ export function CollectionDetailPage() {
                           {picks.map((pick, index) => (
                             <div 
                               key={pick.id} 
-                              className="py-3 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50"
+                              className="py-3 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/50"
                               onClick={() => {
                                 const event = new CustomEvent('openPickModal', {
                                   detail: { pickId: pick.id }
@@ -409,9 +409,9 @@ export function CollectionDetailPage() {
                               }}
                             >
                               <div className="grid grid-cols-12 items-center gap-2">
-                                <div className="text-sm col-span-1">#{String(index + 1).padStart(2, '0')}</div>
-                                <div className="text-sm font-medium col-span-5 truncate">{pick.title}</div>
-                                <div className="text-sm text-gray-500 col-span-6 truncate">{pick.reference}</div>
+                                <div className="text-sm col-span-1 text-foreground">#{String(index + 1).padStart(2, '0')}</div>
+                                <div className="text-sm font-medium col-span-5 truncate text-foreground">{pick.title}</div>
+                                <div className="text-sm text-muted-foreground col-span-6 truncate">{pick.reference}</div>
                               </div>
                             </div>
                           ))}
@@ -470,37 +470,37 @@ export function CollectionDetailPage() {
             </div>
             
             {/* Middle column - Collection content */}
-            <div className="w-2/3 bg-white rounded-lg overflow-y-auto shadow-xl max-h-full h-auto">
+            <div className="w-2/3 bg-card rounded-lg overflow-y-auto shadow-xl max-h-full h-auto">
               <div className="p-8 flex flex-col h-full justify-between">
                 {/* Title/description and info table - 2 columns */}
                 <div className="flex flex-col md:flex-row gap-6 mb-8">
                   {/* Left side - Title and description */}
                   <div className="w-full md:w-1/2">
-                    <h1 className="text-4xl font-bold mb-2">{collection?.title || 'Collection'}</h1>
-                    <p className="text-gray-600">{collection?.description || ''}</p>
+                    <h1 className="text-4xl font-bold mb-2 text-foreground">{collection?.title || 'Collection'}</h1>
+                    <p className="text-muted-foreground">{collection?.description || ''}</p>
                   </div>
                   
                   {/* Right side - Info table */}
                   <div className="w-full md:w-1/2">
                     <div className="w-full font-mono text-sm md:text-base">
-                      <div className="flex justify-between py-3 border-b border-gray-100">
-                        <div className="text-gray-500">ISSUE#</div>
-                        <div>{collection && curatorCollections ? curatorCollections.findIndex(c => c.id === collection.id) + 1 : '-'}</div>
+                      <div className="flex justify-between py-3 border-b border-border">
+                        <div className="text-muted-foreground">ISSUE#</div>
+                        <div className="text-foreground">{collection && curatorCollections ? curatorCollections.findIndex(c => c.id === collection.id) + 1 : '-'}</div>
                       </div>
-                      <div className="flex justify-between py-3 border-b border-gray-100">
-                        <div className="text-gray-500">DATE</div>
-                        <div>{collection?.created_at ? format(new Date(collection.created_at), 'dd. MM. yyyy') : '-'}</div>
+                      <div className="flex justify-between py-3 border-b border-border">
+                        <div className="text-muted-foreground">DATE</div>
+                        <div className="text-foreground">{collection?.created_at ? format(new Date(collection.created_at), 'dd. MM. yyyy') : '-'}</div>
                       </div>
-                      <div className="flex justify-between py-3 border-b border-gray-100">
-                        <div className="text-gray-500">COLLECTED BY</div>
-                        <div>{curator?.name}</div>
+                      <div className="flex justify-between py-3 border-b border-border">
+                        <div className="text-muted-foreground">COLLECTED BY</div>
+                        <div className="text-foreground">{curator?.name}</div>
                       </div>
-                      <div className="flex justify-between py-3 border-b border-gray-100">
-                        <div className="text-gray-500">CATEGORIES</div>
-                        <div>{collection?.categories?.join(', ') || 'Music'}</div>
+                      <div className="flex justify-between py-3 border-b border-border">
+                        <div className="text-muted-foreground">CATEGORIES</div>
+                        <div className="text-foreground">{collection?.categories?.join(', ') || 'Music'}</div>
                       </div>
                       <div className="flex justify-end py-3">
-                        <div className="inline-flex items-center gap-1">
+                        <div className="inline-flex items-center gap-1 text-foreground">
                           <Heart className="w-4 h-4" /> 
                           <span>1.4K</span>
                         </div>
@@ -511,7 +511,7 @@ export function CollectionDetailPage() {
                 
                 {/* Picks section - bottom aligned */}
                 <div className="mt-auto">
-                  <h3 className="text-gray-500 uppercase text-sm font-medium font-mono">PICKS</h3>
+                  <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono">PICKS</h3>
                   
                   {/* Pick grid and list - Different layout for mobile and desktop */}
                   <div className="flex flex-col md:flex-row gap-6">
@@ -521,7 +521,7 @@ export function CollectionDetailPage() {
                         {picks.map((pick, index) => (
                           <div 
                             key={pick.id} 
-                            className="py-3 md:py-4 border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-gray-50"
+                            className="py-3 md:py-4 border-b border-border last:border-b-0 cursor-pointer hover:bg-muted/50"
                             onClick={() => {
                               // Use the same custom event approach to open the modal
                               const event = new CustomEvent('openPickModal', {
@@ -531,9 +531,9 @@ export function CollectionDetailPage() {
                             }}
                           >
                             <div className="grid grid-cols-12 items-center gap-2">
-                              <div className="text-sm md:text-base col-span-1">#{String(index + 1).padStart(2, '0')}</div>
-                              <div className="text-sm md:text-base font-medium col-span-5 truncate">{pick.title}</div>
-                              <div className="text-sm md:text-base text-gray-500 col-span-6 truncate">{pick.reference}</div>
+                              <div className="text-sm md:text-base col-span-1 text-foreground">#{String(index + 1).padStart(2, '0')}</div>
+                              <div className="text-sm md:text-base font-medium col-span-5 truncate text-foreground">{pick.title}</div>
+                              <div className="text-sm md:text-base text-muted-foreground col-span-6 truncate">{pick.reference}</div>
                             </div>
                           </div>
                         ))}
@@ -546,7 +546,7 @@ export function CollectionDetailPage() {
                         {picks.slice(0, 9).map((pick) => (
                           <div 
                             key={pick.id} 
-                            className="aspect-square bg-gray-100 rounded overflow-hidden cursor-pointer" 
+                            className="aspect-square bg-muted rounded overflow-hidden cursor-pointer" 
                             onClick={() => {
                               // Instead of navigating, dispatch a custom event to open the modal
                               // This keeps the current page visible in the background
@@ -564,7 +564,7 @@ export function CollectionDetailPage() {
                                 loading="lazy"
                               />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm">
+                              <div className="w-full h-full flex items-center justify-center bg-muted text-muted-foreground text-sm">
                                 No image
                               </div>
                             )}

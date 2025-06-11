@@ -59,7 +59,7 @@ export function CategoryFilter({
       {pageType === 'discover' ? (
         <div className="mb-2">
           {headerText && (
-            <h2 className="text-gray-500 text-lg font-medium mb-1">
+            <h2 className="text-muted-foreground text-lg font-medium mb-1">
               {headerText}
             </h2>
           )}
@@ -69,7 +69,7 @@ export function CategoryFilter({
       ) : (
         <div className="mb-2">
           {title && (
-            <h2 className="text-gray-500 text-lg font-medium mb-1">
+            <h2 className="text-muted-foreground text-lg font-medium mb-1">
               {title}
             </h2>
           )}
@@ -80,7 +80,7 @@ export function CategoryFilter({
       
       {/* Category Filters */}
       <div className="flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar md:pr-0" style={{ padding: '0.5rem 0' }} data-component-name="CategoryFilter">
-        <label className="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full">
+        <label className="flex items-center gap-2 cursor-pointer bg-card px-4 py-2 rounded-full">
           <input
             type="checkbox"
             name="category-all"
@@ -88,11 +88,11 @@ export function CategoryFilter({
             onChange={handleAllToggle}
             className="h-4 w-4 text-black rounded-full outline-none focus:ring-0 focus:ring-offset-0"
           />
-          <span className="text-sm">All</span>
+          <span className="text-sm text-foreground">All</span>
         </label>
         
         {filteredCategories.map((category) => (
-          <label key={category} className="flex items-center gap-2 cursor-pointer bg-white px-4 py-2 rounded-full">
+          <label key={category} className="flex items-center gap-2 cursor-pointer bg-card px-4 py-2 rounded-full">
             <input
               type="checkbox"
               name={`category-${category}`}
@@ -100,10 +100,10 @@ export function CategoryFilter({
               onChange={() => handleCategoryToggle(category)}
               className="h-4 w-4 text-black rounded-full outline-none focus:ring-0 focus:ring-offset-0"
             />
-            <span className="text-sm capitalize">
+            <span className="text-sm capitalize text-foreground">
               {category.charAt(0).toUpperCase() + category.slice(1)}
               {showCounts && categoryCounts[category] !== undefined && (
-                <span className="ml-1 text-xs text-gray-500">
+                                  <span className="ml-1 text-xs text-muted-foreground">
                   ({categoryCounts[category]})
                 </span>
               )}

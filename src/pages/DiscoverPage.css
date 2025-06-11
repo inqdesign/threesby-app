@@ -19,7 +19,6 @@
 .featured-content-section {
   padding: 1.5rem;
   border-bottom: 1px solid #e5e7eb;
-  background-color: white;
   margin: 0;
   border-radius: 1rem;
   box-shadow: none;
@@ -194,7 +193,6 @@
 /* Ensure the discover-page-header stays within the sticky container */
 .discover-page-header {
   width: 100%;
-  background-color: #F4F4F4;
   padding: 0; /* Remove all padding */
   margin: 0; /* Remove all margins */
 }

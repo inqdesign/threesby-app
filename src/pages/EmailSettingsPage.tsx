@@ -81,7 +81,7 @@ export function EmailSettingsPage() {
       leaveFrom="opacity-100"
       leaveTo="opacity-0"
     >
-      <div className="fixed inset-0 z-50 bg-white overflow-auto">
+      <div className="fixed inset-0 z-50 bg-background overflow-auto">
         <div className="relative w-full h-full">
           <Transition
             show={show && !isExiting}
@@ -93,7 +93,7 @@ export function EmailSettingsPage() {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <div className="min-h-screen bg-gray-50 pb-20">
+            <div className="min-h-screen bg-background pb-20">
               {/* App Bar */}
               <AppBar 
                 title="Email Settings" 
@@ -102,32 +102,32 @@ export function EmailSettingsPage() {
               />
               
               <div className="p-4 md:p-8">
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                  <h2 className="text-xl font-semibold mb-4">Current Email</h2>
-                  <p className="text-gray-700 mb-2">{user?.email}</p>
-                  <p className="text-sm text-gray-500 mb-4">
+                <div className="bg-card rounded-xl shadow-sm p-6 mb-6">
+                  <h2 className="text-xl font-semibold mb-4 text-foreground">Current Email</h2>
+                  <p className="text-lg font-medium text-foreground mb-2 break-all">{user?.email}</p>
+                  <p className="text-sm text-muted-foreground mb-4">
                     This is the email address associated with your account.
                   </p>
                 </div>
                 
-                <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-                  <h2 className="text-xl font-semibold mb-4">Change Email Address</h2>
+                <div className="bg-card rounded-xl shadow-sm p-6 mb-6">
+                  <h2 className="text-xl font-semibold mb-4 text-foreground">Change Email Address</h2>
                   
                   {error && (
-                    <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-lg">
+                    <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 rounded-lg">
                       {error}
                     </div>
                   )}
                   
                   {successMessage && (
-                    <div className="mb-4 p-3 bg-green-50 text-green-700 rounded-lg">
+                    <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 rounded-lg">
                       {successMessage}
                     </div>
                   )}
                   
                   <form onSubmit={handleUpdateEmail}>
                     <div className="mb-4">
-                      <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="newEmail" className="block text-sm font-medium text-foreground mb-1">
                         New Email Address
                       </label>
                       <input
@@ -135,14 +135,14 @@ export function EmailSettingsPage() {
                         id="newEmail"
                         value={newEmail}
                         onChange={(e) => setNewEmail(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Enter new email address"
                         required
                       />
                     </div>
                     
                     <div className="mb-6">
-                      <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                      <label htmlFor="password" className="block text-sm font-medium text-foreground mb-1">
                         Password
                       </label>
                       <input
@@ -150,7 +150,7 @@ export function EmailSettingsPage() {
                         id="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 bg-background text-foreground placeholder:text-muted-foreground"
                         placeholder="Enter your password to confirm"
                         required
                       />
@@ -160,7 +160,7 @@ export function EmailSettingsPage() {
                       type="submit"
                       disabled={isSubmitting}
                       className={`w-full py-3 rounded-lg text-white font-medium ${
-                        isSubmitting ? 'bg-blue-400' : 'bg-blue-600 hover:bg-blue-700'
+                        isSubmitting ? 'bg-orange-400' : 'bg-orange-600 hover:bg-orange-700'
                       }`}
                     >
                       {isSubmitting ? 'Updating...' : 'Update Email'}
@@ -168,39 +168,39 @@ export function EmailSettingsPage() {
                   </form>
                 </div>
                 
-                <div className="bg-white rounded-xl shadow-sm p-6">
-                  <h2 className="text-xl font-semibold mb-4">Email Preferences</h2>
+                <div className="bg-card rounded-xl shadow-sm p-6">
+                  <h2 className="text-xl font-semibold mb-4 text-foreground">Email Preferences</h2>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium text-gray-800">Marketing Emails</h3>
-                        <p className="text-sm text-gray-500">Receive updates about new features and promotions</p>
+                        <h3 className="font-medium text-foreground">Marketing Emails</h3>
+                        <p className="text-sm text-muted-foreground">Receive updates about new features and promotions</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" defaultChecked />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div className="w-11 h-6 bg-secondary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                       </label>
                     </div>
                     
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium text-gray-800">New Follower Notifications</h3>
-                        <p className="text-sm text-gray-500">Receive emails when someone follows you</p>
+                        <h3 className="font-medium text-foreground">New Follower Notifications</h3>
+                        <p className="text-sm text-muted-foreground">Receive emails when someone follows you</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" defaultChecked />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div className="w-11 h-6 bg-secondary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                       </label>
                     </div>
                     
                     <div className="flex items-center justify-between">
                       <div>
-                        <h3 className="font-medium text-gray-800">Comment Notifications</h3>
-                        <p className="text-sm text-gray-500">Receive emails when someone comments on your picks</p>
+                        <h3 className="font-medium text-foreground">Comment Notifications</h3>
+                        <p className="text-sm text-muted-foreground">Receive emails when someone comments on your picks</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" defaultChecked />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        <div className="w-11 h-6 bg-secondary peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
                       </label>
                     </div>
                   </div>

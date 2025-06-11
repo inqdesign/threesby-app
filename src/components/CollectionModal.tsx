@@ -5,6 +5,7 @@ import { Pick } from '../types';
 import { ImageUpload } from './ImageUpload';
 import { uploadImage, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import './CategoryFilter.css';
 
 // Define Category type locally until it's properly exported from types
 type Category = 'places' | 'products' | 'books' | 'arts' | 'design' | 'interiors' | 'fashion' | 'food' | 'music' | 'travel';
@@ -221,20 +222,20 @@ export function CollectionModal({
               leaveTo="translate-x-full"
             >
               <Dialog.Panel className={`pointer-events-auto fixed inset-y-0 ${isFullScreen ? 'inset-x-0' : 'inset-x-0 md:right-0 md:left-auto'} flex ${isFullScreen ? '' : 'md:pl-10'} transform-gpu`}>
-                <div className={`flex h-full w-full flex-col overflow-y-auto bg-white shadow-xl`}>
-                  <div className="sticky top-0 z-10 bg-white px-6 py-4 border-b border-gray-200">
+                <div className={`flex h-full w-full flex-col overflow-y-auto bg-card shadow-xl`}>
+                  <div className="sticky top-0 z-10 bg-card px-6 py-4 border-b border-border">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
                         <button
                           type="button"
                           onClick={onClose}
-                          className="px-3 py-1.5 text-[#585757] bg-[#F4F4F4] rounded-md hover:bg-gray-200 transition-colors text-sm"
+                          className="px-3 py-1.5 text-muted-foreground bg-secondary rounded-md hover:bg-secondary/80 transition-colors text-sm"
                         >
                           Cancel
                         </button>
                         <button
                           type="button"
-                          className="text-gray-600 hover:text-gray-900 transition-colors hidden md:block ml-2"
+                          className="text-muted-foreground hover:text-foreground transition-colors hidden md:block ml-2"
                           onClick={() => setIsFullScreen(!isFullScreen)}
                           aria-label={isFullScreen ? "Exit full screen" : "Enter full screen"}
                         >
@@ -250,7 +251,7 @@ export function CollectionModal({
                           type="button"
                           onClick={handleSave}
                           disabled={isSaving}
-                          className="px-3 py-1.5 bg-[#252525] text-white rounded-md hover:bg-[#111111] transition-colors disabled:opacity-50 text-sm"
+                          className="px-3 py-1.5 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 text-sm"
                         >
                           {isSaving ? 'Saving...' : 'Save'}
                         </button>
@@ -258,9 +259,9 @@ export function CollectionModal({
                     </div>
                   </div>
                   
-                  <form ref={formContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6">
+                  <form ref={formContainerRef} className="flex-1 overflow-y-auto p-6 space-y-6" data-component-name="CollectionModal">
                     {error && (
-                      <div className="p-3 bg-red-100 text-red-800 rounded-md">
+                      <div className="p-3 bg-destructive/10 text-destructive rounded-md border border-destructive/20">
                         {error}
                       </div>
                     )}
@@ -268,13 +269,13 @@ export function CollectionModal({
                     <div className="space-y-4">
                       {/* Title */}
                       <div>
-                        <label htmlFor="title" className="block text-sm font-medium text-[#585757] mb-2">
+                        <label htmlFor="title" className="block text-sm font-medium text-foreground mb-2">
                           Title
                         </label>
                         <input
                           type="text"
                           id="title"
-                          className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 p-3"
+                          className="w-full rounded-lg bg-secondary border-0 shadow-none focus:ring-0 p-3 text-foreground placeholder:text-muted-foreground"
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
                           placeholder="Collection title"
@@ -284,13 +285,13 @@ export function CollectionModal({
                       
                       {/* Description */}
                       <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-[#585757] mb-2">
+                        <label htmlFor="description" className="block text-sm font-medium text-foreground mb-2">
                           Description
                         </label>
                         <textarea
                           id="description"
                           rows={3}
-                          className="w-full rounded-lg bg-gray-100 border-0 shadow-none focus:ring-0 p-3"
+                          className="w-full rounded-lg bg-secondary border-0 shadow-none focus:ring-0 p-3 text-foreground placeholder:text-muted-foreground"
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
                           placeholder="Describe your collection"
@@ -299,10 +300,10 @@ export function CollectionModal({
                     
                       {/* Cover Image Upload */}
                       <div>
-                        <label className="block text-sm font-medium text-[#585757] mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           Cover Image
                         </label>
-                        <div className="relative w-full flex items-start justify-between bg-gray-100 p-4 rounded-lg">
+                        <div className="relative w-full flex items-start justify-between bg-secondary p-4 rounded-lg">
                           <div className="flex flex-col items-center">
                             <div className="relative w-[125px] h-[175px] rounded-lg overflow-hidden">
                               <ImageUpload
@@ -319,9 +320,9 @@ export function CollectionModal({
                           </div>
                           
                           <div className="ml-4 flex-1">
-                            <div className="text-sm text-gray-700">
-                              <p className="font-medium mb-2">Upload an image to use as the cover for your collection.</p>
-                              <ul className="list-disc pl-5 space-y-1 text-xs">
+                            <div className="text-sm text-foreground">
+                              <p className="font-medium mb-2 text-foreground">Upload an image to use as the cover for your collection.</p>
+                              <ul className="list-disc pl-5 space-y-1 text-xs text-muted-foreground">
                                 <li>Recommended size: 5:7 ratio</li>
                                 <li>Formats: PNG, JPG, GIF (up to 5MB)</li>
                                 <li>Images will be optimized automatically</li>
@@ -333,21 +334,21 @@ export function CollectionModal({
                         
                         {/* Font Color Toggle */}
                         <div className="mt-3 flex items-center flex-wrap">
-                          <label className="block text-sm font-medium text-[#585757] mr-3">
+                          <label className="block text-sm font-medium text-foreground mr-3">
                             Font Color:
                           </label>
                           <div className="flex space-x-3">
                             <button
                               type="button"
                               onClick={() => setDarkFont(true)}
-                              className={`px-3 py-1.5 rounded-md transition-colors ${darkFont ? 'bg-[#252525] text-white' : 'bg-gray-100 text-gray-700'}`}
+                              className={`px-3 py-1.5 rounded-md transition-colors ${darkFont ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}`}
                             >
                               Dark
                             </button>
                             <button
                               type="button"
                               onClick={() => setDarkFont(false)}
-                              className={`px-3 py-1.5 rounded-md transition-colors ${!darkFont ? 'bg-[#252525] text-white' : 'bg-gray-100 text-gray-700'}`}
+                              className={`px-3 py-1.5 rounded-md transition-colors ${!darkFont ? 'bg-primary text-primary-foreground' : 'bg-secondary text-foreground'}`}
                             >
                               Light
                             </button>
@@ -360,23 +361,23 @@ export function CollectionModal({
                       
                       {/* Categories */}
                       <div>
-                        <label className="block text-sm font-medium text-[#585757] mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           Categories
                         </label>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 bg-gray-100 p-3 rounded-lg">
+                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 bg-secondary p-3 rounded-lg">
                           {allCategories.map((category) => (
                             <div key={category} className="flex items-center">
                               <input
                                 id={`category-${category}`}
                                 name="categories"
                                 type="checkbox"
-                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                className="h-4 w-4 text-black rounded-full outline-none focus:ring-0 focus:ring-offset-0"
                                 checked={selectedCategories.includes(category)}
                                 onChange={() => handleCategoryToggle(category)}
                               />
                               <label
                                 htmlFor={`category-${category}`}
-                                className="ml-2 text-sm text-gray-700 capitalize"
+                                className="ml-2 text-sm text-foreground capitalize"
                               >
                                 {category}
                               </label>
@@ -387,59 +388,57 @@ export function CollectionModal({
                     
                       {/* Picks Selection */}
                       <div>
-                        <label className="block text-sm font-medium text-[#585757] mb-2">
+                        <label className="block text-sm font-medium text-foreground mb-2">
                           Select Picks (3-9)
                         </label>
-                        <p className="text-sm text-gray-500 mb-2">
+                        <p className="text-sm text-muted-foreground mb-2">
                           Selected: {selectedPicks.length}/9
                         </p>
                         
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 bg-gray-100 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 bg-secondary p-4 rounded-lg">
                           {userPicks.map((pick) => (
-                            <div 
+                            <label 
                               key={pick.id} 
                               className={`
-                                relative border rounded-lg p-3 cursor-pointer transition-all bg-white
-                                ${selectedPicks.includes(pick.id) ? 'border-black bg-gray-50' : 'border-gray-300 hover:border-gray-400'}
+                                relative border rounded-lg p-3 cursor-pointer transition-all bg-card flex items-start space-x-3
+                                ${selectedPicks.includes(pick.id) ? 'border-primary/30' : 'border-border hover:border-primary/50'}
                               `}
-                              onClick={() => handlePickToggle(pick.id)}
                             >
-                              <div className="flex items-start space-x-3">
-                                <div className="flex-shrink-0 h-16 w-16 rounded-md overflow-hidden bg-gray-100">
-                                  {pick.image_url ? (
-                                    <img 
-                                      src={pick.image_url} 
-                                      alt={pick.title} 
-                                      className="h-full w-full object-cover"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=No+Image';
-                                      }}
-                                    />
-                                  ) : (
-                                    <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500 text-xs">No Image</div>
-                                  )}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium text-gray-900 truncate">{pick.title}</p>
-                                  <p className="text-xs text-gray-500 truncate">{pick.reference}</p>
-                                  <div className="mt-1">
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 capitalize">
-                                      {pick.category}
-                                    </span>
-                                    {pick.rank > 0 && pick.rank <= 3 && (
-                                      <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-black">
-                                        Rank {pick.rank}
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                {selectedPicks.includes(pick.id) && (
-                                  <div className="absolute top-2 right-2 text-blue-600">
-                                    <Check className="h-5 w-5" />
-                                  </div>
+                              <input
+                                type="checkbox"
+                                checked={selectedPicks.includes(pick.id)}
+                                onChange={() => handlePickToggle(pick.id)}
+                                className="h-4 w-4 text-black rounded-full outline-none focus:ring-0 focus:ring-offset-0 mt-1"
+                              />
+                              <div className="flex-shrink-0 h-16 w-16 rounded-md overflow-hidden bg-secondary">
+                                {pick.image_url ? (
+                                  <img 
+                                    src={pick.image_url} 
+                                    alt={pick.title} 
+                                    className="h-full w-full object-cover"
+                                    onError={(e) => {
+                                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=No+Image';
+                                    }}
+                                  />
+                                ) : (
+                                  <div className="h-full w-full flex items-center justify-center bg-secondary text-muted-foreground text-xs">No Image</div>
                                 )}
                               </div>
-                            </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-medium text-foreground truncate">{pick.title}</p>
+                                <p className="text-xs text-muted-foreground truncate">{pick.reference}</p>
+                                <div className="mt-1">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-foreground capitalize">
+                                    {pick.category}
+                                  </span>
+                                  {pick.rank > 0 && pick.rank <= 3 && (
+                                    <span className="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-foreground">
+                                      Rank {pick.rank}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </label>
                           ))}
                         </div>
                       </div>

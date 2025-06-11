@@ -140,17 +140,17 @@ export function PreviewModal({ isOpen, onClose, profile, picks }: PreviewModalPr
             leaveTo={isMobile ? "translate-y-full" : "scale-95 opacity-0"}
           >
             <div 
-              className={`relative w-full pointer-events-auto ${isMobile ? 'h-[95vh] rounded-t-xl' : 'h-[90vh] rounded-xl'} bg-[#F4F4F4] overflow-hidden`}
+              className={`relative w-full pointer-events-auto ${isMobile ? 'h-[95vh] rounded-t-xl' : 'h-[90vh] rounded-xl'} bg-card overflow-hidden`}
               style={isMobile ? { position: 'fixed', bottom: 0, left: 0, right: 0 } : {}}
             >
               {/* Header with buttons - fixed position */}
-              <div className="sticky top-0 right-0 left-0 bg-[#F4F4F4] p-4 flex justify-end items-center z-10 border-b border-[#e0e0e0]">
+              <div className="sticky top-0 right-0 left-0 bg-card p-4 flex justify-end items-center z-10 border-b border-border">
                 {/* Close button */}
                 <Button
   onClick={onClose}
   variant="ghost"
   size="sm"
-  className="p-2 rounded-full flex items-center justify-center"
+                  className="p-2 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground"
   aria-label="Close preview"
 >
   <X className="w-5 h-5" />
