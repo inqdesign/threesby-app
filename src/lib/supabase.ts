@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from '../types/supabase';
 import { getSupabaseStorageKey } from './authUtils';
+import { env } from './env';
 
 // Helper function to compress images and convert to WebP
 async function compressImage(file: File): Promise<File | null> {
@@ -75,12 +76,8 @@ async function compressImage(file: File): Promise<File | null> {
   });
 }
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Use validated environment variables
+const { supabaseUrl, supabaseAnonKey } = env;
 
 /**
  * Supabase client with optimized configuration for robust auth persistence:

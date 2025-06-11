@@ -33,7 +33,7 @@ export function AddPick({ category, index, onClick, className, variant, ...props
     >
       {variant === 'default' && (
         <>
-          <div className="absolute top-2 right-2 px-2 py-1 bg-[#8eff65] rounded-md text-[10px] font-medium text-[#252525]">
+          <div className="absolute top-2 right-2 px-2 py-1 bg-[#8eff65] dark:bg-[#4a5d3a] rounded-md text-[10px] font-medium text-[#252525] dark:text-[#a0b998]">
             #{String(index + 1).padStart(2, '0')}
           </div>
           {category === 'places' && <Globe2 className="w-8 h-8 text-[#252525]" />}

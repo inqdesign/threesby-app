@@ -13,7 +13,7 @@ export function UserBadge({ isAdmin, isCreator, isBrand, brandImageUrl, classNam
   if (isAdmin) {
     return (
       <CheckCircle2 
-        className={`w-4 h-4 text-green-500 ${className}`} 
+        className={`w-4 h-4 text-green-500 dark:text-green-400 ${className}`} 
         aria-label="Admin verified"
       />
     );

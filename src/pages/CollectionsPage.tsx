@@ -153,7 +153,7 @@ export const CollectionsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Filter component outside main content with proper background color, padding, and sticky position */}
-      <div className="sticky top-0 z-30 bg-background p-4 md:p-8" style={{ position: 'sticky' }}>
+      <div className="sticky top-0 z-30 bg-background px-4 md:px-8 pt-4 md:pt-8 pb-2 md:pb-4" style={{ position: 'sticky' }}>
         <CategoryFilter
           title="Filter by Category"
           categories={availableCategories}
@@ -169,7 +169,7 @@ export const CollectionsPage: React.FC = () => {
       </div>
       
       {/* Main content with 1rem padding on all sides */}
-      <div className="container mx-auto p-4 md:p-8">
+      <div className="container mx-auto px-4 md:px-8 pt-2 md:pt-4 pb-4 md:pb-8">
         <div>
           {loading ? (
             // Loading state

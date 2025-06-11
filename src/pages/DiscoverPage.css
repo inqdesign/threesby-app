@@ -126,11 +126,6 @@
 }
 
 /* Custom padding for the Discover page sections */
-.discover-page-header {
-  padding: 0;
-  margin-top: 0;
-}
-
 .discover-page-content {
   padding: 0;
   margin-top: 0;
@@ -190,12 +185,7 @@
   opacity: 0;
 }
 
-/* Ensure the discover-page-header stays within the sticky container */
-.discover-page-header {
-  width: 100%;
-  padding: 0; /* Remove all padding */
-  margin: 0; /* Remove all margins */
-}
+/* Filter container styling cleaned up */
 
 /* Ensure content below the sticky header is properly positioned */
 .discover-page-content {
@@ -205,10 +195,6 @@
 }
 
 @media (min-width: 768px) {
-  .discover-page-header {
-    padding: 0;
-    margin-top: 0;
-  }
   .discover-page-content {
     padding: 0;
     margin-top: 0; /* Ensure no margin-top on larger screens */
@@ -222,7 +208,7 @@
 }
 
 /* Remove outline from search input */
-.discover-page-header input[type="text"] {
+input[type="text"] {
   outline: none !important;
   border: none !important;
   box-shadow: none !important;

@@ -189,7 +189,7 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                 <Dialog.Panel 
                   ref={dialogPanelRef}
                   tabIndex={-1}
-                  className="fixed inset-x-0 bottom-0 top-0 max-h-[100vh] bg-white shadow-xl transform transition-all overflow-y-auto modern-scrollbar focus:outline-none"
+                  className="fixed inset-x-0 bottom-0 top-0 max-h-[100vh] bg-background shadow-xl transform transition-all overflow-y-auto modern-scrollbar focus:outline-none"
                   style={{ scrollBehavior: 'smooth', paddingTop: '1rem' }}
                   onTouchStart={handleTouchStart}
                   onTouchMove={handleTouchMove}
@@ -201,7 +201,7 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                   <div className="absolute right-4 top-4 z-10">
                     <button
                       type="button"
-                      className="w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] aspect-square rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
+                      className="w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] aspect-square rounded-full flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                       onClick={onClose}
                       aria-label="Close"
                     >
@@ -212,21 +212,21 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                   <div className="px-4 pb-6 pt-4">
                     {/* Header with title and metadata */}
                     <div className="pb-3">
-                      <h1 className="text-2xl font-normal text-[#252525] leading-tight">
+                      <h1 className="text-2xl font-normal text-foreground leading-tight">
                         {pickData?.title || ''}
                       </h1>
-                      <div className="text-sm text-gray-600 pt-1">
+                      <div className="text-sm text-muted-foreground pt-1">
                         By {pickData?.reference || 'Unknown'}
                       </div>
                       
                       {/* Divider */}
-                      <div className="h-px w-full bg-gray-100 my-3"></div>
+                      <div className="h-px w-full bg-border my-3"></div>
                       
                       {/* Picked by section - In a single row */}
                       <div className="flex flex-col space-y-3">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2">
-                            <span className="text-sm uppercase text-gray-500 font-medium">Picked by</span>
+                            <span className="text-sm uppercase text-muted-foreground font-medium">Picked by</span>
                             <div className="flex items-center space-x-2">
                               {pickData?.profile?.avatar_url ? (
                                 <img 
@@ -235,12 +235,12 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                                   className="h-6 w-6 rounded-full object-cover" 
                                 />
                               ) : null}
-                              <span className="text-sm font-medium text-gray-700">
+                              <span className="text-sm font-medium text-foreground">
                                 {pickData?.profile?.full_name || 'Anonymous'}
                               </span>
                             </div>
                           </div>
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-muted-foreground">
                             {pickData ? formatDistanceToNow(
                               // Use the most recent date between updated_at and created_at
                               new Date(
@@ -255,7 +255,7 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                       </div>
                       
                       {/* Divider line between Picked by section and tags */}
-                      <div className="h-px w-full bg-gray-100 my-3"></div>
+                      <div className="h-px w-full bg-border my-3"></div>
                       
                       {/* Tags - Moved inside the container as requested */}
                       {(pickData as any)?.tags && (pickData as any).tags.length > 0 && (
@@ -290,12 +290,12 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                         </div>
                         
                         {/* Action buttons - scrolls with content */}
-                        <div className="flex items-center justify-between py-4 mb-6 border-b border-gray-100 bg-white px-0">
+                        <div className="flex items-center justify-between py-4 mb-6 border-b border-border bg-background px-0">
                           <div className="flex items-center space-x-4">
                             <button 
                               onClick={handleSave}
                               disabled={loading}
-                              className={`flex items-center space-x-1 ${saved ? 'text-red-500' : 'text-gray-600'} hover:text-gray-900 transition-colors`}
+                              className={`flex items-center space-x-1 ${saved ? 'text-red-500' : 'text-muted-foreground'} hover:text-foreground transition-colors`}
                             >
                               <Heart className={`w-5 h-5 ${saved ? 'fill-current' : ''}`} />
                               <span className="text-sm">{saved ? 'Liked' : 'Like'}</span>
@@ -303,24 +303,24 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                                 <span className="text-xs ml-1">({(pickData as any)?.favorites_count})</span>
                               )}
                             </button>
-                            <button className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 transition-colors">
+                            <button className="flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors">
                               <MessageSquare className="w-5 h-5" />
                               <span className="text-sm">Comment</span>
                             </button>
                           </div>
                           <div>
-                            <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                            <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                               Share
                             </button>
                           </div>
                         </div>
                         
-                        {/* Description */}
+                        {/* Your Story */}
                         {pickData?.description && (
                           <div className="mb-4">
-                            <h3 className="text-gray-500 uppercase text-sm font-medium font-mono">DESCRIPTION</h3>
+                            <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono">YOUR STORY</h3>
                             <div 
-                              className="text-gray-700 text-base md:text-lg leading-relaxed mt-3"
+                              className="text-foreground text-base md:text-lg leading-relaxed mt-3"
                               dangerouslySetInnerHTML={{ 
                                 __html: pickData.description.trim().startsWith('{')
                                   ? DOMPurify.sanitize((LexicalEditor as any).jsonToHtml(pickData.description))
@@ -333,9 +333,9 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                         {/* Why section */}
                         {(pickData as any)?.why && (
                           <div className="mb-4">
-                            <h3 className="text-gray-500 uppercase text-sm font-medium font-mono">WHY I PICKED THIS</h3>
+                            <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono">WHY I PICKED THIS</h3>
                             <div 
-                              className="text-gray-700 text-base md:text-lg leading-relaxed mt-3"
+                              className="text-foreground text-base md:text-lg leading-relaxed mt-3"
                               dangerouslySetInnerHTML={{ 
                                 __html: DOMPurify.sanitize((pickData as any).why) 
                               }}
@@ -365,7 +365,7 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                 <Dialog.Panel 
                   ref={dialogPanelRef}
                   tabIndex={-1}
-                  className="w-full max-w-2xl transform overflow-y-auto rounded-2xl bg-white p-8 text-left align-middle shadow-xl transition-all modern-scrollbar relative focus:outline-none"
+                  className="w-full max-w-[100rem] transform overflow-y-auto rounded-2xl bg-background p-8 text-left align-middle shadow-xl transition-all modern-scrollbar relative focus:outline-none"
                   style={{ 
                     scrollBehavior: 'smooth',
                     height: 'calc(100vh - 80px)', // 100vh minus top bar height (approx 80px)
@@ -376,7 +376,7 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                   <div className="absolute right-5 top-5 z-10">
                     <button
                       type="button"
-                      className="w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] aspect-square rounded-full flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-500 transition-colors"
+                      className="w-10 h-10 min-w-[2.5rem] min-h-[2.5rem] aspect-square rounded-full flex items-center justify-center text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                       onClick={onClose}
                       aria-label="Close"
                     >
@@ -384,92 +384,91 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                     </button>
                   </div>
                   
-                  {/* Header with title and metadata */}
-                  <div className="pb-3">
-                    <h1 className="text-2xl font-normal text-[#252525] leading-tight">
-                      {pickData?.title || ''}
-                    </h1>
-                    <div className="text-sm text-gray-600 pt-1">
-                      By {pickData?.reference || 'Unknown'}
-                    </div>
-                    
-                    {/* Divider */}
-                    <div className="h-px w-full bg-gray-100 my-3"></div>
-                    
-                    {/* Picked by section */}
-                    <div className="flex flex-col space-y-3 pt-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm uppercase text-gray-500 font-medium">Picked by</span>
-                          <div className="flex items-center space-x-2">
-                            {pickData?.profile?.avatar_url ? (
-                              <img 
-                                src={pickData.profile.avatar_url} 
-                                alt={pickData.profile.full_name || ''}
-                                className="h-6 w-6 rounded-full object-cover" 
-                              />
-                            ) : null}
-                            <span className="text-sm font-medium text-gray-700">
-                              {pickData?.profile?.full_name || 'Anonymous'}
-                            </span>
-                          </div>
+                  {/* 2-Column Layout for Desktop */}
+                  <div className="flex flex-col lg:flex-row gap-16">
+                    {/* Left Column: Title, Reference, and Cover Image */}
+                    <div className="lg:w-1/2">
+                      {/* Title and Reference */}
+                      <div className="mb-6">
+                        <h1 className="text-2xl font-normal text-foreground leading-tight mb-2">
+                          {pickData?.title || ''}
+                        </h1>
+                        <div className="text-sm text-muted-foreground">
+                          By {pickData?.reference || 'Unknown'}
                         </div>
-                        <span className="text-sm text-gray-500">
-                          {pickData ? formatDistanceToNow(
-                            // Use the most recent date between updated_at and created_at
-                            new Date(
-                              pickData.updated_at && new Date(pickData.updated_at) > new Date(pickData.created_at)
-                                ? pickData.updated_at
-                                : pickData.created_at
-                            ), 
-                            { addSuffix: true }
-                          ) : ''}
-                        </span>
                       </div>
                       
-                      {/* Divider line between Picked by section and tags */}
-                      <div className="h-px w-full bg-gray-100 my-3"></div>
-                      
-                      {/* Tags - Moved inside the container as requested */}
-                      {(pickData as any)?.tags && (pickData as any).tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                          {(pickData as any).tags.map((tag: string, index: number) => (
-                            <Tag 
-                              key={`tag-mobile-${index}`}
-                              variant="default"
-                              size="md"
-                            >
-                              {tag}
-                            </Tag>
-                          ))}
+                      {/* Cover Image */}
+                      {showContent && (
+                        <div className="rounded-lg overflow-hidden">
+                          <div className="pick-image-container-no-ratio">
+                            <PickImage
+                              src={pickData?.image_url || ''}
+                              alt={pickData?.title || ''}
+                              aspectRatio="auto"
+                              className="w-full h-auto object-cover"
+                              containerStyle={{ aspectRatio: 'auto' }}
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
-                  </div>
-                  
-                  {showContent && (
-                    <div className="flex flex-col">
-                      
-                      {/* Image */}
-                      <div className="mb-4 rounded-lg overflow-hidden">
-                        <div className="pick-image-container-no-ratio">
-                          <PickImage
-                            src={pickData?.image_url || ''}
-                            alt={pickData?.title || ''}
-                            aspectRatio="auto"
-                            className="w-full h-auto object-cover"
-                            containerStyle={{ aspectRatio: 'auto' }}
-                          />
+                    
+                    {/* Right Column: Pick by, Time, Tags, Actions, and Story */}
+                    <div className="lg:w-1/2 lg:mt-20">
+                      {/* Picked by section */}
+                      <div className="mb-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm uppercase text-muted-foreground font-medium">Picked by</span>
+                            <div className="flex items-center space-x-2">
+                              {pickData?.profile?.avatar_url ? (
+                                <img 
+                                  src={pickData.profile.avatar_url} 
+                                  alt={pickData.profile.full_name || ''}
+                                  className="h-6 w-6 rounded-full object-cover" 
+                                />
+                              ) : null}
+                              <span className="text-sm font-medium text-foreground">
+                                {pickData?.profile?.full_name || 'Anonymous'}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {pickData ? formatDistanceToNow(
+                              new Date(
+                                pickData.updated_at && new Date(pickData.updated_at) > new Date(pickData.created_at)
+                                  ? pickData.updated_at
+                                  : pickData.created_at
+                              ), 
+                              { addSuffix: true }
+                            ) : ''}
+                          </span>
                         </div>
+                        
+                        {/* Tags */}
+                        {(pickData as any)?.tags && (pickData as any).tags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-6">
+                            {(pickData as any).tags.map((tag: string, index: number) => (
+                              <Tag 
+                                key={`tag-desktop-${index}`}
+                                variant="default"
+                                size="md"
+                              >
+                                {tag}
+                              </Tag>
+                            ))}
+                          </div>
+                        )}
                       </div>
                       
-                      {/* Action buttons - scrolls with content */}
-                      <div className="flex items-center justify-between py-4 mb-6 border-b border-gray-100 bg-white px-0">
+                      {/* Action buttons */}
+                      <div className="flex items-center justify-between pb-4 mb-6 border-b border-border">
                         <div className="flex items-center space-x-4">
                           <button 
                             onClick={handleSave}
                             disabled={loading}
-                            className={`flex items-center space-x-1 ${saved ? 'text-red-500' : 'text-gray-600'} hover:text-gray-900 transition-colors`}
+                            className={`flex items-center space-x-1 ${saved ? 'text-red-500' : 'text-muted-foreground'} hover:text-foreground transition-colors`}
                           >
                             <Heart className={`w-5 h-5 ${saved ? 'fill-current' : ''}`} />
                             <span className="text-sm">{saved ? 'Liked' : 'Like'}</span>
@@ -477,47 +476,50 @@ export function PickDetailModal({ isOpen, onClose, pickData }: PickDetailModalPr
                               <span className="text-xs ml-1">({(pickData as any)?.favorites_count})</span>
                             )}
                           </button>
-                          <button className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 transition-colors">
+                          <button className="flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors">
                             <MessageSquare className="w-5 h-5" />
                             <span className="text-sm">Comment</span>
                           </button>
                         </div>
                         <div>
-                          <button className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                          <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                             Share
                           </button>
                         </div>
                       </div>
                       
-                      {/* Description */}
-                      {pickData?.description && (
-                        <div className="mb-4">
-                          <h3 className="text-gray-500 uppercase text-sm font-medium font-mono">DESCRIPTION</h3>
-                          <div 
-                            className="text-gray-700 text-base md:text-lg leading-relaxed mt-3"
-                            dangerouslySetInnerHTML={{ 
-                              __html: pickData.description.trim().startsWith('{')
-                                ? DOMPurify.sanitize((LexicalEditor as any).jsonToHtml(pickData.description))
-                                : DOMPurify.sanitize(pickData.description)
-                            }}
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Why section */}
-                      {(pickData as any)?.why && (
-                        <div className="mb-4">
-                          <h3 className="text-gray-500 uppercase text-sm font-medium font-mono">WHY I PICKED THIS</h3>
-                          <div 
-                            className="text-gray-700 text-base md:text-lg leading-relaxed mt-3"
-                            dangerouslySetInnerHTML={{ 
-                              __html: DOMPurify.sanitize((pickData as any).why) 
-                            }}
-                          />
-                        </div>
-                      )}
+                      {/* Story Content */}
+                      <div className="space-y-6">
+                        {/* Your Story */}
+                        {pickData?.description && (
+                          <div>
+                            <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono mb-3">YOUR STORY</h3>
+                            <div 
+                              className="text-foreground text-base leading-relaxed"
+                              dangerouslySetInnerHTML={{ 
+                                __html: pickData.description.trim().startsWith('{')
+                                  ? DOMPurify.sanitize((LexicalEditor as any).jsonToHtml(pickData.description))
+                                  : DOMPurify.sanitize(pickData.description)
+                              }}
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Why section */}
+                        {(pickData as any)?.why && (
+                          <div>
+                            <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono mb-3">WHY I PICKED THIS</h3>
+                            <div 
+                              className="text-foreground text-base leading-relaxed"
+                              dangerouslySetInnerHTML={{ 
+                                __html: DOMPurify.sanitize((pickData as any).why) 
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </Dialog.Panel>
               </Transition.Child>
             </div>

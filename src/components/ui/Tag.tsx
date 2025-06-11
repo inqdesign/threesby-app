@@ -21,9 +21,9 @@ export function Tag({
   const baseStyles = 'inline-flex items-center rounded-lg px-2 py-1 text-xs font-medium';
   
   const variantStyles = {
-    default: 'bg-[rgb(235,235,235)] text-gray-700',
-    outline: 'bg-transparent border border-gray-200 text-gray-700',
-    secondary: 'bg-gray-100 text-gray-700',
+    default: 'bg-[rgb(235,235,235)] dark:bg-card text-gray-700 dark:text-gray-300',
+    outline: 'bg-transparent border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-300',
+    secondary: 'bg-gray-100 dark:bg-card text-gray-700 dark:text-gray-300',
   };
 
   const sizeStyles = {

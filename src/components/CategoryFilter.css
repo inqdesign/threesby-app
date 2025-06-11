@@ -62,7 +62,6 @@
 @media (max-width: 767px) {
   [data-component-name="CategoryFilter"] {
     margin-left: 0;
-    width: calc(100% + 1rem);
-    padding-left: 1rem; /* 1rem left padding */
+    /* Removed width extension to prevent overflow issues */
   }
 }

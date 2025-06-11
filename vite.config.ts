@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
@@ -8,6 +8,18 @@ export default defineConfig({
     outDir: 'build',
     modulePreload: {
       polyfill: true
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom'],
+          'router': ['react-router-dom'],
+          'ui': ['@headlessui/react', '@radix-ui/react-tabs', 'framer-motion'],
+          'supabase': ['@supabase/supabase-js'],
+          'editor': ['lexical', 'react-quill'],
+          'utils': ['date-fns', 'clsx', 'tailwind-merge', 'dompurify']
+        }
+      }
     }
   },
   resolve: {
@@ -35,5 +47,11 @@ export default defineConfig({
       v7_startTransition: true,
       v7_relativeSplatPath: true,
     },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    globals: true,
+    css: true,
   }
 });

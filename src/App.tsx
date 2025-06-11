@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
 import './styles/mobile-fixes.css'; // Import mobile-specific CSS optimizations
 // We no longer need these icons since we removed the dropdown menu
@@ -11,38 +11,40 @@ import { useSettingsModalStore } from './store/settingsModalStore';
 import { SubNav } from './components/SubNav';
 import { ProfileEditModal } from './components/ProfileEditModal';
 import { SettingsModal } from './components/SettingsModal';
-import { DiscoverPage } from './pages/DiscoverPage';
-import { ProfilePage } from './pages/ProfilePage';
-import { AccountPage } from './pages/AccountPage';
-import { AccountSetupPage } from './pages/AccountSetupPage';
-import { SecurityPage } from './pages/SecurityPage';
-import { EmailSettingsPage } from './pages/EmailSettingsPage';
-import { TermsPage } from './pages/TermsPage';
-import { PrivacyPolicyPage } from './pages/PrivacyPolicyPage';
-import { FavoritesPage } from './pages/FavoritesPage';
-import { AdminPage } from './pages/AdminPage';
-import { InvitesPage } from './pages/admin/InvitesPage';
-import { SubmissionsPage } from './pages/admin/SubmissionsPage';
-import { ContentPage } from './pages/admin/ContentPage';
-import { UsersPage } from './pages/admin/UsersPage';
-import { SettingsPage } from './pages/admin/SettingsPage';
-import { FeaturedPicksPage } from './pages/FeaturedPicksPage';
-import { CreatorLandingPage } from './pages/CreatorLandingPage';
-import { InviteLandingPage } from './pages/InviteLandingPage';
-import { MyThreesPage } from './pages/MyThreesPage';
-import { CuratorsPage } from './pages/CuratorsPage';
-import CollectionDetailPage from './pages/CollectionDetailPage';
-import { CollectionsPage } from './pages/CollectionsPage';
-import { SearchResultsPage } from './pages/SearchResultsPage';
-import { OnboardingPage } from './pages/OnboardingPage.tsx';
-import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { BottomNav } from './components/BottomNav';
 import { MainNav } from './components/MainNav';
 import { ScrollToTop } from './components/ScrollToTop';
-// import LexicalEditorTest from './components/LexicalEditorTest'; // Component not found
 import { PickModalWrapper } from './components/PickModalWrapper';
 import { ThemeProvider } from './components/ThemeProvider';
-import { UserSettingsPage } from './pages/SettingsPage';
+// Note: ErrorBoundary is defined below
+
+// Lazy load pages for better performance
+const DiscoverPage = React.lazy(() => import('./pages/DiscoverPage').then(m => ({ default: m.DiscoverPage })));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
+const AccountPage = React.lazy(() => import('./pages/AccountPage').then(m => ({ default: m.AccountPage })));
+const AccountSetupPage = React.lazy(() => import('./pages/AccountSetupPage').then(m => ({ default: m.AccountSetupPage })));
+const SecurityPage = React.lazy(() => import('./pages/SecurityPage').then(m => ({ default: m.SecurityPage })));
+const EmailSettingsPage = React.lazy(() => import('./pages/EmailSettingsPage').then(m => ({ default: m.EmailSettingsPage })));
+const TermsPage = React.lazy(() => import('./pages/TermsPage').then(m => ({ default: m.TermsPage })));
+const PrivacyPolicyPage = React.lazy(() => import('./pages/PrivacyPolicyPage').then(m => ({ default: m.PrivacyPolicyPage })));
+const FavoritesPage = React.lazy(() => import('./pages/FavoritesPage').then(m => ({ default: m.FavoritesPage })));
+const AdminPage = React.lazy(() => import('./pages/AdminPage').then(m => ({ default: m.AdminPage })));
+const InvitesPage = React.lazy(() => import('./pages/admin/InvitesPage').then(m => ({ default: m.InvitesPage })));
+const SubmissionsPage = React.lazy(() => import('./pages/admin/SubmissionsPage').then(m => ({ default: m.SubmissionsPage })));
+const ContentPage = React.lazy(() => import('./pages/admin/ContentPage').then(m => ({ default: m.ContentPage })));
+const UsersPage = React.lazy(() => import('./pages/admin/UsersPage').then(m => ({ default: m.UsersPage })));
+const AdminSettingsPage = React.lazy(() => import('./pages/admin/SettingsPage').then(m => ({ default: m.SettingsPage })));
+const FeaturedPicksPage = React.lazy(() => import('./pages/FeaturedPicksPage').then(m => ({ default: m.FeaturedPicksPage })));
+const CreatorLandingPage = React.lazy(() => import('./pages/CreatorLandingPage').then(m => ({ default: m.CreatorLandingPage })));
+const InviteLandingPage = React.lazy(() => import('./pages/InviteLandingPage').then(m => ({ default: m.InviteLandingPage })));
+const MyThreesPage = React.lazy(() => import('./pages/MyThreesPage').then(m => ({ default: m.MyThreesPage })));
+const CuratorsPage = React.lazy(() => import('./pages/CuratorsPage').then(m => ({ default: m.CuratorsPage })));
+const CollectionDetailPage = React.lazy(() => import('./pages/CollectionDetailPage'));
+const CollectionsPage = React.lazy(() => import('./pages/CollectionsPage').then(m => ({ default: m.CollectionsPage })));
+const SearchResultsPage = React.lazy(() => import('./pages/SearchResultsPage').then(m => ({ default: m.SearchResultsPage })));
+const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
+const AuthCallbackPage = React.lazy(() => import('./pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })));
+const UserSettingsPage = React.lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.UserSettingsPage })));
 
 import type { Pick } from './types';
 
@@ -484,7 +486,12 @@ return (
         {subNavContent}
       </div>
       <div className="w-full">
-        <Routes>
+        <Suspense fallback={
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        }>
+          <Routes>
           <Route path="/" element={<Navigate to="/discover" replace />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/curators" element={<CuratorsPage />} />
@@ -557,10 +564,11 @@ return (
           <Route path="/admin/submissions" element={<ProtectedRoute isAllowed={!!user && isAdmin}><SubmissionsPage /></ProtectedRoute>} />
           <Route path="/admin/content" element={<ProtectedRoute isAllowed={!!user && isAdmin}><ContentPage /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute isAllowed={!!user && isAdmin}><UsersPage /></ProtectedRoute>} />
-          <Route path="/admin/settings" element={<ProtectedRoute isAllowed={!!user && isAdmin}><SettingsPage /></ProtectedRoute>} />
+          <Route path="/admin/settings" element={<ProtectedRoute isAllowed={!!user && isAdmin}><AdminSettingsPage /></ProtectedRoute>} />
           {/* Removed LexicalEditorTest route as component is not available */}
           <Route path="*" element={<Navigate to="/discover" replace />} />
         </Routes>
+        </Suspense>
       </div>
       <BottomNav 
         setShowLoginModal={setShowLoginModal}

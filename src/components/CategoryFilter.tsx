@@ -1,4 +1,5 @@
 // CategoryFilter component
+import React from 'react';
 import './CategoryFilter.css';
 import '../pages/HideScrollbar.css';
 
@@ -18,7 +19,7 @@ interface CategoryFilterProps {
   pageType?: 'discover' | 'collections';
 }
 
-export function CategoryFilter({
+export const CategoryFilter = React.memo(function CategoryFilter({
   title,
   headerText,
   categories,
@@ -113,4 +114,4 @@ export function CategoryFilter({
       </div>
     </div>
   );
-}
+});

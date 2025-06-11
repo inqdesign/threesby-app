@@ -432,13 +432,13 @@ function AccountSettings() {
         
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600">Email:</span>
-            <span className="font-medium">{user?.email}</span>
+            <span className="text-gray-600 dark:text-gray-400">Email:</span>
+            <span className="font-medium text-foreground">{user?.email}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-600">Account Status:</span>
+            <span className="text-gray-600 dark:text-gray-400">Account Status:</span>
             <span className={`px-2 py-1 rounded-full text-xs ${
-              user?.email_confirmed_at ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+              user?.email_confirmed_at ? 'bg-green-100 dark:bg-card text-green-800 dark:text-green-400' : 'bg-yellow-100 dark:bg-card text-yellow-800 dark:text-yellow-400'
             }`}>
               {user?.email_confirmed_at ? 'Verified' : 'Unverified'}
             </span>

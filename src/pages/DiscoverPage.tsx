@@ -235,47 +235,40 @@ export function DiscoverPage({}: DiscoverPageProps) {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Sticky Header Container - This will stay fixed at the top while scrolling */}
-      <div 
-        className={`filter-container ${isSticky ? 'is-sticky' : ''} sticky top-0 z-30 bg-background p-4 md:p-8`}
-      >
-        <div className="discover-page-header">
-          {/* Header is now handled by the CategoryFilter component */}
-          
-          {/* Search button is shown on both mobile and desktop */}
-          
-          {/* Mobile Search Input - Expandable */}
-          {showSearchInput && (
-            <div className="relative mb-4 md:hidden">
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search picks..."
-                className="w-full pl-10 pr-4 py-2.5 bg-input text-foreground rounded-full text-xs md:text-sm outline-none border-0"
-                autoFocus
-                style={{ fontSize: '16px' }} /* Prevents zoom on iOS */
-              />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            </div>
-          )}
-          <CategoryFilter
-            categories={['books', 'places', 'products'] as FilterCategory[]}
-            activeCategories={selectedCategories as FilterCategory[]}
-            onCategoryChange={(categories) => {
-              setSelectedCategories(categories as Category[]);
-              setShowAll(categories.length === 0);
-            }}
-            showSearch={true}
-            headerText="What's people care today."
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            pageType="discover"
-          />
-        </div>
+      {/* Filter component outside main content with proper background color, padding, and sticky position */}
+      <div className="sticky top-0 z-30 bg-background px-4 md:px-8 pt-4 md:pt-8 pb-2 md:pb-4">
+        {/* Mobile Search Input - Expandable */}
+        {showSearchInput && (
+          <div className="relative mb-4 md:hidden">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search picks..."
+              className="w-full pl-10 pr-4 py-2.5 bg-input text-foreground rounded-full text-xs md:text-sm outline-none border-0"
+              autoFocus
+              style={{ fontSize: '16px' }} /* Prevents zoom on iOS */
+            />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          </div>
+        )}
+        <CategoryFilter
+          categories={['books', 'places', 'products'] as FilterCategory[]}
+          activeCategories={selectedCategories as FilterCategory[]}
+          onCategoryChange={(categories) => {
+            setSelectedCategories(categories as Category[]);
+            setShowAll(categories.length === 0);
+          }}
+          showSearch={true}
+          headerText="What's people care today."
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          pageType="discover"
+        />
       </div>
       
-      <div className="w-full mx-auto p-4 md:p-8">
+      {/* Main content with 1rem padding on all sides */}
+      <div className="container mx-auto px-4 md:px-8 pt-2 md:pt-4 pb-4 md:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
           {/* Featured content is now integrated directly into the feed */}
           

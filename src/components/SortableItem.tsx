@@ -152,8 +152,8 @@ export const SortableItem = React.memo(({
       
       {/* Badge for top 3 picks - only shown for non-active users */}
       {pick && [1, 2, 3].includes(pick.rank) && !isActive && (
-        <div className="absolute top-2 right-2 z-30 bg-[#a1ff7a] w-6 h-6 rounded-full flex items-center justify-center">
-          <Check className="w-3 h-3 text-black" />
+                        <div className="absolute top-2 right-2 z-30 bg-[#a1ff7a] w-6 h-6 rounded-full flex items-center justify-center">
+                      <Check className="w-3 h-3 text-black" />
         </div>
       )}
       
