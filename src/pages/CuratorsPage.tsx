@@ -226,7 +226,7 @@ export function CuratorsPage() {
       
       .sticky-profile {
         position: sticky;
-        top: 110px;
+        top: 100px;
         align-self: flex-start;
         z-index: 10;
         padding: 1rem;
@@ -256,19 +256,62 @@ export function CuratorsPage() {
 
   if (curatorsLoading) {
     return (
-      <div className="min-h-screen bg-background p-8">
-        <div className="w-full mx-auto">
+      <div className="min-h-screen bg-background pb-24">
+        <div className="w-full mx-auto p-4 md:p-8">
           <div ref={loadingContainerRef} className="flex flex-col md:flex-row gap-[60px] sticky-container">
-            {/* Profile Section Skeleton */}
+            {/* Profile Section Skeleton - Matching the actual ProfileSection structure */}
             <div className="w-full md:w-1/4">
-              <div className="px-4 md:px-0 py-4 md:py-0">
-                <div className="space-y-4">
-                  <Skeleton className="h-32 w-32 rounded-full" />
-                  <div className="space-y-2">
-                    <Skeleton className="h-6 w-48" />
-                    <Skeleton className="h-4 w-32" />
+              <div className="p-4 flex flex-col items-start w-full">
+                {/* Header with avatar and name */}
+                <div className="flex items-center gap-3 w-full">
+                  <Skeleton className="w-10 h-10 rounded-full" />
+                  <div>
+                    <Skeleton className="h-3 w-24 mb-1" /> {/* Title */}
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-4 w-32" /> {/* Name */}
+                    </div>
                   </div>
-                  <Skeleton className="h-20 w-full" />
+                </div>
+                
+                {/* Follow stats and button */}
+                <div className="w-full">
+                  <div className="h-px w-full bg-border my-3"></div>
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4" /> {/* Follower count */}
+                        <span className="text-gray-500">Followers</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-4 w-4" /> {/* Following count */}
+                        <span className="text-gray-500">Following</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Bio section */}
+                <div className="w-full">
+                  <div className="h-px w-full bg-border my-3"></div>
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-4/5 mb-2" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                
+                {/* Location section */}
+                <div className="w-full">
+                  <div className="h-px w-full bg-border my-3"></div>
+                  <Skeleton className="h-4 w-28" />
+                </div>
+                
+                {/* Interests section */}
+                <div className="w-full">
+                  <div className="h-px w-full bg-border my-3"></div>
+                  <div className="flex flex-wrap gap-2">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-6 w-14" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -277,7 +320,7 @@ export function CuratorsPage() {
             <div className="flex-1">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {[...Array(9)].map((_, i) => (
-                                      <div key={i} className="aspect-square bg-muted rounded"></div>
+                  <div key={i} className="aspect-square bg-muted rounded"></div>
                 ))}
               </div>
             </div>
