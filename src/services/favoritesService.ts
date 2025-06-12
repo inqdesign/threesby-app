@@ -1,11 +1,11 @@
 import { supabase } from '../lib/supabase';
 import type { Pick as PickType } from '../types';
 
-// Temporary local storage for favorites until database is set up
+// Temporary local storage for favorites as fallback
 const localFavorites = new Map<string, Set<string>>();
 
-// Always use local storage for favorites until the database table is properly set up
-let useLocalStorage = true;
+// Try database first, fallback to local storage only if database fails
+let useLocalStorage = false;
 
 /**
  * Add a pick to the user's favorites
@@ -38,18 +38,21 @@ export const savePick = async (pickId: string): Promise<any> => {
       .select();
       
     if (error) {
-      if (error.code === '42P01') { // Table doesn't exist error
+      if (error.code === '42P01' || error.code === 'PGRST204') { // Table doesn't exist or permission error
+        console.warn('Favorites table not available, using local storage fallback');
         useLocalStorage = true;
         return await savePick(pickId);
       }
-      console.error('Error saving pick:', error);
+      console.error('Error saving pick to database:', error);
       throw error;
     }
     
+    console.log('Successfully saved pick to database:', data);
     return data;
   } catch (error) {
     console.error('Error saving pick:', error);
     // Fallback to local storage
+    console.warn('Falling back to local storage for favorites');
     useLocalStorage = true;
     return await savePick(pickId);
   }
@@ -84,18 +87,21 @@ export const unsavePick = async (pickId: string): Promise<any> => {
       .select();
       
     if (error) {
-      if (error.code === '42P01') { // Table doesn't exist error
+      if (error.code === '42P01' || error.code === 'PGRST204') { // Table doesn't exist or permission error
+        console.warn('Favorites table not available, using local storage fallback');
         useLocalStorage = true;
         return await unsavePick(pickId);
       }
-      console.error('Error unsaving pick:', error);
+      console.error('Error unsaving pick from database:', error);
       throw error;
     }
     
+    console.log('Successfully removed pick from database:', data);
     return data;
   } catch (error) {
     console.error('Error unsaving pick:', error);
     // Fallback to local storage
+    console.warn('Falling back to local storage for favorites');
     useLocalStorage = true;
     return await unsavePick(pickId);
   }
@@ -126,17 +132,16 @@ export const isPickSaved = async (pickId: string): Promise<boolean> => {
         user_id: user.user.id,
         pick_id: pickId
       })
-      .single();
+      .maybeSingle();
       
     if (error) {
-      if (error.code === '42P01') { // Table doesn't exist error
+      if (error.code === '42P01' || error.code === 'PGRST204') { // Table doesn't exist or permission error
+        console.warn('Favorites table not available, using local storage fallback');
         useLocalStorage = true;
         return await isPickSaved(pickId);
       }
       
-      if (error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
-        console.error('Error checking if pick is saved:', error);
-      }
+      console.error('Error checking if pick is saved in database:', error);
       return false;
     }
     
@@ -144,6 +149,7 @@ export const isPickSaved = async (pickId: string): Promise<boolean> => {
   } catch (error) {
     console.error('Error checking if pick is saved:', error);
     // Fallback to local storage
+    console.warn('Falling back to local storage for favorites check');
     useLocalStorage = true;
     return await isPickSaved(pickId);
   }

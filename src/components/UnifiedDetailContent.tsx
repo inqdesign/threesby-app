@@ -167,24 +167,41 @@ export function UnifiedDetailContent({
       return;
     }
 
+    // Optimistic UI update - immediately update the visual state
+    const wasLiked = saved;
+    setSaved(!saved);
     setLoading(true);
+    
+    // Update the favorites count optimistically
+    const pickWithCount = pickData as any;
+    const originalCount = pickWithCount.favorites_count || 0;
+    if (pickWithCount.favorites_count !== undefined) {
+      pickWithCount.favorites_count = wasLiked ? 
+        Math.max(0, originalCount - 1) : 
+        originalCount + 1;
+    }
+
     try {
-      if (saved) {
+      if (wasLiked) {
         await unsavePick(pickData.id);
+        console.log('Successfully unliked pick:', pickData.id);
       } else {
         await savePick(pickData.id);
+        console.log('Successfully liked pick:', pickData.id);
       }
-      setSaved(!saved);
       
-      // Update the favorites count in the UI
-      const pickWithCount = pickData as any;
-      if (pickWithCount.favorites_count !== undefined) {
-        pickWithCount.favorites_count = saved ? 
-          Math.max(0, pickWithCount.favorites_count - 1) : 
-          pickWithCount.favorites_count + 1;
-      }
+      // Dispatch a custom event to notify other components about the like change
+      window.dispatchEvent(new CustomEvent('pickLikeChanged', { 
+        detail: { pickId: pickData.id, isLiked: !wasLiked } 
+      }));
+      
     } catch (error) {
       console.error('Error updating save status:', error);
+      // Revert optimistic updates on error
+      setSaved(wasLiked);
+      if (pickWithCount.favorites_count !== undefined) {
+        pickWithCount.favorites_count = originalCount;
+      }
     } finally {
       setLoading(false);
     }
