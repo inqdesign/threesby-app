@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Pick } from '../types';
 import { Heart } from 'lucide-react';
 
@@ -18,6 +19,7 @@ interface FeaturedPickCardProps {
 }
 
 export function FeaturedPickCard({ pick, onClick }: FeaturedPickCardProps) {
+  const navigate = useNavigate();
   
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -26,14 +28,12 @@ export function FeaturedPickCard({ pick, onClick }: FeaturedPickCardProps) {
     if (onClick) {
       onClick();
     } else {
-      // Default behavior - open modal
-      const currentPosition = window.scrollY;
-      localStorage.setItem('discover_scroll_position', currentPosition.toString());
-      
-      const event = new CustomEvent('openPickModal', {
-        detail: { pickId: pick.id }
-      });
-      window.dispatchEvent(event);
+      // Navigate to the unified detail page
+              // Use the modal system instead of navigation to prevent page reload
+        const event = new CustomEvent('openPickModal', {
+          detail: { pickId: pick.id }
+        });
+        window.dispatchEvent(event);
     }
   };
 

@@ -202,6 +202,8 @@ export function CollectionDetailPage() {
         console.error('Error caching collection data:', e);
       }
       
+
+      
     } catch (error) {
       console.error('Error fetching fresh collection details:', error);
     }
@@ -273,6 +275,7 @@ export function CollectionDetailPage() {
         
         {/* Collection cards - horizontal scrolling */}
         <div className="px-4 py-2 overflow-x-auto hide-scrollbar pointer-events-auto" id="mobile-collection-cards">
+
           <div className="flex flex-nowrap">
             {curatorCollections.map((curatorCollection, index, array) => (
               <div 
@@ -281,7 +284,7 @@ export function CollectionDetailPage() {
               >
                 <div onClick={(e) => {
                   e.preventDefault();
-                  window.history.pushState({}, '', `/collections/${curatorCollection.id}`);
+                  window.history.pushState({}, '', `/collection/${curatorCollection.id}`);
                   fetchCollection(curatorCollection.id);
                 }}>
                   <CollectionCard 
@@ -444,6 +447,7 @@ export function CollectionDetailPage() {
             
             {/* Second column - Collection cards */}
             <div className="w-1/6 flex flex-col mb-0 pointer-events-auto">
+
               <div className="flex overflow-y-auto overflow-x-hidden" id="desktop-collection-cards">
                 <div className="flex flex-col">
                   {curatorCollections.map((curatorCollection, index) => (
@@ -453,7 +457,7 @@ export function CollectionDetailPage() {
                     >
                       <div onClick={(e) => {
                         e.preventDefault();
-                        window.history.pushState({}, '', `/collections/${curatorCollection.id}`);
+                        window.history.pushState({}, '', `/collection/${curatorCollection.id}`);
                         fetchCollection(curatorCollection.id);
                       }}>
                         <CollectionCard 
@@ -548,8 +552,7 @@ export function CollectionDetailPage() {
                             key={pick.id} 
                             className="aspect-square bg-muted rounded overflow-hidden cursor-pointer" 
                             onClick={() => {
-                              // Instead of navigating, dispatch a custom event to open the modal
-                              // This keeps the current page visible in the background
+                              // Use the modal system instead of navigation to prevent page reload
                               const event = new CustomEvent('openPickModal', {
                                 detail: { pickId: pick.id }
                               });

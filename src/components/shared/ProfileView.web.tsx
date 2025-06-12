@@ -202,8 +202,6 @@ export function ProfileView() {
                     key={pick.id}
                     pick={pick}
                     variant="Pick"
-                    contentLinkTo={`/picks/${pick.id}`}
-                    contentLinkState={{ source: 'profile', profileName: profile?.full_name || '' }}
                   />
                 ))}
               </div>
@@ -313,9 +311,13 @@ export function ProfileView() {
                 <div 
                   key={pick.id} 
                   className="flex items-center gap-4 p-3 border-b border-gray-200"
-                  onClick={() => navigate(`/picks/${pick.id}`, { 
-                    state: { source: 'profile', profileName: profile?.full_name || '' } 
-                  })}
+                  onClick={() => {
+                    // Use the modal system instead of navigation to prevent page reload
+                    const event = new CustomEvent('openPickModal', {
+                      detail: { pickId: pick.id }
+                    });
+                    window.dispatchEvent(event);
+                  }}
                 >
                   <img 
                     src={pick.image_url || '/default-pick.png'} 

@@ -388,7 +388,13 @@ export function SearchResultsPage() {
                              <div 
                                key={collection.id} 
                                className="bg-card rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                               onClick={() => navigate(`/collections/${collection.id}`)}
+                               onClick={() => {
+                        // Use the modal system instead of navigation to prevent page reload
+                        const event = new CustomEvent('openCollectionModal', {
+                          detail: { collectionId: collection.id }
+                        });
+                        window.dispatchEvent(event);
+                      }}
                              >
                               <div className="p-4">
                                                                  <h3 className="font-semibold text-lg mb-2 overflow-hidden" style={{

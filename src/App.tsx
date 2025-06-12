@@ -14,7 +14,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { BottomNav } from './components/BottomNav';
 import { MainNav } from './components/MainNav';
 import { ScrollToTop } from './components/ScrollToTop';
-import { PickModalWrapper } from './components/PickModalWrapper';
+import { UnifiedModalWrapper } from './components/UnifiedModalWrapper';
 import { ThemeProvider } from './components/ThemeProvider';
 // Note: ErrorBoundary is defined below
 
@@ -40,6 +40,7 @@ const InviteLandingPage = React.lazy(() => import('./pages/InviteLandingPage').t
 const MyThreesPage = React.lazy(() => import('./pages/MyThreesPage').then(m => ({ default: m.MyThreesPage })));
 const CuratorsPage = React.lazy(() => import('./pages/CuratorsPage').then(m => ({ default: m.CuratorsPage })));
 const CollectionDetailPage = React.lazy(() => import('./pages/CollectionDetailPage'));
+const UnifiedDetailPage = React.lazy(() => import('./pages/UnifiedDetailPage').then(m => ({ default: m.UnifiedDetailPage })));
 const CollectionsPage = React.lazy(() => import('./pages/CollectionsPage').then(m => ({ default: m.CollectionsPage })));
 const SearchResultsPage = React.lazy(() => import('./pages/SearchResultsPage').then(m => ({ default: m.SearchResultsPage })));
 const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
@@ -467,7 +468,7 @@ return (
 return (
   <ErrorBoundary>
     <ThemeProvider>
-      <PickModalWrapper>
+      <UnifiedModalWrapper>
       <div className="min-h-screen bg-background text-foreground">
       <ScrollToTop />
       <header
@@ -495,8 +496,12 @@ return (
           <Route path="/" element={<Navigate to="/discover" replace />} />
           <Route path="/discover" element={<DiscoverPage />} />
           <Route path="/curators" element={<CuratorsPage />} />
-          <Route path="/collections" element={<CollectionsPage />} />
-          <Route path="/collections/:id" element={<CollectionDetailPage />} />
+                          <Route path="/collections" element={<CollectionsPage />} />
+          {/* Unified detail pages for both picks and collections */}
+          <Route path="/pick/:id" element={<UnifiedDetailPage />} />
+          <Route path="/collection/:id" element={<UnifiedDetailPage />} />
+          {/* Legacy collection route - redirect to new format */}
+          <Route path="/collections/:id" element={<UnifiedDetailPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/creator" element={<CreatorLandingPage />} />
           <Route path="/onboarding" element={<OnboardingPage />} />\n          <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -556,7 +561,7 @@ return (
                 onDeletePick={handleDeletePick}
               />
             </ProtectedRoute>} />
-          <Route path="/picks/:id" element={null} />
+          <Route path="/picks/:id" element={<UnifiedDetailPage />} />
           <Route path="/favorites" element={<ProtectedRoute isAllowed={!!user}><FavoritesPage /></ProtectedRoute>} />
           <Route path="/featured" element={<FeaturedPicksPage />} />
           <Route path="/admin" element={<ProtectedRoute isAllowed={!!user && isAdmin}><AdminPage /></ProtectedRoute>} />
@@ -574,7 +579,7 @@ return (
         setShowLoginModal={setShowLoginModal}
       />
     </div>
-    </PickModalWrapper>
+    </UnifiedModalWrapper>
     {/* Auth modals */}
       <AuthModal
       isOpen={showLoginModal}

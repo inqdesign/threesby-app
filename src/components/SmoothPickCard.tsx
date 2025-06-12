@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PickCard } from './PickCard';
 import type { Pick } from '../types';
 
@@ -23,21 +24,20 @@ interface SmoothPickCardProps {
  * This ensures proper sharing capabilities while maintaining a modal experience
  */
 export function SmoothPickCard({ pick, variant = 'feed', display = 'desktop' }: SmoothPickCardProps) {
+  const navigate = useNavigate();
+  
   // Handle click on the card
   const handleClick = (e: React.MouseEvent) => {
     // Prevent default navigation behavior
     e.preventDefault();
     e.stopPropagation();
     
-    // Save current scroll position for when modal is closed
-    const currentPosition = window.scrollY;
-    localStorage.setItem('discover_scroll_position', currentPosition.toString());
-    
-    // Dispatch a custom event to open the modal
-    const event = new CustomEvent('openPickModal', {
-      detail: { pickId: pick.id }
-    });
-    window.dispatchEvent(event);
+    // Navigate to the unified detail page
+            // Use the modal system instead of navigation to prevent page reload
+        const event = new CustomEvent('openPickModal', {
+          detail: { pickId: pick.id }
+        });
+        window.dispatchEvent(event);
   };
 
   return (

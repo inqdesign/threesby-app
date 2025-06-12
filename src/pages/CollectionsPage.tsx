@@ -223,7 +223,13 @@ export const CollectionsPage: React.FC = () => {
                             <div 
                               key={collection.id} 
                               className="collection-card cursor-pointer"
-                              onClick={() => navigate(`/collections/${collection.id}`)}
+                              onClick={() => {
+                  // Use the modal system instead of navigation to prevent page reload
+                  const event = new CustomEvent('openCollectionModal', {
+                    detail: { collectionId: collection.id }
+                  });
+                  window.dispatchEvent(event);
+                }}
                             >
                               <CollectionCard 
                                 collection={collection} 

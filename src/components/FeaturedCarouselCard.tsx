@@ -23,15 +23,12 @@ export function FeaturedCarouselCard({ type, title, items, className = '' }: Fea
   };
 
   const handlePickClick = (pick: Pick) => {
-    // Save current scroll position for when modal is closed
-    const currentPosition = window.scrollY;
-    localStorage.setItem('discover_scroll_position', currentPosition.toString());
-    
-    // Dispatch a custom event to open the modal
-    const event = new CustomEvent('openPickModal', {
-      detail: { pickId: pick.id }
-    });
-    window.dispatchEvent(event);
+    // Navigate to the unified detail page
+            // Use the modal system instead of navigation to prevent page reload
+        const event = new CustomEvent('openPickModal', {
+          detail: { pickId: pick.id }
+        });
+        window.dispatchEvent(event);
   };
 
   const handleCuratorClick = (curator: Profile) => {

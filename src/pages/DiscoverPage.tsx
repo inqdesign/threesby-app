@@ -198,7 +198,6 @@ export function DiscoverPage({}: DiscoverPageProps) {
     fetchWithRetry();
   }, [location.state, fetchFeedPicks]);
 
-  // Always fetch feed picks on component mount
   useEffect(() => {
     console.log('DiscoverPage: Fetching feed picks');
     fetchFeedPicks();
@@ -232,6 +231,8 @@ export function DiscoverPage({}: DiscoverPageProps) {
       const dateB = new Date(b.updated_at || b.created_at);
       return dateB.getTime() - dateA.getTime(); // Most recent first
     }) : [];
+
+
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -278,109 +279,110 @@ export function DiscoverPage({}: DiscoverPageProps) {
             {/* Feed Content */}
             <div className="discover-page-content" style={{ marginTop: '0' }}>
               {feedLoading ? (
-                <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-12">
-                  {/* Featured Picks Skeleton */}
-                  <div className="space-y-4 pick-card-container overflow-hidden">
-                    <div className="w-full aspect-square bg-muted animate-pulse" />
-                    <div className="py-4 px-3 space-y-2">
-                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
-                      <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
-                    </div>
-                  </div>
-                  
-                  {/* Featured Curators Skeleton */}
-                  <div className="space-y-4 pick-card-container overflow-hidden">
-                    <div className="w-full aspect-square bg-muted animate-pulse" />
-                    <div className="py-4 px-3 space-y-2">
-                      <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
-                      <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
-                    </div>
-                  </div>
-                  
-                  {/* Regular feed picks skeletons */}
-                  {[...Array(10)].map((_, i) => (
-                    <div key={i} className="space-y-4 pick-card-container overflow-hidden">
+                  <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-12">
+                    {/* Featured Picks Skeleton */}
+                    <div className="space-y-4 pick-card-container overflow-hidden">
                       <div className="w-full aspect-square bg-muted animate-pulse" />
                       <div className="py-4 px-3 space-y-2">
                         <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
                         <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
                       </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                {/* Featured content row for mobile - 2 columns */}
-                <div className="w-full grid grid-cols-2 gap-4 mb-6 sm:hidden">
-                  {/* Featured Picks */}
-                  <div className="relative">
-                    <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
-                      <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', padding: '4px 8px' }}>OUR THREES</span>
+                    
+                    {/* Featured Curators Skeleton */}
+                    <div className="space-y-4 pick-card-container overflow-hidden">
+                      <div className="w-full aspect-square bg-muted animate-pulse" />
+                      <div className="py-4 px-3 space-y-2">
+                        <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                        <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
+                      </div>
                     </div>
-                    <FeaturedContent 
-                      type="threes" 
-                      title="OUR THREES" 
-                      key="featured-picks-mobile"
-                      className="featured-mobile"
-                    />
+                    
+                    {/* Regular feed picks skeletons */}
+                    {[...Array(10)].map((_, i) => (
+                      <div key={i} className="space-y-4 pick-card-container overflow-hidden">
+                        <div className="w-full aspect-square bg-muted animate-pulse" />
+                        <div className="py-4 px-3 space-y-2">
+                          <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
+                          <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                  {/* Featured content row for mobile - 2 columns */}
+                  <div className="w-full grid grid-cols-2 gap-4 mb-6 sm:hidden">
+                    {/* Featured Picks */}
+                    <div className="relative">
+                      <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
+                        <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', padding: '4px 8px' }}>OUR THREES</span>
+                      </div>
+                      <FeaturedContent 
+                        type="threes" 
+                        title="OUR THREES" 
+                        key="featured-picks-mobile"
+                        className="featured-mobile"
+                      />
+                    </div>
+                    
+                    {/* Featured Curators */}
+                    <div className="relative">
+                      <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
+                        <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', padding: '4px 8px' }}>CURATORS</span>
+                      </div>
+                      <FeaturedContent 
+                        type="curators" 
+                        title="THREE CURATORS" 
+                        key="featured-curators-mobile"
+                        className="featured-mobile"
+                      />
+                    </div>
                   </div>
                   
-                  {/* Featured Curators */}
-                  <div className="relative">
-                    <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
-                      <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '10px', padding: '4px 8px' }}>CURATORS</span>
+                  {/* Main feed grid - 2 columns on mobile */}
+                  <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6 md:gap-12" ref={feedContainerRef}>
+                    {/* Featured Picks - Only visible on tablet and above */}
+                    <div className="relative hidden sm:block">
+                      <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
+                        <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', padding: '5px 10px' }}>OUR THREES</span>
+                        <div id="threes-pagination" className="flex space-x-1"></div>
+                      </div>
+                      <FeaturedContent 
+                        type="threes" 
+                        title="OUR THREES" 
+                        key="featured-picks-integrated"
+                        className="featured-integrated"
+                      />
                     </div>
-                    <FeaturedContent 
-                      type="curators" 
-                      title="THREE CURATORS" 
-                      key="featured-curators-mobile"
-                      className="featured-mobile"
-                    />
-                  </div>
-                </div>
-                
-                {/* Main feed grid - 2 columns on mobile */}
-                <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6 md:gap-12" ref={feedContainerRef}>
-                  {/* Featured Picks - Only visible on tablet and above */}
-                  <div className="relative hidden sm:block">
-                    <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
-                      <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', padding: '5px 10px' }}>OUR THREES</span>
-                      <div id="threes-pagination" className="flex space-x-1"></div>
+                    
+                    {/* Featured Curators - Only visible on tablet and above */}
+                    <div className="relative hidden sm:block">
+                      <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
+                        <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', padding: '5px 10px' }}>CURATORS</span>
+                        <div id="curators-pagination" className="flex space-x-1"></div>
+                      </div>
+                      <FeaturedContent 
+                        type="curators" 
+                        title="THREE CURATORS" 
+                        key="featured-curators-integrated"
+                        className="featured-integrated"
+                      />
                     </div>
-                    <FeaturedContent 
-                      type="threes" 
-                      title="OUR THREES" 
-                      key="featured-picks-integrated"
-                      className="featured-integrated"
-                    />
+                    
+                    {/* Regular feed picks */}
+                    {filteredPicks.map((pick) => (
+                      <SmoothPickCard
+                        key={pick.id}
+                        pick={pick}
+                        variant="feed"
+                        display="desktop"
+                      />
+                    ))}
                   </div>
-                  
-                  {/* Featured Curators - Only visible on tablet and above */}
-                  <div className="relative hidden sm:block">
-                    <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
-                      <span className="bg-[#ADFF8B] text-[#262626] text-xs font-mono px-2 py-1" style={{ fontFamily: 'Geist Mono, monospace', fontSize: '12px', padding: '5px 10px' }}>CURATORS</span>
-                      <div id="curators-pagination" className="flex space-x-1"></div>
-                    </div>
-                    <FeaturedContent 
-                      type="curators" 
-                      title="THREE CURATORS" 
-                      key="featured-curators-integrated"
-                      className="featured-integrated"
-                    />
-                  </div>
-                  
-                  {/* Regular feed picks */}
-                  {filteredPicks.map((pick) => (
-                    <SmoothPickCard
-                      key={pick.id}
-                      pick={pick}
-                      variant="feed"
-                      display="desktop"
-                    />
-                  ))}
-                </div>
-                </>
-              )}
+                  </>
+                )
+              }
             </div>
           </div>
 

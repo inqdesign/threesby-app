@@ -173,7 +173,7 @@ export function ProfileSection({ profile, isOwnProfile = false, onEditProfile }:
           <div className="h-px w-full bg-border my-3"></div>
           <div className="flex flex-wrap gap-2">
             {interests.map((interest: string, index: number) => (
-              <Tag key={index}>
+              <Tag key={index} className="font-mono">
                 {interest}
               </Tag>
             ))}
@@ -236,7 +236,7 @@ export function ProfileSection({ profile, isOwnProfile = false, onEditProfile }:
           <div className="h-px w-full bg-[rgb(235,235,235)] my-3"></div>
           <div className="flex gap-2 flex-wrap">
             {(profile as any).tags.map((tag: string) => (
-              <Tag key={tag} variant="secondary">
+              <Tag key={tag} variant="secondary" className="font-mono">
                 {tag}
               </Tag>
             ))}

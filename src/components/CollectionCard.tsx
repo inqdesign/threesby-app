@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+
 import { useState, useEffect, memo } from 'react';
 
 // Define Collection type locally until it's properly exported from types
@@ -97,12 +97,20 @@ export const CollectionCard = memo(function CollectionCard({
   
   // Return the card with or without the Link wrapper based on the linkWrapper prop
   return linkWrapper ? (
-    <Link 
-      to={`/collections/${collection.id}`}
-      className="block w-full group"
+    <div 
+      className="block w-full group cursor-pointer"
+      onClick={() => {
+        // Use the modal system instead of navigation to prevent page reload
+        console.log('🚀 DISPATCHING openCollectionModal EVENT for ID:', collection.id);
+        const event = new CustomEvent('openCollectionModal', {
+          detail: { collectionId: collection.id }
+        });
+        window.dispatchEvent(event);
+        console.log('🚀 EVENT DISPATCHED');
+      }}
     >
       {cardContent}
-    </Link>
+    </div>
   ) : (
     cardContent
   );

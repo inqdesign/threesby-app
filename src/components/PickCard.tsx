@@ -1,6 +1,6 @@
 import React, { useState, useCallback, memo } from 'react';
 import { Heart, Check } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import './LazyImage.css';
 import { useAuth } from '../hooks/useAuth';
 import { UserBadge } from './UserBadge';
@@ -83,9 +83,8 @@ const PickCardInternal = memo(
     contentLinkState,
     isArchived = false,
     isActive = false,
-    navigate,
     ...otherProps
-  }: PickCardProps & { navigate?: any }) => {
+  }: PickCardProps) => {
     const { user } = useAuth();
     const [saved, setSaved] = useState(false);
     const openAuthModal = useAuthModalStore(state => state.openModal);
@@ -154,7 +153,7 @@ const PickCardInternal = memo(
         e.preventDefault();
         e.stopPropagation();
         
-        // Dispatch a custom event to open the modal
+        // Use the modal system instead of navigation to prevent page reload
         const event = new CustomEvent('openPickModal', {
           detail: { pickId: pick.id }
         });
@@ -306,15 +305,11 @@ const PickCardInternal = memo(
                       if (onImageClick) {
                         onImageClick(pick);
                       } else if (pick && pick.id) {
-                        // Use a custom event to open the modal
-                        console.log('PickCard: Opening modal for pick:', pick.id);
-                        
-                        // Dispatch a custom event to open the modal
-                        window.dispatchEvent(
-                          new CustomEvent('openPickModal', {
-                            detail: { pickId: pick.id }
-                          })
-                        );
+                        // Use the modal system instead of navigation to prevent page reload
+                        const event = new CustomEvent('openPickModal', {
+                          detail: { pickId: pick.id }
+                        });
+                        window.dispatchEvent(event);
                       }
                     }}
                   />
@@ -382,8 +377,5 @@ const PickCardInternal = memo(
 
 PickCardInternal.displayName = 'PickCardInternal';
 
-// Wrapper component that uses hooks
-export const PickCard = (props: PickCardProps) => {
-  const navigate = useNavigate();
-  return <PickCardInternal {...props} navigate={navigate} />;
-};
+// Export the component directly since we no longer need navigate
+export const PickCard = PickCardInternal;
