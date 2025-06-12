@@ -7,6 +7,9 @@ const localFavorites = new Map<string, Set<string>>();
 // Try database first, fallback to local storage only if database fails
 let useLocalStorage = false;
 
+// Generate a unique ID for local storage entries
+const generateLocalId = () => `local-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
 /**
  * Add a pick to the user's favorites
  * @param pickId The ID of the pick to favorite
@@ -26,7 +29,7 @@ export const savePick = async (pickId: string): Promise<any> => {
         localFavorites.set(user.user.id, new Set());
       }
       localFavorites.get(user.user.id)?.add(pickId);
-      return [{ id: crypto.randomUUID(), user_id: user.user.id, pick_id: pickId }];
+      return [{ id: generateLocalId(), user_id: user.user.id, pick_id: pickId }];
     }
     
     const { data, error } = await supabase
@@ -74,7 +77,7 @@ export const unsavePick = async (pickId: string): Promise<any> => {
     if (useLocalStorage) {
       // Use local storage implementation
       localFavorites.get(user.user.id)?.delete(pickId);
-      return [{ id: crypto.randomUUID(), user_id: user.user.id, pick_id: pickId }];
+      return [{ id: generateLocalId(), user_id: user.user.id, pick_id: pickId }];
     }
     
     const { data, error } = await supabase

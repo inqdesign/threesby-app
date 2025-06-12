@@ -459,17 +459,37 @@ export function UnifiedDetailModal({
 
     if (!pickData) return;
 
+    // Optimistic UI update - update state immediately
+    const wasLiked = saved;
+    setSaved(!saved);
+    
+    // Update favorites count optimistically
+    if (pickData) {
+      const currentCount = (pickData as any)?.favorites_count || 0;
+      (pickData as any).favorites_count = wasLiked ? 
+        Math.max(0, currentCount - 1) : 
+        currentCount + 1;
+    }
+
     setLoading(true);
     try {
-      if (saved) {
+      if (wasLiked) {
         await unsavePick(pickData.id);
-        setSaved(false);
+        console.log('Successfully unliked pick');
       } else {
         await savePick(pickData.id);
-        setSaved(true);
+        console.log('Successfully liked pick');
       }
     } catch (error) {
       console.error('Error toggling save status:', error);
+      // Revert optimistic updates on error
+      setSaved(wasLiked);
+      if (pickData) {
+        const currentCount = (pickData as any)?.favorites_count || 0;
+        (pickData as any).favorites_count = wasLiked ? 
+          currentCount + 1 : 
+          Math.max(0, currentCount - 1);
+      }
     } finally {
       setLoading(false);
     }
@@ -640,6 +660,7 @@ export function UnifiedDetailModal({
                 src={pickData.image_url} 
                 alt={pickData.title}
                 className="w-full h-auto"
+                aspectRatio="auto"
               />
             </div>
           </div>
