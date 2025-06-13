@@ -814,9 +814,57 @@ export function UnifiedDetailModal({
           </div>
         )}
 
+        {/* Mobile Pick Info Table */}
+        {isMobile && (
+          <div className="mb-6">
+            {loadingStates.sidebarInfo ? (
+              <div className="space-y-3">
+                <div className="flex justify-between py-3 border-b border-border">
+                  <SkeletonLoader className="w-28" />
+                  <SkeletonLoader className="w-24" />
+                </div>
+                <div className="flex justify-between py-3 border-b border-border">
+                  <SkeletonLoader className="w-20" />
+                  <SkeletonLoader className="w-28" />
+                </div>
+                <div className="flex justify-between py-3 border-b border-border">
+                  <SkeletonLoader className="w-24" />
+                  <div className="flex gap-2">
+                    <SkeletonLoader className="w-16 h-6" />
+                    <SkeletonLoader className="w-20 h-6" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full font-mono text-sm">
+                <div className="flex justify-between py-3 border-b border-border">
+                  <div className="text-muted-foreground">PICKED BY</div>
+                  <div className="text-foreground">{pickData.profile?.full_name || curatorData?.name || 'Anonymous'}</div>
+                </div>
+                <div className="flex justify-between py-3 border-b border-border">
+                  <div className="text-muted-foreground">PUBLISHED</div>
+                  <div className="text-foreground">{format(new Date(pickData.created_at), 'dd. MM. yyyy')}</div>
+                </div>
+                <div className="flex justify-between py-3 border-b border-border">
+                  <div className="text-muted-foreground">CATEGORY</div>
+                  <div className="text-foreground">
+                    <Tag className="font-mono">
+                      {pickData.category}
+                    </Tag>
+                  </div>
+                </div>
+                <div className="flex justify-between py-3 border-b border-border">
+                  <div className="text-muted-foreground">RANK</div>
+                  <div className="text-foreground">#{pickData.rank}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Pick Story */}
         {pickData.description && (
-          <div className="mb-4">
+          <div className="mb-6">
             <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono">STORY</h3>
             <div 
               className="text-foreground text-base md:text-lg leading-relaxed mt-3"
@@ -826,6 +874,119 @@ export function UnifiedDetailModal({
                   : DOMPurify.sanitize(pickData.description)
               }}
             />
+          </div>
+        )}
+
+        {/* Mobile Related Picks - Show collection picks if in collection context, otherwise curator picks */}
+        {isMobile && (
+          <div className="mb-6">
+            {/* Show collection picks if we're viewing a pick from a collection */}
+            {collectionPicks && collectionPicks.length > 0 ? (
+              <>
+                <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">
+                  RELATED PICKS
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {collectionPicks.slice(0, 9).map((pick, index) => (
+                    <div 
+                      key={pick.id}
+                      className={`group cursor-pointer relative transition-all duration-200 ${pickData?.id === pick.id ? 'ring-2 ring-primary' : ''}`}
+                      onClick={() => handleNavigateToPick(pick.id)}
+                    >
+                      <div className="aspect-square bg-secondary overflow-hidden group-hover:ring-2 group-hover:ring-primary/20 transition-all rounded-lg">
+                        {pick.image_url ? (
+                          <img 
+                            key={pick.id}
+                            src={pick.image_url} 
+                            alt={pick.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <span className="text-xs">#{String(index + 1).padStart(2, '0')}</span>
+                          </div>
+                        )}
+                      </div>
+                      {loadingStates.pickDetails && pickData?.id === pick.id && (
+                        <div className="absolute inset-0 bg-background/40 flex items-center justify-center rounded-lg">
+                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              /* Show curator picks for standalone pick view */
+              <>
+                <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">
+                  Other picks by @{pickData?.profile?.full_name || curatorData?.name || 'curator'}
+                </div>
+                {loadingStates.relatedContent ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {Array.from({ length: 9 }, (_, i) => (
+                      <SkeletonLoader key={i} variant="image" className="rounded-lg" />
+                    ))}
+                  </div>
+                ) : curatorPicks.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {curatorPicks.slice(0, 9).map((pick, index) => (
+                      <div 
+                        key={pick.id}
+                        className={`group cursor-pointer relative transition-all duration-200 ${pickData?.id === pick.id ? 'ring-2 ring-primary' : ''}`}
+                        onClick={() => handleNavigateToPick(pick.id)}
+                      >
+                        <div className="aspect-square bg-secondary overflow-hidden group-hover:ring-2 group-hover:ring-primary/20 transition-all rounded-lg">
+                          {pick.image_url ? (
+                            <img 
+                              key={pick.id}
+                              src={pick.image_url} 
+                              alt={pick.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                              <span className="text-xs">#{String(index + 1).padStart(2, '0')}</span>
+                            </div>
+                          )}
+                        </div>
+                        {loadingStates.pickDetails && pickData?.id === pick.id && (
+                          <div className="absolute inset-0 bg-background/40 flex items-center justify-center rounded-lg">
+                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground py-8">
+                    No related picks available
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Mobile More Collections - Only show if we have curator collections */}
+        {isMobile && curatorCollections.length > 0 && (
+          <div className="mb-6">
+            <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">MORE COLLECTIONS</div>
+            <div className="flex space-x-3 overflow-x-auto pb-2">
+              {curatorCollections.slice(0, 5).map((collection, index) => (
+                <div 
+                  key={collection.id}
+                  className="flex-shrink-0 w-32 cursor-pointer"
+                  onClick={() => handleNavigateToCollection(collection.id)}
+                >
+                  <CollectionCard
+                    collection={collection}
+                    linkWrapper={false}
+                    issueNumber={String(index + 1).padStart(2, '0')}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -918,12 +1079,162 @@ export function UnifiedDetailModal({
           </div>
         )}
 
-        {/* Collection Story/Description */}
+        {/* Mobile Collection Info Table */}
+        {isMobile && (
+          <div className="mb-6">
+            {loadingStates.sidebarInfo ? (
+              <div className="space-y-3">
+                <div className="flex justify-between py-3 border-b border-border">
+                  <SkeletonLoader className="w-28" />
+                  <SkeletonLoader className="w-24" />
+                </div>
+                <div className="flex justify-between py-3 border-b border-border">
+                  <SkeletonLoader className="w-20" />
+                  <SkeletonLoader className="w-28" />
+                </div>
+                <div className="flex justify-between py-3 border-b border-border">
+                  <SkeletonLoader className="w-24" />
+                  <div className="flex gap-2">
+                    <SkeletonLoader className="w-16 h-6" />
+                    <SkeletonLoader className="w-20 h-6" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="w-full font-mono text-sm">
+                <div className="flex justify-between py-3 border-b border-border">
+                  <div className="text-muted-foreground">COLLECTED BY</div>
+                  <div className="text-foreground">{curatorData?.name || 'Anonymous'}</div>
+                </div>
+                <div className="flex justify-between py-3 border-b border-border">
+                  <div className="text-muted-foreground">PUBLISHED</div>
+                  <div className="text-foreground">{format(new Date(collectionData.created_at), 'dd. MM. yyyy')}</div>
+                </div>
+                {collectionData.categories && collectionData.categories.length > 0 && (
+                  <div className="flex justify-between py-3 border-b border-border">
+                    <div className="text-muted-foreground">CATEGORIES</div>
+                    <div className="text-foreground text-right flex-1 ml-2">
+                      <div className="flex flex-wrap gap-2 justify-end">
+                        {collectionData.categories.map((category, index) => (
+                          <Tag key={index} className="font-mono">
+                            {category}
+                          </Tag>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Collection Description */}
         {collectionData.description && (
-          <div className="mb-4">
-            <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono">STORY</h3>
-            <div className="text-foreground text-base md:text-lg leading-relaxed mt-3">
-              {collectionData.description}
+          <div className="mb-6">
+            <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono">ABOUT</h3>
+            <div 
+              className="text-foreground text-base md:text-lg leading-relaxed mt-3"
+              dangerouslySetInnerHTML={{ 
+                __html: collectionData.description.trim().startsWith('{')
+                  ? DOMPurify.sanitize((LexicalEditor as any).jsonToHtml(collectionData.description))
+                  : DOMPurify.sanitize(collectionData.description)
+              }}
+            />
+          </div>
+        )}
+
+        {/* Mobile Collection Picks List */}
+        {isMobile && collectionPicks.length > 0 && (
+          <div className="mb-6">
+            <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">
+              PICKS IN THIS COLLECTION ({collectionPicks.length})
+            </div>
+            <div className="space-y-3">
+              {collectionPicks.map((pick, index) => (
+                <div 
+                  key={pick.id}
+                  className="flex items-center space-x-4 p-3 bg-secondary rounded-lg cursor-pointer hover:bg-secondary/80 transition-colors"
+                  onClick={() => handleNavigateToPick(pick.id)}
+                >
+                  <div className="flex-shrink-0 w-12 h-12 bg-muted rounded-lg overflow-hidden">
+                    {pick.image_url ? (
+                      <img 
+                        src={pick.image_url} 
+                        alt={pick.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <span className="text-xs font-mono">#{String(index + 1).padStart(2, '0')}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium text-foreground truncate">{pick.title}</div>
+                    <div className="text-sm text-muted-foreground">#{pick.rank}</div>
+                  </div>
+                  <div className="flex-shrink-0">
+                    <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Related Picks - 3x3 Grid */}
+        {isMobile && collectionPicks.length > 0 && (
+          <div className="mb-6">
+            <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">RELATED PICKS</div>
+            <div className="grid grid-cols-3 gap-2">
+              {collectionPicks.slice(0, 9).map((pick, index) => (
+                <div 
+                  key={pick.id}
+                  className="group cursor-pointer relative transition-all duration-200"
+                  onClick={() => handleNavigateToPick(pick.id)}
+                >
+                  <div className="aspect-square bg-secondary overflow-hidden group-hover:ring-2 group-hover:ring-primary/20 transition-all rounded-lg">
+                    {pick.image_url ? (
+                      <img 
+                        key={pick.id}
+                        src={pick.image_url} 
+                        alt={pick.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                        <span className="text-xs">#{String(index + 1).padStart(2, '0')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Mobile More Collections */}
+        {isMobile && curatorCollections.length > 0 && (
+          <div className="mb-6">
+            <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">MORE COLLECTIONS</div>
+            <div className="flex space-x-3 overflow-x-auto pb-2">
+              {curatorCollections
+                .filter(c => c.id !== collectionData?.id)
+                .slice(0, 5)
+                .map((collection, index) => (
+                <div 
+                  key={collection.id}
+                  className="flex-shrink-0 w-32 cursor-pointer"
+                  onClick={() => handleNavigateToCollection(collection.id)}
+                >
+                  <CollectionCard
+                    collection={collection}
+                    linkWrapper={false}
+                    issueNumber={String(index + 1).padStart(2, '0')}
+                  />
+                </div>
+              ))}
             </div>
           </div>
         )}
