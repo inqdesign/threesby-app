@@ -76,7 +76,7 @@ export function FavoritesPage() {
             
             {/* Content */}
             {loading ? (
-              <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-12">
+              <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-6 md:gap-12">
                 {[...Array(12)].map((_, i) => (
                   <div key={i} className="space-y-4 pick-card-container overflow-hidden">
                     {/* Image skeleton */}
@@ -95,7 +95,7 @@ export function FavoritesPage() {
                                   <p className="text-muted-foreground mt-2">You haven't added any favorites yet or none match your current filters</p>
               </div>
             ) : (
-              <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-12">
+              <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-6 md:gap-12">
                 {filteredFavorites.map((pick) => (
                   <SmoothPickCard
                     key={pick.id}

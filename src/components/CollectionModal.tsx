@@ -5,6 +5,7 @@ import { Pick } from '../types';
 import { ImageUpload } from './ImageUpload';
 import { uploadImage, supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
+import LexicalEditor, { LexicalEditorRefMethods } from './LexicalEditor';
 import './CategoryFilter.css';
 
 // Define Category type locally until it's properly exported from types
@@ -41,6 +42,7 @@ export function CollectionModal({
 }: CollectionModalProps) {
   const { } = useAuth(); // We get the user directly in handleImageUpload
   const formContainerRef = useRef<HTMLFormElement>(null);
+  const editorRef = useRef<LexicalEditorRefMethods>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
@@ -51,6 +53,17 @@ export function CollectionModal({
   const [imageLoading, setImageLoading] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [darkFont, setDarkFont] = useState(true); // Default to dark font
+  
+  // For swipe gesture detection (mobile only)
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const touchEndY = useRef<number | null>(null);
+  const minSwipeDistance = 100;
+  
+  // For swipe visual feedback
+  const [swipeProgress, setSwipeProgress] = useState(0);
+  const [isSwipeActive, setIsSwipeActive] = useState(false);
   
   // Reset form when modal opens or collection changes
   useEffect(() => {
@@ -115,6 +128,58 @@ export function CollectionModal({
       setError(error instanceof Error ? error.message : 'Failed to upload image');
     } finally {
       setImageLoading(false);
+    }
+  };
+
+  // Handle image upload for the rich text editor
+  const handleEditorImageUpload = async () => {
+    try {
+      // Create a file input element
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      
+      // Handle file selection
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        
+        // Validate file type and size
+        if (!file.type.startsWith('image/')) {
+          setError('Please select an image file');
+          return;
+        }
+        if (file.size > 5 * 1024 * 1024) { // 5MB limit
+          setError('Image size must be less than 5MB');
+          return;
+        }
+        
+        try {
+          // Get user ID for the file path
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) {
+            throw new Error('User must be authenticated to upload images');
+          }
+          
+          // Upload the image to Supabase storage
+          const filePath = `collections/descriptions/${user.id}`;
+          const imageUrl = await uploadImage(file, filePath);
+          
+          // Insert the image into the editor
+          if (editorRef.current) {
+            editorRef.current.insertImage(imageUrl);
+          }
+        } catch (error) {
+          console.error('Error uploading image:', error);
+          setError(error instanceof Error ? error.message : 'Failed to upload image');
+        }
+      };
+      
+      // Trigger the file input click
+      input.click();
+    } catch (error) {
+      console.error('Error creating file input:', error);
+      setError('Failed to open file selector');
     }
   };
 
@@ -192,6 +257,77 @@ export function CollectionModal({
   };
   
   const allCategories: Category[] = ['books', 'products', 'places', 'arts', 'design', 'interiors', 'fashion', 'food', 'music', 'travel'];
+  
+  // Handle touch events for swipe detection (mobile only)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
+    
+    // Check if starting from left edge (mobile only)
+    if (touch.clientX < 50 && window.innerWidth < 768) {
+      setIsSwipeActive(true);
+      setSwipeProgress(0);
+    }
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchEndX.current = touch.clientX;
+    touchEndY.current = touch.clientY;
+    
+    // If starting from left edge and swiping right (mobile only)
+    if (touchStartX.current !== null && touchStartX.current < 50 && window.innerWidth < 768) {
+      const deltaX = touch.clientX - touchStartX.current;
+      const deltaY = touch.clientY - (touchStartY.current || 0);
+      
+      if (deltaX > 30 && Math.abs(deltaY) < Math.abs(deltaX)) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Update swipe progress for visual feedback (unlimited swipe)
+        const progress = deltaX / window.innerWidth; // Use full screen width
+        setSwipeProgress(Math.max(0, progress));
+      }
+    }
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartX.current || !touchEndX.current) {
+      // Reset swipe state
+      setIsSwipeActive(false);
+      setSwipeProgress(0);
+      return;
+    }
+    
+    const deltaX = touchEndX.current - touchStartX.current;
+    const deltaY = (touchEndY.current || 0) - (touchStartY.current || 0);
+    
+    // Check for left-edge swipe to close (swipe right from left edge, mobile only)
+    if (touchStartX.current < 50 && deltaX > 100 && Math.abs(deltaY) < Math.abs(deltaX) && window.innerWidth < 768) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Animate to full close
+      setSwipeProgress(1);
+      
+      // Close after animation
+      setTimeout(() => {
+        onClose();
+      }, 200);
+      return;
+    }
+    
+    // Reset swipe state
+    setIsSwipeActive(false);
+    setSwipeProgress(0);
+    
+    // Reset values
+    touchStartX.current = null;
+    touchEndX.current = null;
+    touchStartY.current = null;
+    touchEndY.current = null;
+  };
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -221,8 +357,28 @@ export function CollectionModal({
               leaveFrom="translate-x-0"
               leaveTo="translate-x-full"
             >
-              <Dialog.Panel className={`pointer-events-auto fixed inset-y-0 ${isFullScreen ? 'inset-x-0' : 'inset-x-0 md:right-0 md:left-auto'} flex ${isFullScreen ? '' : 'md:pl-10'} transform-gpu`}>
-                <div className={`flex h-full w-full flex-col overflow-y-auto bg-card shadow-xl`}>
+              <Dialog.Panel 
+                className={`pointer-events-auto fixed inset-y-0 ${isFullScreen ? 'inset-x-0' : 'inset-x-0 md:right-0 md:left-auto'} flex ${isFullScreen ? '' : 'md:pl-10'} transform-gpu transition-transform duration-200 ease-out`}
+                style={{
+                  transform: isSwipeActive && window.innerWidth < 768 
+                    ? `translateX(${swipeProgress * window.innerWidth}px)` 
+                    : undefined
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div className={`flex h-full w-full flex-col overflow-y-auto bg-card shadow-xl relative`}>
+                  {/* Swipe progress indicator (mobile only) */}
+                  {isSwipeActive && window.innerWidth < 768 && (
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 bg-primary transition-all duration-200 ease-out z-50"
+                      style={{
+                        width: `${Math.max(2, Math.min(swipeProgress * 6, 6))}px`,
+                        opacity: Math.min(swipeProgress * 0.8, 0.8)
+                      }}
+                    />
+                  )}
                   <div className="sticky top-0 z-10 bg-card px-6 py-4 border-b border-border">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-3">
@@ -283,21 +439,6 @@ export function CollectionModal({
                         />
                       </div>
                       
-                      {/* Description */}
-                      <div>
-                        <label htmlFor="description" className="block text-sm font-medium text-foreground mb-2">
-                          Description
-                        </label>
-                        <textarea
-                          id="description"
-                          rows={3}
-                          className="w-full rounded-lg bg-secondary border-0 shadow-none focus:ring-0 p-3 text-foreground placeholder:text-muted-foreground"
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
-                          placeholder="Describe your collection"
-                        />
-                      </div>
-                    
                       {/* Cover Image Upload */}
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-2">
@@ -440,6 +581,24 @@ export function CollectionModal({
                               </div>
                             </label>
                           ))}
+                        </div>
+                      </div>
+                      
+                      {/* Description - moved to bottom with rich text editor */}
+                      <div>
+                        <label htmlFor="description" className="block text-sm font-medium text-foreground mb-2">
+                          Description
+                        </label>
+                        <div className="bg-secondary rounded-lg overflow-hidden">
+                          <LexicalEditor
+                            value={description}
+                            onChange={setDescription}
+                            placeholder="Describe your collection..."
+                            className="min-h-[200px]"
+                            autoFocus={false}
+                            ref={editorRef}
+                            onImageUpload={handleEditorImageUpload}
+                          />
                         </div>
                       </div>
                     </div>

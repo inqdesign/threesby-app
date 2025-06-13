@@ -80,7 +80,7 @@ export const CategoryFilter = React.memo(function CategoryFilter({
       )}
       
       {/* Category Filters */}
-      <div className="flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar md:pr-0" style={{ padding: '1rem 0' }} data-component-name="CategoryFilter">
+      <div className="flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar pr-4 md:pr-0" style={{ padding: '1rem 0' }} data-component-name="CategoryFilter">
         <label className="flex items-center gap-2 cursor-pointer bg-card px-4 py-2 rounded-full">
           <input
             type="checkbox"

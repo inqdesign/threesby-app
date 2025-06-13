@@ -8,6 +8,7 @@ export const CACHE_KEYS = {
   USER_PROFILE: 'onshelf_user_profile',
   USER_PICKS: 'onshelf_user_picks',
   FEED_PICKS: 'onshelf_feed_picks',
+  FEED_CONTENT: 'onshelf_feed_content',
   FEATURED_PICKS: 'onshelf_featured_picks',
   CURATORS: 'onshelf_curators',
   FEATURED_CURATORS: 'onshelf_featured_curators',

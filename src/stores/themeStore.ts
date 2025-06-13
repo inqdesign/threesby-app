@@ -19,7 +19,7 @@ export const useThemeStore = create<ThemeState>()(
   persist(
     (set, get) => ({
       theme: 'system',
-      resolvedTheme: getSystemTheme(),
+      resolvedTheme: 'light', // Default to light, will be updated in onRehydrateStorage
       setTheme: (theme) => {
         set({ theme });
         // Update the resolved theme immediately
@@ -33,6 +33,8 @@ export const useThemeStore = create<ThemeState>()(
         const { theme } = get();
         if (theme === 'system') {
           set({ resolvedTheme: getSystemTheme() });
+        } else {
+          set({ resolvedTheme: theme as 'light' | 'dark' });
         }
       }
     }),
@@ -40,6 +42,17 @@ export const useThemeStore = create<ThemeState>()(
       name: 'theme-storage',
       // Only persist the theme preference, not the resolved theme
       partialize: (state) => ({ theme: state.theme }),
+      // Update resolved theme after rehydration
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Update resolved theme based on the persisted theme preference
+          if (state.theme === 'system') {
+            state.resolvedTheme = getSystemTheme();
+          } else {
+            state.resolvedTheme = state.theme as 'light' | 'dark';
+          }
+        }
+      },
     }
   )
 );

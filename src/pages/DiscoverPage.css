@@ -294,3 +294,35 @@ h2.text-base.font-mono.uppercase {
     width: 50%;
   }
 }
+
+/* Remove border radius from collection cards in the feed and make them fill height */
+.collection-card-no-radius {
+  height: 100%;
+}
+
+.collection-card-no-radius > .block.w-full.group.cursor-pointer {
+  height: 100% !important;
+}
+
+.collection-card-no-radius .relative.overflow-hidden.rounded-lg.bg-\[#f8f8f8\].w-full.aspect-\[5\/7\].group {
+  border-radius: 0 !important;
+  height: 100% !important;
+  aspect-ratio: auto !important;
+}
+
+/* More specific selector for the exact class combination */
+.relative.overflow-hidden.rounded-lg.bg-\[#f8f8f8\].w-full.aspect-\[5\/7\].group {
+  height: 100% !important;
+  aspect-ratio: auto !important;
+  border-radius: 0 !important;
+}
+
+/* Fallback for any rounded elements */
+.collection-card-no-radius .rounded-lg {
+  border-radius: 0 !important;
+}
+
+/* Ensure the grid item itself has proper height */
+.feed-items .collection-card-no-radius {
+  align-self: stretch;
+}

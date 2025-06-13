@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { CollectionCard } from './CollectionCard';
@@ -24,7 +24,12 @@ interface MyCollectionsListProps {
   onEditCollection?: (collection: Collection) => void;
 }
 
-export function MyCollectionsList({ userId, onCreateCollection, onEditCollection }: MyCollectionsListProps) {
+export interface MyCollectionsListRef {
+  refreshCollections: () => Promise<void>;
+}
+
+export const MyCollectionsList = forwardRef<MyCollectionsListRef, MyCollectionsListProps>(
+  ({ userId, onCreateCollection, onEditCollection }, ref) => {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
@@ -232,6 +237,10 @@ export function MyCollectionsList({ userId, onCreateCollection, onEditCollection
     );
   };
 
+  useImperativeHandle(ref, () => ({
+    refreshCollections: fetchCollections,
+  }));
+
   return (
     <div className="my-collections mt-6 mb-8">
       {/* Debug section - only shown when collections array is empty */}
@@ -257,7 +266,7 @@ export function MyCollectionsList({ userId, onCreateCollection, onEditCollection
                 className="w-full h-full"
                 disabled={isCreatingCollection}
               >
-                <div className="w-full h-full rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors aspect-[5/7]">
+                <div className="w-full h-full rounded-none border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors aspect-[5/7]">
                   <div className="w-10 h-10 rounded-full bg-[#f3f2ed] flex items-center justify-center mb-2">
                     <Plus className="w-5 h-5 text-gray-500" />
                   </div>
@@ -322,4 +331,4 @@ export function MyCollectionsList({ userId, onCreateCollection, onEditCollection
       </div>
     </div>
   );
-}
+});

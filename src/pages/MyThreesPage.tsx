@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import { withRetry, handleSupabaseError } from '../lib/supabaseUtils';
@@ -7,8 +7,8 @@ import { useNavigate } from 'react-router-dom';
 import { Menu } from 'lucide-react';
 import type { Profile, Pick } from '../types';
 import { ItemModal } from '../components/ItemModal';
-import { MyCollectionsList } from '../components/MyCollectionsList';
-import { CollectionsSection } from '../components/CollectionsSection';
+import { MyCollectionsList, type MyCollectionsListRef } from '../components/MyCollectionsList';
+import { CollectionsSection, type CollectionsSectionRef } from '../components/CollectionsSection';
 import { CollectionModal } from '../components/CollectionModal';
 // SubNav import removed as it's now handled at the App level
 import { Book, Package, MapPin, Check } from 'lucide-react';
@@ -23,13 +23,18 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  DragEndEvent
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent
 } from '@dnd-kit/core';
 import {
   SortableContext,
   sortableKeyboardCoordinates,
-  rectSortingStrategy
+  rectSortingStrategy,
+  arrayMove
 } from '@dnd-kit/sortable';
+import { SortablePickCard } from '../components/SortablePickCard';
+import { createPortal } from 'react-dom';
 
 type Category = 'places' | 'products' | 'books';
 
@@ -138,6 +143,10 @@ export function MyThreesPage({
   const [updateSuccess, setUpdateSuccess] = React.useState(false);
   const [updateMessage, setUpdateMessage] = React.useState('');
 
+  // Refs for collection components
+  const collectionsRef = useRef<CollectionsSectionRef>(null);
+  const myCollectionsRef = useRef<MyCollectionsListRef>(null);
+
   // Define helper functions first, without dependencies on other functions
   const handleAddPick = (category: Category, rank: number) => {
     setSelectedCategory(category);
@@ -198,6 +207,18 @@ export function MyThreesPage({
       setUpdateSuccess(true);
       setUpdateMessage('Collection saved successfully');
       setIsCollectionModalOpen(false);
+      
+      // Refresh collections list
+      try {
+        if (profileState?.status === 'approved' && collectionsRef.current) {
+          await collectionsRef.current.refreshCollections();
+        }
+        if (profileState?.status === 'active' && myCollectionsRef.current) {
+          await myCollectionsRef.current.refreshCollections();
+        }
+      } catch (refreshError) {
+        console.error('Error refreshing collections:', refreshError);
+      }
       
       // Hide success message after 3 seconds
       setTimeout(() => {
@@ -1159,6 +1180,7 @@ export function MyThreesPage({
         {profileState?.status === 'approved' && (
           <>
             <CollectionsSection 
+              ref={collectionsRef}
               userId={user?.id || ''}
               onCreateCollection={handleCreateCollection}
               onEditCollection={handleEditCollection}
@@ -1172,6 +1194,7 @@ export function MyThreesPage({
         {profileState?.status === 'active' && (
           <>
             <MyCollectionsList 
+              ref={myCollectionsRef}
               userId={user?.id || ''}
               onCreateCollection={handleCreateCollection}
               onEditCollection={handleEditCollection}

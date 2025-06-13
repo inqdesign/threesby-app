@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { SmoothPickCard } from '../components/SmoothPickCard';
+import { CollectionCard } from '../components/CollectionCard';
 import { Search } from 'lucide-react';
 // import { useScrollDirection } from '../hooks/useScrollDirection'; // Commented out as it's not currently used
 import { useMediaQuery } from '../hooks/useMediaQuery';
@@ -10,8 +11,31 @@ import { FeaturedContent } from '../components/FeaturedContent';
 import { Footer } from '../components/Footer';
 import { useAppStore } from '../store/index';
 import { CategoryFilter, FilterCategory } from '../components/CategoryFilter';
+import { supabase } from '../lib/supabase';
 
 type Category = 'places' | 'products' | 'books';
+
+// Local Collection type definition
+type Collection = {
+  id: string;
+  profile_id: string;
+  title: string;
+  description: string;
+  categories: string[];
+  picks: string[];
+  cover_image?: string;
+  font_color?: 'dark' | 'light';
+  created_at: string;
+  updated_at: string;
+  profiles?: Profile;
+};
+
+// Mixed content type for the feed
+type FeedItem = {
+  type: 'pick' | 'collection';
+  data: any;
+  updated_at: string;
+};
 
 type DiscoverPageProps = {};
 
@@ -23,6 +47,12 @@ export function DiscoverPage({}: DiscoverPageProps) {
   const [showAll, setShowAll] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showSearchInput] = useState(false);
+  
+  // New state for collections and mixed content
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [collectionsLoading, setCollectionsLoading] = useState(false);
+  const [mixedContent, setMixedContent] = useState<FeedItem[]>([]);
+  
   // const isScrollingUp = useScrollDirection(); // Commented out as it's not currently used
   const isDesktop = useMediaQuery('(min-width: 768px)');
   const scrollPositionRef = useRef<number>(0);
@@ -203,44 +233,123 @@ export function DiscoverPage({}: DiscoverPageProps) {
     fetchFeedPicks();
   }, [fetchFeedPicks]);
 
+  // Function to fetch collections
+  const fetchCollections = async () => {
+    try {
+      setCollectionsLoading(true);
+      const { data, error } = await supabase
+        .from('collections')
+        .select(`
+          *,
+          profiles (
+            id,
+            full_name,
+            email,
+            avatar_url,
+            title,
+            is_admin,
+            is_creator
+          )
+        `)
+        .order('updated_at', { ascending: false })
+        .limit(25);
 
-  // Filter and sort the feed picks by the most recent update date
-  const filteredPicks = Array.isArray(feedPicks) ? feedPicks
-    // First filter the picks based on search and category, and exclude rank=0 picks
-    .filter((pick) => {
-      // Get the profile from the pick object
-      // The profile data is attached directly to the pick object by our fetchFeedPicks function
-      const profile = (pick as any).profile as Profile;
-      
-      const matchesSearch =
-        profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pick.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pick.description.toLowerCase().includes(searchTerm.toLowerCase());
+      if (error) throw error;
+      setCollections(data || []);
+    } catch (error) {
+      console.error('Error fetching collections:', error);
+      setCollections([]);
+    } finally {
+      setCollectionsLoading(false);
+    }
+  };
 
-      const matchesCategory = showAll || selectedCategories.includes(pick.category as Category);
-      
-      // Exclude picks with rank=0
-      const isValidRank = pick.rank !== 0;
+  // Function to create mixed content from picks and collections
+  const createMixedContent = () => {
+    const mixedItems: FeedItem[] = [];
+    
+    // Add picks
+    feedPicks.forEach(pick => {
+      mixedItems.push({
+        type: 'pick',
+        data: pick,
+        updated_at: pick.updated_at || pick.created_at
+      });
+    });
+    
+    // Add collections
+    collections.forEach(collection => {
+      mixedItems.push({
+        type: 'collection',
+        data: collection,
+        updated_at: collection.updated_at || collection.created_at
+      });
+    });
+    
+    // Sort by latest update time
+    mixedItems.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    
+    setMixedContent(mixedItems);
+  };
 
-      return matchesSearch && matchesCategory && isValidRank;
-    })
-    // Then sort by the most recent update date
-    .sort((a, b) => {
-      const dateA = new Date(a.updated_at || a.created_at);
-      const dateB = new Date(b.updated_at || b.created_at);
-      return dateB.getTime() - dateA.getTime(); // Most recent first
+  // Refresh mixed content when picks or collections change
+  useEffect(() => {
+    createMixedContent();
+  }, [feedPicks, collections]);
+
+  // Fetch collections when component mounts
+  useEffect(() => {
+    fetchCollections();
+  }, []);
+
+  // Filter and sort the mixed content by the most recent update date
+  const filteredContent = Array.isArray(mixedContent) ? mixedContent
+    .filter((item) => {
+      if (item.type === 'pick') {
+        const pick = item.data;
+        // Get the profile from the pick object
+        const profile = (pick as any).profile as Profile;
+        
+        const matchesSearch =
+          profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          profile?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pick.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          pick.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesCategory = showAll || selectedCategories.includes(pick.category as Category);
+        
+        // Exclude picks with rank=0
+        const isValidRank = pick.rank !== 0;
+
+        return matchesSearch && matchesCategory && isValidRank;
+      } else if (item.type === 'collection') {
+        const collection = item.data;
+        const profile = collection.profiles as Profile;
+        
+        const matchesSearch =
+          profile?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          profile?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          collection.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          collection.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+        // For collections, check if any of their categories match the selected categories
+        const matchesCategory = showAll || 
+          (collection.categories && collection.categories.some((cat: string) => 
+            selectedCategories.includes(cat as Category)
+          ));
+
+        return matchesSearch && matchesCategory;
+      }
+      return false;
     }) : [];
-
-
 
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Filter component outside main content with proper background color, padding, and sticky position */}
-      <div className="sticky top-0 z-30 bg-background px-4 md:px-8 pt-4 md:pt-8 pb-0">
+      <div className="sticky top-0 z-30 bg-background pl-4 md:pl-8 pr-0 pt-4 md:pt-8 pb-0">
         {/* Mobile Search Input - Expandable */}
         {showSearchInput && (
-          <div className="relative mb-4 md:hidden">
+          <div className="relative mb-4 md:hidden pr-4">
             <input
               type="text"
               value={searchTerm}
@@ -261,15 +370,15 @@ export function DiscoverPage({}: DiscoverPageProps) {
             setShowAll(categories.length === 0);
           }}
           showSearch={true}
-          headerText="What's people care today."
+          headerText="Selected With Care"
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
           pageType="discover"
         />
       </div>
       
-      {/* Main content with 2rem padding on all sides */}
-      <div className="container mx-auto px-8 md:px-8 pt-8 md:pt-8 pb-8 md:pb-8">
+      {/* Main content with mobile padding removed */}
+      <div className="container mx-auto px-4 md:px-8 pt-4 md:pt-8 pb-8 md:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
           {/* Featured content is now integrated directly into the feed */}
           
@@ -312,7 +421,7 @@ export function DiscoverPage({}: DiscoverPageProps) {
                 ) : (
                   <>
                   {/* Featured content row for mobile - 2 columns */}
-                  <div className="w-full grid grid-cols-2 gap-4 mb-6 sm:hidden">
+                  <div className="w-full grid grid-cols-2 gap-2 mb-6 sm:hidden">
                     {/* Featured Picks */}
                     <div className="relative">
                       <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
@@ -341,7 +450,7 @@ export function DiscoverPage({}: DiscoverPageProps) {
                   </div>
                   
                   {/* Main feed grid - 2 columns on mobile */}
-                  <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 sm:gap-6 md:gap-12" ref={feedContainerRef}>
+                  <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-6 md:gap-12" ref={feedContainerRef}>
                     {/* Featured Picks - Only visible on tablet and above */}
                     <div className="relative hidden sm:block">
                       <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>
@@ -370,14 +479,23 @@ export function DiscoverPage({}: DiscoverPageProps) {
                       />
                     </div>
                     
-                    {/* Regular feed picks */}
-                    {filteredPicks.map((pick) => (
-                      <SmoothPickCard
-                        key={pick.id}
-                        pick={pick}
-                        variant="feed"
-                        display="desktop"
-                      />
+                    {/* Regular feed content - mixed picks and collections */}
+                    {filteredContent.map((item) => (
+                      item.type === 'pick' ? (
+                        <SmoothPickCard
+                          key={`pick-${item.data.id}`}
+                          pick={item.data}
+                          variant="feed"
+                          display="desktop"
+                        />
+                      ) : (
+                        <div key={`collection-${item.data.id}`} className="collection-card-no-radius">
+                          <CollectionCard
+                            collection={item.data}
+                            linkWrapper={true}
+                          />
+                        </div>
+                      )
                     ))}
                   </div>
                   </>

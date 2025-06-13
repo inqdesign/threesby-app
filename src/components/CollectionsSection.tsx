@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { supabase } from '../lib/supabase';
 import { CollectionCard } from './CollectionCard';
 import { Plus } from 'lucide-react';
@@ -24,7 +24,12 @@ interface CollectionsSectionProps {
   onEditCollection: (collection: Collection) => void;
 }
 
-export function CollectionsSection({ userId, onCreateCollection, onEditCollection }: CollectionsSectionProps) {
+export interface CollectionsSectionRef {
+  refreshCollections: () => Promise<void>;
+}
+
+export const CollectionsSection = forwardRef<CollectionsSectionRef, CollectionsSectionProps>(
+  ({ userId, onCreateCollection, onEditCollection }, ref) => {
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreatingCollection, setIsCreatingCollection] = useState(false);
@@ -86,6 +91,10 @@ export function CollectionsSection({ userId, onCreateCollection, onEditCollectio
     }, 2000); // 2 second delay to allow for collection creation
   };
 
+  useImperativeHandle(ref, () => ({
+    refreshCollections: fetchCollections,
+  }));
+
   return (
     <div className="flex flex-col md:flex-row w-full gap-4 md:rounded-xl bg-card p-6 rounded-none md:rounded-xl mb-4 mt-0" data-component-name="CollectionsSection">
       {/* Left column - Section header, text and count */}
@@ -111,7 +120,7 @@ export function CollectionsSection({ userId, onCreateCollection, onEditCollectio
               className="w-full h-full"
               disabled={isCreatingCollection}
             >
-              <div className="w-full h-full aspect-[5/7] bg-[#f5ffde] relative rounded-lg">
+              <div className="w-full h-full aspect-[5/7] bg-[#f5ffde] relative rounded-none">
                 <div className="flex items-end justify-between w-full h-full p-4">
                   <span className="text-base text-[#252525] font-medium">Add</span>
                   <div className="flex items-center justify-center min-w-[24px]">
@@ -176,4 +185,4 @@ export function CollectionsSection({ userId, onCreateCollection, onEditCollectio
       </div>
     </div>
   );
-}
+});

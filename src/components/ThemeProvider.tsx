@@ -6,13 +6,13 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const { resolvedTheme, updateResolvedTheme } = useThemeStore();
+  const { resolvedTheme, updateResolvedTheme, theme } = useThemeStore();
 
   // Listen for system theme changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     
-    // Initial update
+    // Initial update - ensure resolved theme is correct after hydration
     updateResolvedTheme();
     
     // Update when system preference changes
@@ -30,7 +30,10 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     document.documentElement.classList.remove('light', 'dark');
     // Add the resolved theme class
     document.documentElement.classList.add(resolvedTheme);
-  }, [resolvedTheme]);
+    
+    // Debug logging to help track theme changes
+    console.log('Theme applied:', { theme, resolvedTheme });
+  }, [resolvedTheme, theme]);
 
   return <>{children}</>;
 }

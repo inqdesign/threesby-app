@@ -116,6 +116,7 @@ export function MainNav({ onLogin, onSignup, onLogout }: MainNavProps) {
                   type="text"
                   placeholder="Search..."
                   className="pl-10 pr-4 py-2 w-[300px] bg-input rounded-full text-sm text-foreground focus:outline-none focus:ring-0"
+                  style={{ fontSize: '16px' }} /* Prevents zoom on iOS */
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -141,6 +142,7 @@ export function MainNav({ onLogin, onSignup, onLogout }: MainNavProps) {
                   type="text"
                   placeholder="Search..."
                   className="pl-10 pr-4 py-2 w-full bg-input rounded-full text-sm text-foreground focus:outline-none focus:ring-0"
+                  style={{ fontSize: '16px' }} /* Prevents zoom on iOS */
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />

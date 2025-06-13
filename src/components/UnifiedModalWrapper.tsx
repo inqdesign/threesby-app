@@ -151,17 +151,17 @@ export function UnifiedModalWrapper({ children }: UnifiedModalWrapperProps) {
       console.log('Collection profile object:', data.profile);
       console.log('Collection picks array:', data.picks);
       
-      setCollectionData(data);
-      
+        setCollectionData(data);
+        
       // Set curator data from the collection's profile (handle case where profile is null)
-      if (data.profile) {
+        if (data.profile) {
         console.log('Setting curator from profile data:', data.profile);
-        setCuratorData({
-          id: data.profile_id,
-          name: data.profile.full_name || 'Unknown',
-          title: data.profile.title || '',
-          shelfImage: data.profile.shelf_image_url
-        });
+          setCuratorData({
+            id: data.profile_id,
+            name: data.profile.full_name || 'Unknown',
+            title: data.profile.title || '',
+            shelfImage: data.profile.shelf_image_url
+          });
       } else if (data.profile_id) {
         console.log('Profile join failed, setting Anonymous curator for profile_id:', data.profile_id);
         // If profile join failed but we have profile_id, try to fetch it separately
@@ -173,16 +173,16 @@ export function UnifiedModalWrapper({ children }: UnifiedModalWrapperProps) {
         });
       } else {
         console.log('No profile_id found in collection data');
-      }
-      
-      // Always fetch collection picks if they exist (regardless of curator)
-      if (data.picks && data.picks.length > 0) {
-        console.log('Fetching collection picks:', data.picks);
-        const { data: picksData, error: picksError } = await supabase
-          .from('picks')
-          .select('*')
-          .in('id', data.picks);
+        }
         
+      // Always fetch collection picks if they exist (regardless of curator)
+        if (data.picks && data.picks.length > 0) {
+        console.log('Fetching collection picks:', data.picks);
+          const { data: picksData, error: picksError } = await supabase
+            .from('picks')
+            .select('*')
+            .in('id', data.picks);
+          
         if (picksError) {
           console.error('Error fetching collection picks:', picksError);
         } else {
@@ -222,17 +222,17 @@ export function UnifiedModalWrapper({ children }: UnifiedModalWrapperProps) {
         if (curatorPicksData) {
           setCuratorPicks(curatorPicksData);
           console.log('Set curator picks state');
-        }
+          }
       } else {
         console.log('No profile_id found, skipping curator data fetch');
-      }
-      
-      setIsLoading(false);
+        }
+        
+        setIsLoading(false);
       
       return data;
     } catch (err) {
       console.error('Error fetching fresh collection data:', err);
-      setIsLoading(false);
+        setIsLoading(false);
       return null;
     }
   };
@@ -317,8 +317,7 @@ export function UnifiedModalWrapper({ children }: UnifiedModalWrapperProps) {
         setCollectionId(id);
         setPickId(null);
         setPickData(null);
-        setCuratorCollections([]);
-        setCuratorPicks([]);
+        // Don't clear the related data here - let fetchFreshCollectionData set it
         setIsLoading(true);
         console.log('Modal state set, about to check cache...');
         
@@ -334,8 +333,18 @@ export function UnifiedModalWrapper({ children }: UnifiedModalWrapperProps) {
         console.log('Fresh data fetch completed, result:', freshData);
         if (freshData) {
           console.log('Setting collection data and opening modal');
-          setCollectionData(freshData);
+          // Don't set collection data here since fetchFreshCollectionData already did it
           setIsLoading(false);
+          
+          // Debug logging for what we're about to pass to modal
+          console.log('🎯 ABOUT TO OPEN MODAL WITH DATA:');
+          console.log('modalMode:', modalMode);
+          console.log('collectionData state:', collectionData);
+          console.log('collectionPicks state:', collectionPicks);
+          console.log('curatorData state:', curatorData);
+          console.log('curatorCollections state:', curatorCollections);
+          console.log('curatorPicks state:', curatorPicks);
+          
           setIsModalOpen(true);
         } else {
           // Handle error case

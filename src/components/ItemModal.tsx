@@ -40,6 +40,17 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
   const [saving, setSaving] = React.useState(false);
   const [imageError, setImageError] = React.useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = React.useState(false);
+  
+  // For swipe gesture detection (mobile only)
+  const touchStartX = React.useRef<number | null>(null);
+  const touchEndX = React.useRef<number | null>(null);
+  const touchStartY = React.useRef<number | null>(null);
+  const touchEndY = React.useRef<number | null>(null);
+  const minSwipeDistance = 100;
+  
+  // For swipe visual feedback
+  const [swipeProgress, setSwipeProgress] = React.useState(0);
+  const [isSwipeActive, setIsSwipeActive] = React.useState(false);
 
   const handleImageSelected = (file: File) => {
     try {
@@ -104,6 +115,77 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
 
   // Create a ref for the form container
   const formContainerRef = React.useRef<HTMLFormElement>(null);
+  
+  // Handle touch events for swipe detection (mobile only)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartX.current = touch.clientX;
+    touchStartY.current = touch.clientY;
+    
+    // Check if starting from left edge (mobile only)
+    if (touch.clientX < 50 && window.innerWidth < 768) {
+      setIsSwipeActive(true);
+      setSwipeProgress(0);
+    }
+  };
+  
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchEndX.current = touch.clientX;
+    touchEndY.current = touch.clientY;
+    
+    // If starting from left edge and swiping right (mobile only)
+    if (touchStartX.current !== null && touchStartX.current < 50 && window.innerWidth < 768) {
+      const deltaX = touch.clientX - touchStartX.current;
+      const deltaY = touch.clientY - (touchStartY.current || 0);
+      
+      if (deltaX > 30 && Math.abs(deltaY) < Math.abs(deltaX)) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Update swipe progress for visual feedback (unlimited swipe)
+        const progress = deltaX / window.innerWidth; // Use full screen width
+        setSwipeProgress(Math.max(0, progress));
+      }
+    }
+  };
+  
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!touchStartX.current || !touchEndX.current) {
+      // Reset swipe state
+      setIsSwipeActive(false);
+      setSwipeProgress(0);
+      return;
+    }
+    
+    const deltaX = touchEndX.current - touchStartX.current;
+    const deltaY = (touchEndY.current || 0) - (touchStartY.current || 0);
+    
+    // Check for left-edge swipe to close (swipe right from left edge, mobile only)
+    if (touchStartX.current < 50 && deltaX > 100 && Math.abs(deltaY) < Math.abs(deltaX) && window.innerWidth < 768) {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Animate to full close
+      setSwipeProgress(1);
+      
+      // Close after animation
+      setTimeout(() => {
+        onClose();
+      }, 200);
+      return;
+    }
+    
+    // Reset swipe state
+    setIsSwipeActive(false);
+    setSwipeProgress(0);
+    
+    // Reset values
+    touchStartX.current = null;
+    touchEndX.current = null;
+    touchStartY.current = null;
+    touchEndY.current = null;
+  };
 
   React.useEffect(() => {
     if (isOpen && initialData) {
@@ -462,8 +544,28 @@ export function ItemModal({ isOpen, onClose, onSubmit, onDelete, initialData }: 
               leaveFrom="translate-x-0"
               leaveTo="translate-x-full"
             >
-              <Dialog.Panel className={`pointer-events-auto fixed inset-y-0 ${isFullScreen ? 'inset-x-0' : 'inset-x-0 md:right-0 md:left-auto md:w-[700px]'} flex ${isFullScreen ? '' : 'md:pl-10'} transform-gpu`}>
-                <div className={`flex h-full w-full flex-col overflow-y-auto bg-card shadow-xl`}>
+              <Dialog.Panel 
+                className={`pointer-events-auto fixed inset-y-0 ${isFullScreen ? 'inset-x-0' : 'inset-x-0 md:right-0 md:left-auto md:w-[700px]'} flex ${isFullScreen ? '' : 'md:pl-10'} transform-gpu transition-transform duration-200 ease-out`}
+                style={{
+                  transform: isSwipeActive && window.innerWidth < 768 
+                    ? `translateX(${swipeProgress * window.innerWidth}px)` 
+                    : undefined
+                }}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+              >
+                <div className={`flex h-full w-full flex-col overflow-y-auto bg-card shadow-xl relative`}>
+                  {/* Swipe progress indicator (mobile only) */}
+                  {isSwipeActive && window.innerWidth < 768 && (
+                    <div 
+                      className="absolute left-0 top-0 bottom-0 bg-primary transition-all duration-200 ease-out z-50"
+                      style={{
+                        width: `${Math.max(2, Math.min(swipeProgress * 6, 6))}px`,
+                        opacity: Math.min(swipeProgress * 0.8, 0.8)
+                      }}
+                    />
+                  )}
                   {/* Top bar (sticky) */}
                   <div className={isFullScreen ? 'max-w-[700px] mx-auto w-full' : 'w-full'}>
                     <div className="sticky top-0 z-10 bg-card px-6 py-4">
