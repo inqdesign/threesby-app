@@ -237,7 +237,7 @@ export function DiscoverPage({}: DiscoverPageProps) {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Filter component outside main content with proper background color, padding, and sticky position */}
-      <div className="sticky top-0 z-30 bg-background px-4 md:px-8 pt-4 md:pt-8 pb-2 md:pb-4">
+      <div className="sticky top-0 z-30 bg-background px-4 md:px-8 pt-4 md:pt-8 pb-0">
         {/* Mobile Search Input - Expandable */}
         {showSearchInput && (
           <div className="relative mb-4 md:hidden">
@@ -268,8 +268,8 @@ export function DiscoverPage({}: DiscoverPageProps) {
         />
       </div>
       
-      {/* Main content with 1rem padding on all sides */}
-      <div className="container mx-auto px-4 md:px-8 pt-2 md:pt-4 pb-4 md:pb-8">
+      {/* Main content with 2rem padding on all sides */}
+      <div className="container mx-auto px-8 md:px-8 pt-8 md:pt-8 pb-8 md:pb-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
           {/* Featured content is now integrated directly into the feed */}
           

@@ -332,9 +332,6 @@ const PickCardInternal = memo(
                           }`}
                         >
                           <Heart className={`w-5 h-5 ${saved ? 'fill-current' : ''}`} />
-                          {(pick as any).favorites_count !== undefined && (pick as any).favorites_count > 0 && (
-                            <span className="text-xs ml-1">{(pick as any).favorites_count}</span>
-                          )}
                           <span className="sr-only">{saved ? 'Unsave' : 'Save'}</span>
                         </button>
                       )}

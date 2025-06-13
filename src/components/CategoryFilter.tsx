@@ -58,9 +58,9 @@ export const CategoryFilter = React.memo(function CategoryFilter({
     <div>
       {/* Header Section */}
       {pageType === 'discover' ? (
-        <div className="mb-2">
+        <div className="mb-0">
           {headerText && (
-            <h2 className="text-muted-foreground text-lg font-medium mb-1">
+            <h2 className="text-muted-foreground text-lg font-medium mb-0">
               {headerText}
             </h2>
           )}
@@ -68,7 +68,7 @@ export const CategoryFilter = React.memo(function CategoryFilter({
           {/* Search functionality moved to MainNav */}
         </div>
       ) : (
-        <div className="mb-2">
+        <div className="mb-0">
           {title && (
             <h2 className="text-muted-foreground text-lg font-medium mb-1">
               {title}
@@ -80,7 +80,7 @@ export const CategoryFilter = React.memo(function CategoryFilter({
       )}
       
       {/* Category Filters */}
-      <div className="flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar md:pr-0" style={{ padding: '0.5rem 0' }} data-component-name="CategoryFilter">
+      <div className="flex flex-nowrap gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar md:pr-0" style={{ padding: '1rem 0' }} data-component-name="CategoryFilter">
         <label className="flex items-center gap-2 cursor-pointer bg-card px-4 py-2 rounded-full">
           <input
             type="checkbox"

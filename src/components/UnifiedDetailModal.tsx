@@ -91,6 +91,13 @@ export function UnifiedDetailModal({
   const [curatorPicks, setCuratorPicks] = useState<Pick[]>(initialCuratorPicks);
   const [originalUrl, setOriginalUrl] = useState<string>('');
   
+  // Cache for curator-specific content to avoid refetching
+  const [curatorDataCache, setCuratorDataCache] = useState<Map<string, {
+    curatorInfo: any;
+    curatorPicks: Pick[];
+    curatorCollections: Collection[];
+  }>>(new Map());
+  
   // Breadcrumb state for collection → pick navigation
   const [breadcrumbCollection, setBreadcrumbCollection] = useState<Collection | null>(null);
   
@@ -100,13 +107,13 @@ export function UnifiedDetailModal({
   const { openModal } = useAuthModalStore();
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [contentLoading, setContentLoading] = useState(false);
   
-  // Granular loading states for better UX
+  // More granular loading states for better UX
   const [loadingStates, setLoadingStates] = useState({
     mainContent: false,
     sidebarInfo: false,
-    relatedContent: false
+    relatedContent: false,
+    pickDetails: false // New: specific to just the pick details
   });
   
   // Simple close handler that always closes the modal
@@ -144,13 +151,15 @@ export function UnifiedDetailModal({
 
   // Internal data fetching functions
   const fetchPickData = async (pickId: string) => {
-    // Use granular loading states instead of blocking everything
-    setLoadingStates(prev => ({ ...prev, mainContent: true, sidebarInfo: true }));
+    // Only show loading for pick details, keep sidebar stable if same curator
+    setLoadingStates(prev => ({ ...prev, pickDetails: true }));
+    
     try {
       const { data, error } = await supabase
         .from('picks')
         .select(`
           *,
+          favorites_count,
           profile:profiles(*)
         `)
         .eq('id', pickId)
@@ -158,63 +167,117 @@ export function UnifiedDetailModal({
 
       if (error) throw error;
 
-      // Update data smoothly without clearing the entire state
+      const profileId = data.profile_id;
+      const currentCuratorId = curatorData?.id;
+      const isSameCurator = currentCuratorId === profileId;
+      
+      // Update pick data immediately
       setPickData(data);
       setMode('pick');
       
-      // Clear main content loading first for faster perceived loading
-      setLoadingStates(prev => ({ ...prev, mainContent: false }));
-      
-      // Set curator data from the pick's profile
-      if (data.profile) {
-        setCuratorData({
-          id: data.profile_id,
-          name: data.profile.full_name || 'Unknown',
-          title: data.profile.title || '',
-          shelfImage: data.profile.shelf_image_url
-        });
+      // Clear pick details loading quickly for immediate feedback
+      setLoadingStates(prev => ({ ...prev, pickDetails: false }));
+
+      // Only update sidebar and related content if it's a different curator
+      if (!isSameCurator) {
+        setLoadingStates(prev => ({ ...prev, sidebarInfo: true, relatedContent: true }));
         
-        // Clear sidebar loading after curator data is set
-        setLoadingStates(prev => ({ ...prev, sidebarInfo: false }));
-      }
-      
-      // Load related content in the background without blocking UI
-      setLoadingStates(prev => ({ ...prev, relatedContent: true }));
-      
-      if (data.profile_id) {
-        // Fetch other picks by the same curator
-        const { data: curatorPicksData } = await supabase
-          .from('picks')
-          .select('*')
-          .eq('profile_id', data.profile_id)
-          .neq('id', pickId)
-          .order('created_at', { ascending: false })
-          .limit(8);
+        // Check cache first for curator data
+        const cachedData = curatorDataCache.get(profileId);
+        
+        if (cachedData) {
+          // Use cached data for instant loading - but ensure current pick is included
+          setCuratorData(cachedData.curatorInfo);
+          
+          // Check if current pick is in cached picks, if not add it
+          const cachedPicks = cachedData.curatorPicks;
+          const currentPickInCached = cachedPicks.some(pick => pick.id === pickId);
+          const finalCuratorPicks = currentPickInCached ? cachedPicks : [data, ...cachedPicks];
+          
+          setCuratorPicks(finalCuratorPicks);
+          setCuratorCollections(cachedData.curatorCollections);
+          setLoadingStates(prev => ({ ...prev, sidebarInfo: false, relatedContent: false }));
+        } else {
+          // Fetch and cache curator data
+          if (data.profile) {
+            const newCuratorData = {
+              id: data.profile_id,
+              name: data.profile.full_name || 'Unknown',
+              title: data.profile.title || '',
+              shelfImage: data.profile.shelf_image_url
+            };
+            setCuratorData(newCuratorData);
+            setLoadingStates(prev => ({ ...prev, sidebarInfo: false }));
 
-        if (curatorPicksData) {
-          setCuratorPicks(curatorPicksData);
+            if (data.profile_id) {
+              // Fetch curator content in parallel for better performance
+              // First, get the top 3 ranked picks
+              const [curatorPicksResponse, curatorCollectionsResponse] = await Promise.all([
+                supabase
+                  .from('picks')
+                  .select('*')
+                  .eq('profile_id', data.profile_id)
+                  .gte('rank', 1)
+                  .lte('rank', 3)
+                  .order('rank', { ascending: true }),
+                supabase
+                  .from('collections')
+                  .select('*')
+                  .eq('profile_id', data.profile_id)
+                  .order('created_at', { ascending: false })
+                  .limit(6)
+              ]);
+
+              // Check if current pick is already in the top 3 ranked picks
+              const topRankedPicks = curatorPicksResponse.data || [];
+              const currentPickInTopRanked = topRankedPicks.some(pick => pick.id === pickId);
+              
+              // If current pick is not in top 3, fetch it separately and include it
+              let allCuratorPicks = topRankedPicks;
+              if (!currentPickInTopRanked) {
+                // The current pick should already be in `data`, so just add it to the list
+                allCuratorPicks = [data, ...topRankedPicks];
+              }
+
+              let curatorPicksData: Pick[] = [];
+              if (allCuratorPicks && allCuratorPicks.length > 0) {
+                // DON'T filter out current pick - keep all picks and highlight the selected one
+                curatorPicksData = allCuratorPicks.sort((a, b) => {
+                  const categoryOrder = { books: 0, places: 1, products: 2 };
+                  const aCategoryOrder = categoryOrder[a.category as keyof typeof categoryOrder] ?? 3;
+                  const bCategoryOrder = categoryOrder[b.category as keyof typeof categoryOrder] ?? 3;
+                  
+                  if (aCategoryOrder !== bCategoryOrder) {
+                    return aCategoryOrder - bCategoryOrder;
+                  }
+                  return a.rank - b.rank;
+                });
+              }
+
+              const curatorCollectionsData = curatorCollectionsResponse.data || [];
+              
+              // Update state
+              setCuratorPicks(curatorPicksData);
+              setCuratorCollections(curatorCollectionsData);
+              
+              // Cache the data for future use (cache the original top-ranked picks only)
+              setCuratorDataCache(prev => new Map(prev.set(profileId, {
+                curatorInfo: newCuratorData,
+                curatorPicks: topRankedPicks,
+                curatorCollections: curatorCollectionsData
+              })));
+              
+              setLoadingStates(prev => ({ ...prev, relatedContent: false }));
+            }
+          }
         }
-
-        // Fetch other collections by the same curator
-        const { data: curatorCollectionsData } = await supabase
-          .from('collections')
-          .select('*')
-          .eq('profile_id', data.profile_id)
-          .order('created_at', { ascending: false })
-          .limit(6);
-
-        if (curatorCollectionsData) {
-          setCuratorCollections(curatorCollectionsData);
-        }
       }
-      
-      // Clear related content loading
-      setLoadingStates(prev => ({ ...prev, relatedContent: false }));
+      // For same curator, don't modify the curator picks at all to prevent grid changes
+      // Also preserve collectionPicks and breadcrumbCollection when navigating within the same context
 
     } catch (error) {
       console.error('Error fetching pick:', error);
-      // Clear all loading states on error
-      setLoadingStates({ mainContent: false, sidebarInfo: false, relatedContent: false });
+      setLoadingStates({ mainContent: false, sidebarInfo: false, relatedContent: false, pickDetails: false });
     }
   };
 
@@ -250,29 +313,44 @@ export function UnifiedDetailModal({
         // Load related content in background
         setLoadingStates(prev => ({ ...prev, relatedContent: true }));
 
-        // Fetch other collections by the same curator
-        const { data: curatorCollectionsData } = await supabase
-          .from('collections')
-          .select('*')
-          .eq('profile_id', data.profile_id)
-          .neq('id', collectionId)
-          .order('created_at', { ascending: false })
-          .limit(5);
+        // Use Promise.all for parallel fetching to improve performance
+        const [curatorCollectionsResponse, curatorPicksResponse] = await Promise.all([
+          supabase
+            .from('collections')
+            .select('*')
+            .eq('profile_id', data.profile_id)
+            .neq('id', collectionId)
+            .order('created_at', { ascending: false })
+            .limit(5),
+          supabase
+            .from('picks')
+            .select('*')
+            .eq('profile_id', data.profile_id)
+            .gte('rank', 1)
+            .lte('rank', 3)
+            .order('rank', { ascending: true })
+        ]);
 
-        if (curatorCollectionsData) {
-          setCuratorCollections(curatorCollectionsData);
+        if (curatorCollectionsResponse.data) {
+          setCuratorCollections(curatorCollectionsResponse.data);
         }
 
-        // Also fetch picks by the same curator
-        const { data: curatorPicksData } = await supabase
-          .from('picks')
-          .select('*')
-          .eq('profile_id', data.profile_id)
-          .order('created_at', { ascending: false })
-          .limit(10);
-
-        if (curatorPicksData) {
-          setCuratorPicks(curatorPicksData);
+        if (curatorPicksResponse.data && curatorPicksResponse.data.length > 0) {
+          // Sort by category order (books, places, products) then by rank
+          const sortedPicks = curatorPicksResponse.data.sort((a, b) => {
+            const categoryOrder = { books: 0, places: 1, products: 2 };
+            const aCategoryOrder = categoryOrder[a.category as keyof typeof categoryOrder] ?? 3;
+            const bCategoryOrder = categoryOrder[b.category as keyof typeof categoryOrder] ?? 3;
+            
+            if (aCategoryOrder !== bCategoryOrder) {
+              return aCategoryOrder - bCategoryOrder;
+            }
+            
+            // Then by rank within category
+            return a.rank - b.rank;
+          });
+          
+          setCuratorPicks(sortedPicks);
         }
         
         setLoadingStates(prev => ({ ...prev, relatedContent: false }));
@@ -299,7 +377,7 @@ export function UnifiedDetailModal({
 
     } catch (error) {
       console.error('Error fetching collection:', error);
-      setLoadingStates({ mainContent: false, sidebarInfo: false, relatedContent: false });
+      setLoadingStates({ mainContent: false, sidebarInfo: false, relatedContent: false, pickDetails: false });
     }
   };
 
@@ -331,6 +409,75 @@ export function UnifiedDetailModal({
       setCuratorPicks(initialCuratorPicks);
     }
   }, [isOpen, originalUrl, initialPickData, initialCollectionData, initialCollectionPicks, initialCuratorData, initialCuratorCollections, initialCuratorPicks]);
+
+  // Fetch curator picks if we have pick data but no curator picks
+  // BUT ONLY if we're NOT in a collection context (i.e., standalone pick view)
+  useEffect(() => {
+    const fetchCuratorPicksIfNeeded = async () => {
+      // Only fetch curator picks if:
+      // 1. Modal is open and in pick mode
+      // 2. We have pick data with profile_id
+      // 3. We don't have curator picks yet
+      // 4. We're NOT in collection context (no breadcrumb collection and no collection picks)
+      const isStandalonePick = !breadcrumbCollection && (!collectionPicks || collectionPicks.length === 0);
+      
+      if (isOpen && mode === 'pick' && pickData && (!curatorPicks || curatorPicks.length === 0) && pickData.profile_id && isStandalonePick) {
+        console.log('Fetching curator picks for standalone pick view, profile_id:', pickData.profile_id);
+        
+        setLoadingStates(prev => ({ ...prev, relatedContent: true }));
+        
+        try {
+          // Fetch only the top picks (ranks 1-3) from the same curator
+          const { data: topRankedPicks, error: curatorPicksError } = await supabase
+            .from('picks')
+            .select('*')
+            .eq('profile_id', pickData.profile_id)
+            .gte('rank', 1)
+            .lte('rank', 3)
+            .order('rank', { ascending: true });
+            
+          console.log('Top ranked picks:', topRankedPicks);
+          console.log('Curator picks error:', curatorPicksError);
+
+          if (topRankedPicks && topRankedPicks.length > 0) {
+            // Check if current pick is already in the top 3 ranked picks
+            const currentPickInTopRanked = topRankedPicks.some(pick => pick.id === pickData.id);
+            
+            // If current pick is not in top 3, add it to the list
+            let allCuratorPicks = topRankedPicks;
+            if (!currentPickInTopRanked) {
+              allCuratorPicks = [pickData, ...topRankedPicks];
+            }
+            
+            // Sort by category order (books, places, products) then by rank
+            const sortedPicks = allCuratorPicks.sort((a, b) => {
+              const categoryOrder = { books: 0, places: 1, products: 2 };
+              const aCategoryOrder = categoryOrder[a.category as keyof typeof categoryOrder] ?? 3;
+              const bCategoryOrder = categoryOrder[b.category as keyof typeof categoryOrder] ?? 3;
+              
+              if (aCategoryOrder !== bCategoryOrder) {
+                return aCategoryOrder - bCategoryOrder;
+              }
+              
+              // Then by rank within category
+              return a.rank - b.rank;
+            });
+            
+            console.log('Final curator picks including current:', sortedPicks);
+            setCuratorPicks(sortedPicks);
+          }
+        } catch (error) {
+          console.error('Error fetching curator picks:', error);
+        } finally {
+          setLoadingStates(prev => ({ ...prev, relatedContent: false }));
+        }
+      } else if (!isStandalonePick) {
+        console.log('Skipping curator picks fetch - in collection context');
+      }
+    };
+
+    fetchCuratorPicksIfNeeded();
+  }, [isOpen, mode, pickData, curatorPicks, breadcrumbCollection, collectionPicks]);
 
   // Internal navigation handlers - don't create browser history entries
   const handleNavigateToPick = (pickId: string) => {
@@ -597,7 +744,7 @@ export function UnifiedDetailModal({
     if (!pickData) return null;
 
     return (
-      <div className="px-4 pb-6 pt-4">
+      <div className={`px-4 pb-6 pt-4 transition-opacity duration-200 ${loadingStates.pickDetails ? 'opacity-60' : 'opacity-100'}`}>
         {/* Breadcrumb */}
         {breadcrumbCollection && (
           <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
@@ -657,6 +804,7 @@ export function UnifiedDetailModal({
           <div className="mb-6">
             <div className="relative w-full bg-secondary rounded-xl overflow-hidden">
               <PickImage 
+                key={pickData.id}
                 src={pickData.image_url} 
                 alt={pickData.title}
                 className="w-full h-auto"
@@ -897,75 +1045,157 @@ export function UnifiedDetailModal({
                               {loadingStates.sidebarInfo ? (
                                 <div className="space-y-3">
                                   <div className="flex justify-between py-3 border-b border-border">
-                                    <SkeletonLoader className="w-20" />
+                                    <SkeletonLoader className="w-28" />
                                     <SkeletonLoader className="w-24" />
                                   </div>
                                   <div className="flex justify-between py-3 border-b border-border">
-                                    <SkeletonLoader className="w-16" />
+                                    <SkeletonLoader className="w-20" />
                                     <SkeletonLoader className="w-28" />
                                   </div>
                                   <div className="flex justify-between py-3 border-b border-border">
                                     <SkeletonLoader className="w-24" />
-                                    <SkeletonLoader className="w-32" />
+                                    <div className="flex gap-2">
+                                      <SkeletonLoader className="w-16 h-6" />
+                                      <SkeletonLoader className="w-20 h-6" />
+                                    </div>
                                   </div>
                                 </div>
                               ) : pickData && (
                                 <div className="w-full font-mono text-sm">
                                   <div className="flex justify-between py-3 border-b border-border">
-                                    <div className="text-muted-foreground">CATEGORY</div>
-                                    <div className="text-foreground">{pickData.category}</div>
+                                    <div className="text-muted-foreground">PICKED BY</div>
+                                    <div className="text-foreground">{pickData.profile?.full_name || curatorData?.name || 'Anonymous'}</div>
                                   </div>
                                   <div className="flex justify-between py-3 border-b border-border">
-                                    <div className="text-muted-foreground">DATE</div>
+                                    <div className="text-muted-foreground">PUBLISHED</div>
                                     <div className="text-foreground">{format(new Date(pickData.created_at), 'dd. MM. yyyy')}</div>
                                   </div>
                                   <div className="flex justify-between py-3 border-b border-border">
-                                    <div className="text-muted-foreground">PICKED BY</div>
-                                    <div className="text-foreground">{pickData.profile?.full_name || 'Anonymous'}</div>
+                                    <div className="text-muted-foreground">CATEGORY</div>
+                                    <div className="text-foreground">
+                                      <Tag className="font-mono">
+                                        {pickData.category}
+                                      </Tag>
+                                    </div>
+                                  </div>
+                                  <div className="flex justify-between py-3 border-b border-border">
+                                    <div className="text-muted-foreground">RANK</div>
+                                    <div className="text-foreground">#{pickData.rank}</div>
                                   </div>
                                 </div>
                               )}
                             </div>
                             
-                            {/* More Picks - 3x3 Grid */}
+                            {/* Related Picks - Show collection picks if in collection context, otherwise curator picks */}
                             <div>
-                              <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">MORE PICKS</div>
-                              {loadingStates.relatedContent ? (
-                                <div className="grid grid-cols-3 gap-2">
-                                  {Array.from({ length: 9 }, (_, i) => (
-                                    <SkeletonLoader key={i} variant="image" />
-                                  ))}
-                                </div>
-                              ) : curatorPicks.length > 0 ? (
-                                <div className="grid grid-cols-3 gap-2">
-                                  {curatorPicks.slice(0, 9).map((pick, index) => (
-                                    <div 
-                                      key={pick.id}
-                                      className={`group cursor-pointer ${pickData?.id === pick.id ? 'ring-2 ring-primary' : ''}`}
-                                      onClick={() => handleNavigateToPick(pick.id)}
-                                    >
-                                      <div className="aspect-square bg-secondary overflow-hidden group-hover:ring-2 group-hover:ring-primary/20 transition-all">
-                                        {pick.image_url ? (
-                                          <img 
-                                            src={pick.image_url} 
-                                            alt={pick.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                          />
-                                        ) : (
-                                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                                            <span className="text-xs">#{String(index + 1).padStart(2, '0')}</span>
+                              {/* Show collection picks if we're viewing a pick from a collection */}
+                              {collectionPicks && collectionPicks.length > 0 ? (
+                                <>
+                                  <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">
+                                    RELATED PICKS
+                                  </div>
+                                  <div className="grid grid-cols-3 gap-2">
+                                    {collectionPicks.slice(0, 9).map((pick, index) => (
+                                      <div 
+                                        key={pick.id}
+                                        className={`group cursor-pointer relative transition-all duration-200 ${pickData?.id === pick.id ? 'ring-2 ring-primary' : ''}`}
+                                        onClick={() => handleNavigateToPick(pick.id)}
+                                      >
+                                        <div className="aspect-square bg-secondary overflow-hidden group-hover:ring-2 group-hover:ring-primary/20 transition-all">
+                                          {pick.image_url ? (
+                                            <img 
+                                              key={pick.id}
+                                              src={pick.image_url} 
+                                              alt={pick.title}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                              <span className="text-xs">#{String(index + 1).padStart(2, '0')}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        {loadingStates.pickDetails && pickData?.id === pick.id && (
+                                          <div className="absolute inset-0 bg-background/40 flex items-center justify-center">
+                                            <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                                           </div>
                                         )}
                                       </div>
+                                    ))}
+                                  </div>
+                                </>
+                              ) : (
+                                /* Show curator picks for standalone pick view */
+                                <>
+                                  <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">
+                                    Other picks by @{pickData?.profile?.full_name || curatorData?.name || 'curator'}
+                                  </div>
+                                  {loadingStates.relatedContent ? (
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {Array.from({ length: 9 }, (_, i) => (
+                                        <SkeletonLoader key={i} variant="image" />
+                                      ))}
+                                    </div>
+                                  ) : curatorPicks.length > 0 ? (
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {curatorPicks.slice(0, 9).map((pick, index) => (
+                                        <div 
+                                          key={pick.id}
+                                          className={`group cursor-pointer relative transition-all duration-200 ${pickData?.id === pick.id ? 'ring-2 ring-primary' : ''}`}
+                                          onClick={() => handleNavigateToPick(pick.id)}
+                                        >
+                                          <div className="aspect-square bg-secondary overflow-hidden group-hover:ring-2 group-hover:ring-primary/20 transition-all">
+                                            {pick.image_url ? (
+                                              <img 
+                                                key={pick.id}
+                                                src={pick.image_url} 
+                                                alt={pick.title}
+                                                className="w-full h-full object-cover"
+                                              />
+                                            ) : (
+                                              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                                                <span className="text-xs">#{String(index + 1).padStart(2, '0')}</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                          {loadingStates.pickDetails && pickData?.id === pick.id && (
+                                            <div className="absolute inset-0 bg-background/40 flex items-center justify-center">
+                                              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-center text-muted-foreground py-8">
+                                      No related picks available
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                            
+                            {/* More Collections - Only show if we have curator collections */}
+                            {curatorCollections.length > 0 && (
+                              <div>
+                                <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">MORE COLLECTIONS</div>
+                                <div className="flex space-x-3 overflow-x-auto pb-2">
+                                  {curatorCollections.slice(0, 5).map((collection, index) => (
+                                    <div 
+                                      key={collection.id}
+                                      className="flex-shrink-0 w-32 cursor-pointer"
+                                      onClick={() => handleNavigateToCollection(collection.id)}
+                                    >
+                                      <CollectionCard
+                                        collection={collection}
+                                        linkWrapper={false}
+                                        issueNumber={String(index + 1).padStart(2, '0')}
+                                      />
                                     </div>
                                   ))}
                                 </div>
-                              ) : (
-                                <div className="text-center text-muted-foreground py-8">
-                                  No related picks available
-                                </div>
-                              )}
-                            </div>
+                              </div>
+                            )}
                           </>
                         )}
                         
@@ -1027,15 +1257,16 @@ export function UnifiedDetailModal({
                                   {collectionPicks.slice(0, 9).map((pick, index) => (
                                     <div 
                                       key={pick.id}
-                                      className={`group cursor-pointer ${pickData?.id === pick.id ? 'ring-2 ring-primary' : ''}`}
+                                      className={`group cursor-pointer relative transition-all duration-200 ${pickData?.id === pick.id ? 'ring-2 ring-primary' : ''}`}
                                       onClick={() => handleNavigateToPick(pick.id)}
                                     >
                                       <div className="aspect-square bg-secondary overflow-hidden group-hover:ring-2 group-hover:ring-primary/20 transition-all">
                                         {pick.image_url ? (
                                           <img 
+                                            key={pick.id}
                                             src={pick.image_url} 
                                             alt={pick.title}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                            className="w-full h-full object-cover"
                                           />
                                         ) : (
                                           <div className="w-full h-full flex items-center justify-center text-muted-foreground">
@@ -1043,6 +1274,11 @@ export function UnifiedDetailModal({
                                           </div>
                                         )}
                                       </div>
+                                      {loadingStates.pickDetails && pickData?.id === pick.id && (
+                                        <div className="absolute inset-0 bg-background/40 flex items-center justify-center">
+                                          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                                        </div>
+                                      )}
                                     </div>
                                   ))}
                                 </div>

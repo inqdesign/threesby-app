@@ -35,12 +35,20 @@ export const PickImage = memo(({
   variant = 'feed',
   containerStyle
 }: PickImageProps) => {
-  // Track loading state for skeleton animation
-  const [isLoaded, setIsLoaded] = useState(imageCache.has(src));
+  // Track loading state for skeleton animation - reset when src changes
+  const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   
   // Use image caching hook to prevent unnecessary reloads
   const cachedSrc = useImageCache(src);
+  
+  // Reset loading states when src changes
+  useEffect(() => {
+    if (src) {
+      setIsLoaded(imageCache.has(src));
+      setHasError(false);
+    }
+  }, [src]);
   
   // Generate optimized image URLs for different sizes - memoized to prevent recalculation
   const optimizedImageUrl = useMemo(() => cachedSrc || src, [cachedSrc, src]);
@@ -75,7 +83,10 @@ export const PickImage = memo(({
   
   // Load and cache the image
   useEffect(() => {
-    if (!src || isLoaded) return;
+    if (!src) return;
+    
+    // If already loaded and cached, no need to reload
+    if (imageCache.has(src) && isLoaded) return;
     
     const img = new Image();
     img.src = src;
@@ -94,7 +105,7 @@ export const PickImage = memo(({
       img.onload = null;
       img.onerror = null;
     };
-  }, [src, isLoaded]);
+  }, [src]); // Remove isLoaded dependency to prevent blocking updates
   
   // Handle click events
   const handleClick = (e: React.MouseEvent) => {
