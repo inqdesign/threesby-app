@@ -151,7 +151,7 @@ export function ProfileView() {
           {/* Picks Column */}
           <div className="w-3/4">
             <div className="mb-6">
-                              <div className="flex space-x-4 border-b border-border">
+                              <div className="flex space-x-4 border-b border-transparent">
                 <button
                   onClick={() => setActiveTab('all')}
                   className={`py-2 px-4 text-sm font-medium ${
@@ -262,7 +262,7 @@ export function ProfileView() {
             </div>
           </div>
           
-          <div className="flex space-x-1 border-b border-border mb-6">
+          <div className="flex space-x-1 border-b border-transparent mb-6">
             <button
               onClick={() => setActiveTab('all')}
               className={`flex-1 py-3 text-xs font-medium ${
