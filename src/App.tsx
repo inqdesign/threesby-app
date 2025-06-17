@@ -133,17 +133,14 @@ class ErrorBoundary extends React.Component<
 }
 
 function App() {
+  // CRITICAL: ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const { user, loading: authLoading } = useAuth();
   const [showLoginModal, setShowLoginModal] = React.useState(false);
   const [showSignupModal, setShowSignupModal] = React.useState(false);
   const [showProfileEditModal, setShowProfileEditModal] = React.useState(false);
-  // Commented out unused variable
-  // const isHeaderVisible = useScrollDirection();
   const location = useLocation();
   const navigate = useNavigate();
-  const isCreatorLanding = location.pathname === '/creator';
-  // const isDiscoverPage = location.pathname === '/discover'; // Not used currently
-
+  
   const {
     userProfile,
     userPicks,
@@ -154,21 +151,11 @@ function App() {
     fetchCurators
   } = useAppStore();
 
-  // Get isAdmin from userProfile
-  const isAdmin = (userProfile as any)?.is_admin === true;
+  const { signOut } = useAuth();
 
-  // CRITICAL FIX: Show loading screen while authentication is initializing
-  // This prevents the app from breaking when users refresh the page
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <div className="text-sm text-muted-foreground">Loading...</div>
-        </div>
-      </div>
-    );
-  }
+  // Derived state calculations
+  const isCreatorLanding = location.pathname === '/creator';
+  const isAdmin = (userProfile as any)?.is_admin === true;
 
   // Load user data when user authenticates
   React.useEffect(() => {
@@ -231,8 +218,6 @@ function App() {
 
     loadGlobalData();
   }, [fetchFeedPicks, fetchFeaturedPicks, fetchCurators, fetchFeaturedCurators]);
-
-  const { signOut } = useAuth();
   
   const handleSignOut = async () => {
     try {
@@ -520,6 +505,20 @@ return (
 }, [user, userProfile, userPicks, isAdmin, authLoading, handleProfileSubmit, handleUnpublish, handleCancelSubmission, location.pathname, navigate]);
 
 // isActive function moved above
+
+// CRITICAL FIX: Show loading screen while authentication is initializing
+// This prevents the app from breaking when users refresh the page
+// MUST be placed after ALL hooks have been called
+if (authLoading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="text-sm text-muted-foreground">Loading...</div>
+      </div>
+    </div>
+  );
+}
 
 return (
   <ErrorBoundary>
