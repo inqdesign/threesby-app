@@ -8,6 +8,7 @@ import { useAuth } from './context/AuthContext';
 import { supabase } from './lib/supabase';
 import { useAppStore } from './store/index';
 import { useSettingsModalStore } from './store/settingsModalStore';
+import { clearImageCache } from './hooks/useImageCache';
 import { SubNav } from './components/SubNav';
 import { ProfileEditModal } from './components/ProfileEditModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -165,6 +166,11 @@ function App() {
   React.useEffect(() => {
     if (user && !authLoading) {
       console.log('App.tsx: Loading user data for authenticated user:', user.email);
+      
+      // CRITICAL FIX: Clear image cache to prevent stale profile images
+      clearImageCache();
+      
+      // Force refresh user data to get latest profile info
       fetchUserData(user.id).catch((error) => {
         console.error('App.tsx: Error loading user data:', error);
       });
@@ -203,17 +209,23 @@ function App() {
     }
   }, [user, userProfile, authLoading, location.pathname, navigate]);
 
-  // Load global data on app initialization
+  // Load global data ONLY after authentication is resolved
   React.useEffect(() => {
-    console.log('App.tsx: Loading global app data');
+    // CRITICAL FIX: Wait for authentication to be resolved before loading data
+    if (authLoading) {
+      console.log('App.tsx: Authentication still loading, waiting...');
+      return;
+    }
+    
+    console.log('App.tsx: Authentication resolved, loading global app data');
     
     const loadGlobalData = async () => {
       try {
         await Promise.all([
-          fetchFeedPicks(),
-          fetchFeaturedPicks(),
-          fetchCurators(),
-          fetchFeaturedCurators()
+          fetchFeedPicks(true), // Force refresh to clear stale cache
+          fetchFeaturedPicks(true), // Force refresh to clear stale cache
+          fetchCurators(true), // Force refresh to clear stale cache
+          fetchFeaturedCurators(true) // Force refresh to clear stale cache
         ]);
       } catch (error) {
         console.error('App.tsx: Error loading global data:', error);
@@ -221,7 +233,7 @@ function App() {
     };
 
     loadGlobalData();
-  }, [fetchFeedPicks, fetchFeaturedPicks, fetchCurators, fetchFeaturedCurators]);
+  }, [authLoading, fetchFeedPicks, fetchFeaturedPicks, fetchCurators, fetchFeaturedCurators]);
   
   const handleSignOut = async () => {
     try {

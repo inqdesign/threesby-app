@@ -3,11 +3,21 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 // Global in-memory cache for images that persists between renders
 const imageCache = new Map<string, string>();
 
+// Track when the cache was last cleared to prevent stale data
+let lastCacheCleared = Date.now();
+
 // Pre-cache specific images that we know will be used frequently
 // This helps prevent reloading of common profile images
 const PRECACHED_IMAGES = [
   'https://ncjwuguemdbreswyglbs.supabase.co/storage/v1/object/public/profiles/avatars/6646c74d-5f68-43e7-86e5-fefd1b502beb/1744115781762.png'
 ];
+
+// Function to clear the image cache when user logs in/out
+export function clearImageCache() {
+  console.log('Clearing image cache to prevent stale profile images');
+  imageCache.clear();
+  lastCacheCleared = Date.now();
+}
 
 // Initialize pre-caching of important images
 function initializeImagePreCache() {
