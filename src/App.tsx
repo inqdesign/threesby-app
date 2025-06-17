@@ -152,6 +152,10 @@ function App() {
   } = useAppStore();
 
   const { signOut } = useAuth();
+  
+  // Settings modal store - MUST be called at top level, not conditionally
+  const isSettingsModalOpen = useSettingsModalStore(state => state.isOpen);
+  const closeSettingsModal = useSettingsModalStore(state => state.closeModal);
 
   // Derived state calculations
   const isCreatorLanding = location.pathname === '/creator';
@@ -719,8 +723,8 @@ return (
         
         {/* Settings modal */}
         <SettingsModal 
-          isOpen={useSettingsModalStore(state => state.isOpen)}
-          onClose={useSettingsModalStore(state => state.closeModal)}
+          isOpen={isSettingsModalOpen}
+          onClose={closeSettingsModal}
         />
       </ThemeProvider>
     </ErrorBoundary>
