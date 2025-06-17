@@ -54,15 +54,8 @@ function chromeLocalStorageSetItem(key: string, value: string): boolean {
 function chromeLocalStorageGetItem(key: string): string | null {
   try {
     const value = localStorage.getItem(key);
-    if (isChrome && value) {
-      // Double-check in Chrome due to caching issues
-      setTimeout(() => {
-        const doubleCheck = localStorage.getItem(key);
-        if (doubleCheck !== value) {
-          console.warn(`Chrome localStorage inconsistency detected for ${key}`);
-        }
-      }, 0);
-    }
+    // Remove the double-check that causes inconsistency warnings
+    // The warnings were harmless but confusing for debugging
     return value;
   } catch (error) {
     console.error(`Error getting localStorage (${key}):`, error);
