@@ -52,8 +52,8 @@ export function FeaturedPickCard({ pick, onClick }: FeaturedPickCardProps) {
       </div>
       
       {/* Info Section - No Profile Info */}
-      <div className="py-4 pick-card-info">
-        <div className="flex items-center justify-between">
+      <div className="pt-4 pick-card-info">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-medium text-[#252525] dark:text-white truncate" style={{ fontSize: '1rem' }}>
               {pick.title}

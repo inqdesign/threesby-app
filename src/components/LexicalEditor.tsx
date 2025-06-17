@@ -432,23 +432,82 @@ LexicalEditor.displayName = 'LexicalEditor';
 // Add a static method to convert Lexical JSON to HTML
 (LexicalEditor as any).jsonToHtml = function(json: string): string {
   try {
-    // Create a temporary editor instance to parse the JSON and generate HTML
-    // This is a workaround since Lexical does not provide a direct static method
-    const tempEditor = new (require('lexical').LexicalEditor)({
-      namespace: 'Temp',
-      theme,
-      nodes,
-      onError: () => {},
-      editorState: null,
-      editable: false,
-    });
-    tempEditor.setEditorState(tempEditor.parseEditorState(json));
-    return tempEditor.getEditorState().read(() => {
-      return require('@lexical/html').$generateHtmlFromNodes(tempEditor);
-    });
+    // Parse the JSON to check if it's valid Lexical format
+    const parsedJson = JSON.parse(json);
+    
+
+    
+    // Enhanced conversion: handle different node types including images
+    if (parsedJson && parsedJson.root && parsedJson.root.children) {
+      const convertNode = (node: any): string => {
+        switch (node.type) {
+          case 'text':
+            let text = node.text || '';
+            // Apply text formatting
+            if (node.format) {
+              if (node.format & 1) text = `<strong>${text}</strong>`; // Bold
+              if (node.format & 2) text = `<em>${text}</em>`; // Italic
+              if (node.format & 8) text = `<u>${text}</u>`; // Underline
+              if (node.format & 4) text = `<s>${text}</s>`; // Strikethrough
+              if (node.format & 16) text = `<code>${text}</code>`; // Code
+            }
+            return text;
+            
+          case 'paragraph':
+            const paragraphContent = node.children ? node.children.map(convertNode).join('') : '';
+            return paragraphContent ? `<p>${paragraphContent}</p>` : '<p><br></p>';
+            
+          case 'heading':
+            const headingContent = node.children ? node.children.map(convertNode).join('') : '';
+            const level = node.tag || 'h1';
+            return `<${level}>${headingContent}</${level}>`;
+            
+          case 'list':
+            const listItems = node.children ? node.children.map(convertNode).join('') : '';
+            const listTag = node.listType === 'number' ? 'ol' : 'ul';
+            return `<${listTag}>${listItems}</${listTag}>`;
+            
+          case 'listitem':
+            const itemContent = node.children ? node.children.map(convertNode).join('') : '';
+            return `<li>${itemContent}</li>`;
+            
+          case 'image':
+            const src = node.src || '';
+            const alt = node.altText || 'Image';
+            const width = node.width ? ` width="${node.width}"` : '';
+            const height = node.height ? ` height="${node.height}"` : '';
+            return `<img src="${src}" alt="${alt}"${width}${height} style="max-width: 100%; height: auto; margin: 1rem 0 2rem;" />`;
+            
+          case 'video':
+            const videoSrc = node.src || '';
+            return `<video controls style="max-width: 100%; height: auto; margin: 1rem 0 2rem;"><source src="${videoSrc}" type="video/mp4">Your browser does not support the video tag.</video>`;
+            
+          case 'link':
+            const href = node.url || '';
+            const linkContent = node.children ? node.children.map(convertNode).join('') : '';
+            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${linkContent}</a>`;
+            
+          case 'linebreak':
+            return '<br>';
+            
+          default:
+            // For unknown node types, try to process children
+            if (node.children && Array.isArray(node.children)) {
+              return node.children.map(convertNode).join('');
+            }
+            return '';
+        }
+      };
+      
+      return parsedJson.root.children.map(convertNode).join('');
+    }
+    
+    // If not a valid Lexical structure, return empty
+    return '';
   } catch (e) {
     console.error('Failed to convert Lexical JSON to HTML', e);
-    return '';
+    // If JSON parsing fails, treat as plain text
+    return `<p>${json}</p>`;
   }
 };
 

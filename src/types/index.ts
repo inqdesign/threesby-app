@@ -78,6 +78,7 @@ export type Collection = {
   picks: string[]; // Array of pick IDs
   cover_image?: string; // URL to the cover image
   font_color?: 'dark' | 'light'; // Text color for collection card
+  issue_number?: number; // Issue number for the collection (starting from 1)
   created_at: string;
   updated_at: string;
   profiles?: Profile;

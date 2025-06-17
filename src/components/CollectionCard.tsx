@@ -10,6 +10,7 @@ type Collection = {
   picks: string[];
   cover_image?: string;
   font_color?: 'dark' | 'light';
+  issue_number?: number; // Issue number for the collection
   created_at: string;
   updated_at: string;
   profiles?: any;
@@ -93,7 +94,7 @@ export const CollectionCard = memo(function CollectionCard({
       {/* Issue number - top left with same padding as title */}
       <div className={`absolute top-0 left-0 right-0 p-4 transition-opacity duration-300 ${isActive ? 'opacity-0' : 'group-hover:opacity-0'} z-20`}>
         <span className="text-[10px] font-medium text-[#FFFFFF] text-left block">
-          ISSUE #{issueNumber || '01'}
+          ISSUE #{collection.issue_number ? String(collection.issue_number).padStart(2, '0') : (issueNumber || '01')}
         </span>
       </div>
       

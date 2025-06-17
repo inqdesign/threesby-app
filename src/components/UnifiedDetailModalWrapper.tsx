@@ -165,23 +165,17 @@ export function UnifiedDetailModalWrapper({
     }
   };
 
-  const handleNavigateToCollection = (collectionId: string) => {
-    fetchCollectionData(collectionId);
-  };
 
-  const handleNavigateToPick = (pickId: string) => {
-    fetchPickData(pickId);
-  };
 
   if (loading) {
     return (
-      <UnifiedDetailModal
-        isOpen={isOpen}
-        onClose={onClose}
-        mode={mode}
-        pickData={null}
-        collectionData={null}
-      />
+          <UnifiedDetailModal
+      isOpen={isOpen}
+      onClose={onClose}
+      initialMode={mode}
+      initialPickData={null}
+      initialCollectionData={null}
+    />
     );
   }
 
@@ -189,16 +183,14 @@ export function UnifiedDetailModalWrapper({
     <UnifiedDetailModal
       isOpen={isOpen}
       onClose={onClose}
-      mode={mode}
-      pickData={pickData}
-      collectionData={collectionData}
-      collectionPicks={collectionPicks}
-      curatorData={curatorData}
-      curatorCollections={curatorCollections}
+      initialMode={mode}
+      initialPickData={pickData}
+      initialCollectionData={collectionData}
+      initialCollectionPicks={collectionPicks}
+      initialCuratorData={curatorData}
+      initialCuratorCollections={curatorCollections}
       onNavigateNext={handleNavigateNext}
       onNavigatePrev={handleNavigatePrev}
-      onNavigateToCollection={handleNavigateToCollection}
-      onNavigateToPick={handleNavigateToPick}
       hasNext={currentIndex < navigationIds.length - 1}
       hasPrev={currentIndex > 0}
       currentIndex={currentIndex}

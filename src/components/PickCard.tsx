@@ -316,8 +316,8 @@ const PickCardInternal = memo(
                 </div>
                 
                 {showPickInfo && (
-                  <div className="py-4 pick-card-info">
-                    <div className="flex items-center justify-between">
+                  <div className="pt-4 pick-card-info">
+                    <div className="flex items-center justify-between gap-4">
                       <div>
                         <h3 className="text-base font-medium text-[#252525] dark:text-white truncate" style={{ fontSize: '1rem' }}>{pick?.title}</h3>
                         <div className="uppercase text-xs font-mono text-[#9d9b9b] dark:text-gray-400 line-clamp-1">{pick?.reference || 'No reference'}</div>

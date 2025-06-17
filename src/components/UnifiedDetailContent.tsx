@@ -522,8 +522,8 @@ export function UnifiedDetailContent({
           </div>
         )}
         
-        {/* Other collections by curator */}
-        {curatorCollections.length > 0 && (
+        {/* Other collections by curator - Only show when in collection mode */}
+        {mode === 'collection' && curatorCollections.length > 0 && (
           <div className="mb-4">
             <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono">MORE BY {curatorData?.name?.toUpperCase()}</h3>
             <div className="grid grid-cols-1 gap-3 mt-3">

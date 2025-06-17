@@ -8,11 +8,10 @@ import { Search, Heart, Bell, MoreVertical, Settings, HelpCircle, LogOut, LogIn 
 
 interface MainNavProps {
   onLogin: () => void;
-  onSignup: () => void;
   onLogout: () => void;
 }
 
-export function MainNav({ onLogin, onSignup, onLogout }: MainNavProps) {
+export function MainNav({ onLogin, onLogout }: MainNavProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -50,7 +49,7 @@ export function MainNav({ onLogin, onSignup, onLogout }: MainNavProps) {
   const isMyThreesPage = location.pathname.startsWith('/my-threes');
   
   // Check if we're on account settings page to hide search and more button
-  const isAccountSettings = location.pathname.includes('/account') || location.pathname.includes('/settings');
+  const isAccountSettings = location.pathname === '/account' || location.pathname === '/settings';
 
   const isActive = (path: string) => {
     if (path === '/my-threes') {
@@ -340,7 +339,7 @@ export function MainNav({ onLogin, onSignup, onLogout }: MainNavProps) {
                             className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted hover:text-foreground flex items-center gap-2 transition-colors"
                             onClick={() => {
                               setShowAccountMenu(false);
-                              if (onSignup) onSignup();
+                              navigate('/signup');
                             }}
                           >
                             <LogIn className="w-4 h-4" />
@@ -362,7 +361,7 @@ export function MainNav({ onLogin, onSignup, onLogout }: MainNavProps) {
                 Log in
               </button>
               <button
-                onClick={() => window.dispatchEvent(new CustomEvent('show-signup-modal'))}
+                onClick={() => navigate('/signup')}
                 className="whitespace-nowrap px-4 py-2 rounded-full border border-[#252525] text-[#252525] hover:bg-[#252525] hover:text-white transition-colors"
               >
                 Join now

@@ -11,7 +11,7 @@
 /* Main collection container */
 .collection-container {
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Container for cards with horizontal scrolling */
@@ -22,17 +22,21 @@
   width: 100%;
 }
 
-/* Extend collection row on mobile to go all the way to the edge */
+/* Fix for mobile to prevent hard cut on the right side */
 @media (max-width: 767px) {
   .collection-row {
-    margin-right: -1rem; /* Negative margin to extend beyond container */
-    padding-right: 0; /* No padding to allow cards to go to the edge */
+    /* Remove negative margin that causes hard cut */
+    margin-right: 0;
+    padding-right: 2rem; /* Add generous padding to prevent cut-off */
+    /* Allow horizontal scrolling to extend beyond viewport */
+    width: calc(100% + 2rem);
+    margin-left: 0;
   }
   
   .collection-container {
-    margin-left: -1rem; /* Extend container to the left edge */
-    width: calc(100% + 2rem); /* Extend width to cover full screen width */
-    padding-left: 1.5rem; /* Increased left padding */
+    overflow: visible;
+    /* Allow the container to extend beyond its bounds */
+    width: 100%;
   }
 }
 

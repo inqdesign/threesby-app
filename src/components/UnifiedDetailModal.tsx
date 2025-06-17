@@ -992,7 +992,7 @@ export function UnifiedDetailModal({
               <div>
                 <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono mb-3">STORY</h3>
                 <div 
-                  className="text-foreground text-base leading-relaxed"
+                  className="text-foreground text-base leading-relaxed pr-8"
                   dangerouslySetInnerHTML={{ 
                     __html: pickData.description.trim().startsWith('{')
                       ? DOMPurify.sanitize((LexicalEditor as any).jsonToHtml(pickData.description))
@@ -1126,7 +1126,7 @@ export function UnifiedDetailModal({
           <div className="mb-6">
             <h3 className="text-muted-foreground uppercase text-sm font-medium font-mono">STORY</h3>
             <div 
-              className="text-foreground text-base md:text-lg leading-relaxed mt-3"
+              className="text-foreground text-base md:text-lg leading-relaxed mt-3 pr-8"
               dangerouslySetInnerHTML={{ 
                 __html: pickData.description.trim().startsWith('{')
                   ? DOMPurify.sanitize((LexicalEditor as any).jsonToHtml(pickData.description))
@@ -1349,7 +1349,7 @@ export function UnifiedDetailModal({
             </div>
 
             {/* 6. More stories (More Collections) */}
-            {curatorCollections.length > 0 && (
+            {curatorCollections.length > 0 && collectionData && (
               <div>
                 <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-3">MORE STORIES</div>
                 <div className="flex space-x-3 overflow-x-auto pb-2">
@@ -1741,12 +1741,15 @@ export function UnifiedDetailModal({
                               )}
                             </div>
                             
-                            {/* More Collections - Only show if we have curator collections */}
-                            {curatorCollections.length > 0 && (
+                            {/* More Collections - Only show if we have curator collections AND we're in a collection context */}
+                            {curatorCollections.length > 0 && collectionData && (
                               <div>
                                 <div className="text-muted-foreground uppercase text-sm font-medium font-mono mb-4">MORE COLLECTIONS</div>
                                 <div className="flex space-x-3 overflow-x-auto pb-2">
-                                  {curatorCollections.slice(0, 5).map((collection, index) => (
+                                  {curatorCollections
+                                    .filter(c => c.id !== collectionData?.id)
+                                    .slice(0, 5)
+                                    .map((collection, index) => (
                                     <div 
                                       key={collection.id}
                                       className="flex-shrink-0 w-32 cursor-pointer"

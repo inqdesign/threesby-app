@@ -272,16 +272,7 @@ export function UnifiedDetailPage() {
     }
   };
 
-  // Handle URL updates from internal modal navigation
-  const handleUrlUpdate = (newId: string, newMode: 'pick' | 'collection') => {
-    const newPath = newMode === 'pick' ? `/pick/${newId}` : `/collection/${newId}`;
-    navigate(newPath, {
-      state: {
-        from: location.pathname
-      },
-      replace: true // Don't create new history entries
-    });
-  };
+
 
   // Close handler (navigate back)
   const handleClose = () => {
@@ -342,7 +333,6 @@ export function UnifiedDetailPage() {
         hasPrev={currentIndex > 0}
         currentIndex={currentIndex}
         totalItems={navigationIds.length}
-        onUrlUpdate={handleUrlUpdate}
       />
     </div>
   );

@@ -214,8 +214,8 @@ export function FeaturedContent({ type, className = '' }: FeaturedContentProps) 
                   </div>
                   
                   {/* Bottom info part - similar to regular pick cards */}
-                  <div className="py-4 pick-card-info">
-                    <div className="flex items-center justify-between">
+                  <div className="pt-4 pick-card-info">
+                    <div className="flex items-center justify-between gap-4">
                       <div>
                         <h3 className="text-base font-medium text-foreground truncate" style={{ fontSize: '1rem' }}>
                           {featuredCurators[currentIndex].full_name || 'Anonymous'}

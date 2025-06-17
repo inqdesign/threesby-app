@@ -25,6 +25,7 @@ type Collection = {
   picks: string[];
   cover_image?: string;
   font_color?: 'dark' | 'light';
+  issue_number?: number; // Issue number for the collection
   created_at: string;
   updated_at: string;
   profiles?: Profile;
@@ -388,7 +389,7 @@ export function DiscoverPage({}: DiscoverPageProps) {
             {/* Feed Content */}
             <div className="discover-page-content" style={{ marginTop: '0' }}>
               {feedLoading ? (
-                  <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-6 md:gap-12">
+                  <div className="feed-items grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-6 gap-y-6 sm:gap-y-10 md:gap-y-12">
                     {/* Featured Picks Skeleton */}
                     <div className="space-y-4 pick-card-container overflow-hidden">
                       <div className="w-full aspect-square bg-muted animate-pulse" />
@@ -450,7 +451,7 @@ export function DiscoverPage({}: DiscoverPageProps) {
                   </div>
                   
                   {/* Main feed grid - 2 columns on mobile */}
-                  <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-6 md:gap-12" ref={feedContainerRef}>
+                  <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-6 gap-y-6 sm:gap-y-10 md:gap-y-12" ref={feedContainerRef}>
                     {/* Featured Picks - Only visible on tablet and above */}
                     <div className="relative hidden sm:block">
                       <div className="absolute z-10 flex items-center gap-2.5" style={{ top: '0.5rem', left: '0.5rem' }}>

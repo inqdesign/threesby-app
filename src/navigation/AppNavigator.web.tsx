@@ -18,7 +18,6 @@ export const AppNavigator = () => {
     <Router>
       <MainNav 
         onLogin={() => console.log('Login clicked')} 
-        onSignup={() => console.log('Signup clicked')} 
         onLogout={() => console.log('Logout clicked')} 
       />
       <Routes>

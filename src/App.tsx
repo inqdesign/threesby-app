@@ -39,13 +39,14 @@ const CreatorLandingPage = React.lazy(() => import('./pages/CreatorLandingPage')
 const InviteLandingPage = React.lazy(() => import('./pages/InviteLandingPage').then(m => ({ default: m.InviteLandingPage })));
 const MyThreesPage = React.lazy(() => import('./pages/MyThreesPage').then(m => ({ default: m.MyThreesPage })));
 const CuratorsPage = React.lazy(() => import('./pages/CuratorsPage').then(m => ({ default: m.CuratorsPage })));
-const CollectionDetailPage = React.lazy(() => import('./pages/CollectionDetailPage'));
+
 const UnifiedDetailPage = React.lazy(() => import('./pages/UnifiedDetailPage').then(m => ({ default: m.UnifiedDetailPage })));
 const CollectionsPage = React.lazy(() => import('./pages/CollectionsPage').then(m => ({ default: m.CollectionsPage })));
 const SearchResultsPage = React.lazy(() => import('./pages/SearchResultsPage').then(m => ({ default: m.SearchResultsPage })));
 const OnboardingPage = React.lazy(() => import('./pages/OnboardingPage').then(m => ({ default: m.OnboardingPage })));
 const AuthCallbackPage = React.lazy(() => import('./pages/AuthCallbackPage').then(m => ({ default: m.AuthCallbackPage })));
 const UserSettingsPage = React.lazy(() => import('./pages/SettingsPage').then(m => ({ default: m.UserSettingsPage })));
+const SignupPage = React.lazy(() => import('./pages/SignupPage').then(m => ({ default: m.SignupPage })));
 
 import type { Pick } from './types';
 
@@ -479,7 +480,6 @@ return (
         {/* Use our updated MainNav component with all the required menu items */}
         <MainNav 
           onLogin={() => setShowLoginModal(true)}
-          onSignup={() => setShowSignupModal(true)}
           onLogout={handleSignOut}
         />
       </header>
@@ -504,7 +504,9 @@ return (
           <Route path="/collections/:id" element={<UnifiedDetailPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
           <Route path="/creator" element={<CreatorLandingPage />} />
-          <Route path="/onboarding" element={<OnboardingPage />} />\n          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/invite" element={<InviteLandingPage />} />
           <Route path="/profile/:id" element={<ProfilePage />} />
           <Route path="/@:username" element={<ProfilePage />} />

@@ -76,12 +76,10 @@ export function FavoritesPage() {
             
             {/* Content */}
             {loading ? (
-              <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-6 md:gap-12">
+              <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-6 gap-y-6 sm:gap-y-10 md:gap-y-12">
                 {[...Array(12)].map((_, i) => (
                   <div key={i} className="space-y-4 pick-card-container overflow-hidden">
-                    {/* Image skeleton */}
                     <div className="w-full aspect-square bg-muted animate-pulse" />
-                    {/* Info section skeleton */}
                     <div className="py-4 px-3 space-y-2">
                       <div className="h-4 w-3/4 bg-muted rounded animate-pulse" />
                       <div className="h-3 w-1/2 bg-muted rounded animate-pulse" />
@@ -95,7 +93,7 @@ export function FavoritesPage() {
                                   <p className="text-muted-foreground mt-2">You haven't added any favorites yet or none match your current filters</p>
               </div>
             ) : (
-              <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 sm:gap-6 md:gap-12">
+              <div className="feed-items grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-x-6 gap-y-6 sm:gap-y-10 md:gap-y-12">
                 {filteredFavorites.map((pick) => (
                   <SmoothPickCard
                     key={pick.id}
