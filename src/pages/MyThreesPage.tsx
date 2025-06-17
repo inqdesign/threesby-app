@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { withRetry, handleSupabaseError } from '../lib/supabaseUtils';
 import { Dialog, Transition } from '@headlessui/react';

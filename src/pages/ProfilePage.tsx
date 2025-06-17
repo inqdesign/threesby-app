@@ -1,6 +1,6 @@
 
 import { useParams } from 'react-router-dom';
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../context/AuthContext";
 import { MasterLayout } from "../components/MasterLayout";
 import { ProfileView } from '../components/shared/ProfileView.web';
 import { useProfileData } from '../hooks/useProfileData';

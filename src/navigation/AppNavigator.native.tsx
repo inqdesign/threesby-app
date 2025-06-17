@@ -28,7 +28,7 @@ const BookIcon = ({ size, stroke }: { size: number, stroke: string }) => (
   </View>
 );
 import { ProfileScreen } from '../screens/ProfileScreen.native';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { RootStackParamList, TabParamList } from '../types/navigation';
 import tw from '../lib/tailwind';
 

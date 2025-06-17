@@ -4,7 +4,7 @@ import { Check, Maximize2, Minimize2 } from 'lucide-react';
 import { Pick } from '../types';
 import { ImageUpload } from './ImageUpload';
 import { uploadImage, supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import LexicalEditor, { LexicalEditorRefMethods } from './LexicalEditor';
 import './CategoryFilter.css';
 

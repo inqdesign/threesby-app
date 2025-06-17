@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from "react";
 import { useAppStore } from '../store/index';
 import "./CuratorsPage.css";
 import "./CuratorAnimation.css";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../context/AuthContext";
 import { ProfileSection } from "../components/ProfileSection";
 import { Skeleton } from "../components/ui/skeleton";
 import { PicksGrid } from "../components/PicksGrid";

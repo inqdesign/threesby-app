@@ -12,7 +12,7 @@ import {
 // Will be used when implementing navigation features
 // import { useNavigation } from '../platform/native';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import tw from '../lib/tailwind';
 import type { Pick } from '../types';
 

@@ -10,7 +10,7 @@ import {
 } from '../platform/native';
 import { useRoute } from '../platform/native';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import tw from '../lib/tailwind';
 import type { Pick, Profile } from '../types';
 

@@ -9,7 +9,7 @@ import {
   SafeAreaView
 } from '../../platform/native';
 import { useRoute, useNavigation } from '../../platform/native';
-import { useAuth } from "../../hooks/useAuth";
+import { useAuth } from "../../context/AuthContext";
 import { useProfileData } from '../../hooks/useProfileData';
 import type { Pick } from '../../types';
 import tw from '../../lib/tailwind';

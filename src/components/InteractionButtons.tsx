@@ -1,6 +1,6 @@
 import React from 'react';
 import { Heart, MessageCircle, BookmarkPlus } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { useAuthModalStore } from '../store/authModalStore';
 
 type InteractionButtonsProps = {

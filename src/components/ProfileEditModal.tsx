@@ -1,7 +1,7 @@
 import React, { Fragment } from "react";
 import { Dialog, Transition } from '@headlessui/react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../context/AuthContext";
 import { supabase } from "../lib/supabase";
 import { SimpleImageUpload } from './SimpleImageUpload';
 

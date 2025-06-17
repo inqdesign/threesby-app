@@ -6,7 +6,7 @@ import {
   TouchableOpacity
 } from '../platform/native';
 import { useNavigation } from '../platform/native';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { savePick, unsavePick, isPickSaved } from '../services/favoritesService';
 import type { Pick } from '../types';
 import tw from '../lib/tailwind';

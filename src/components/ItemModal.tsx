@@ -3,7 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X, Trash2, Maximize2, Minimize2 } from 'lucide-react';
 import { SimpleImageUpload } from './SimpleImageUpload';
 import { uploadImage } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import LexicalEditor, { LexicalEditorRefMethods } from './LexicalEditor';
 import { INSERT_IMAGE_COMMAND } from './editor/ImageNode';
 import { INSERT_VIDEO_COMMAND } from './editor/VideoNode';

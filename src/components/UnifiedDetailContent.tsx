@@ -7,7 +7,7 @@ import type { Pick } from '../types';
 import DOMPurify from 'dompurify';
 import { formatDistanceToNow, format } from 'date-fns';
 import './ModernScrollbar.css';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { useAuthModalStore } from '../store/authModalStore';
 import { savePick, unsavePick, isPickSaved } from '../services/favoritesService';
 import LexicalEditor from './LexicalEditor';

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import type { Pick } from '../types';
 import { CategoryFilter, FilterCategory } from '../components/CategoryFilter';
 import { SmoothPickCard } from '../components/SmoothPickCard';

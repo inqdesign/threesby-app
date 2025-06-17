@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { Pick } from '../types';
 import { Eye, EyeOff } from 'lucide-react';

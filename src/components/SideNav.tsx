@@ -3,7 +3,7 @@ import {
   User, LayoutDashboard, Mail, CheckCircle, 
   Users, Flag, Bell, Shield, LogOut, Cog, CreditCard
 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 
 interface SideNavProps {

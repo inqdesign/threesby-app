@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Star, Users, Globe2, Package, BookOpen, ArrowRight } from 'lucide-react';
 import { motion, useInView } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 
 export function CreatorLandingPage() {
   const navigate = useNavigate();

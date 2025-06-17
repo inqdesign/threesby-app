@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { User, AlertCircle, Check, Shield, Bell, LogOut, Loader2, X, CreditCard, DollarSign } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { supabase, uploadImage } from '../lib/supabase';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AppBar } from '../components/AppBar';

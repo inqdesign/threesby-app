@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { useSettingsModalStore } from '../store/settingsModalStore';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types';

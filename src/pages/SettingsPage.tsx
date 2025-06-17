@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User, Shield, Bell, LogOut, ChevronRight, Mail, FileText, Lock } from 'lucide-react';
 import { ThemeSettings } from '../components/ThemeSettings';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useAppStore } from '../store';
 import { AppBar } from '../components/AppBar';

@@ -10,7 +10,7 @@ import {
 import { PickCard } from '../components/PickCard.native';
 // These imports will be used when implementing navigation and auth features
 // import { useNavigation } from '../platform/native';
-// import { useAuth } from '../hooks/useAuth';
+// import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { Pick } from '../types';
 import tw from '../lib/tailwind';

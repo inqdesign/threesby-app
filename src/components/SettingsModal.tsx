@@ -3,7 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X, Settings, Bell, Palette, CreditCard, DollarSign, Check, AlertCircle, Loader2, User, Lock, LogOut } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { useThemeStore } from '../stores/themeStore';
 
 type SettingsTab = 'general' | 'account' | 'notifications' | 'appearance';

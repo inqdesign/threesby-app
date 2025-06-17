@@ -1,6 +1,6 @@
 import { useLocation, Link } from 'react-router-dom';
 import { Home, User, Heart, BookOpen, Users } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import type { Profile } from '../types';

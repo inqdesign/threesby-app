@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useFollow } from '../hooks/useFollow';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { AuthModal } from './AuthModal';
 
 type FollowButtonProps = {

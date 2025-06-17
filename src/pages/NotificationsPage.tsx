@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { Heart, MessageSquare, User, Clock } from 'lucide-react';
 
 type Notification = {

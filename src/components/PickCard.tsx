@@ -2,7 +2,7 @@ import React, { useState, useCallback, memo } from 'react';
 import { Heart, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './LazyImage.css';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { UserBadge } from './UserBadge';
 import { PickImage } from './PickImage';
 import { useAuthModalStore } from '../store/authModalStore';

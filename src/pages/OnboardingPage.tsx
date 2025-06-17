@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { Check, ChevronRight, Mail, User, MapPin, Camera, ArrowLeft, Star, Award, BookOpen } from 'lucide-react';
 import { LocationSelect } from '../components/LocationSelect';
 

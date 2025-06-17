@@ -7,7 +7,7 @@ import { FollowButton } from './FollowButton';
 import type { Pick } from '../types';
 import DOMPurify from 'dompurify';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 import { useAuthModalStore } from '../store/authModalStore';
 
 type PickDetailModalProps = {

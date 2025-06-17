@@ -3,7 +3,7 @@ import { Globe2, Package, BookOpen, X, Save } from 'lucide-react';
 import type { Pick } from '../types';
 import { ImageUpload } from './ImageUpload';
 import { uploadImage, supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../context/AuthContext';
 
 type PickFormProps = {
   onSubmit: (picks: Omit<Pick, 'id' | 'profile_id' | 'created_at' | 'updated_at' | 'status'>[]) => Promise<void>;
