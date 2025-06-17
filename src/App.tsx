@@ -3,7 +3,7 @@ import { Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-
 import './styles/mobile-fixes.css'; // Import mobile-specific CSS optimizations
 // We no longer need these icons since we removed the dropdown menu
 import { AuthModal } from './components/AuthModal';
-import { useAuth } from './hooks/useAuth';
+import { useAuth } from './context/AuthContext';
 // import { useScrollDirection } from './hooks/useScrollDirection';
 import { supabase } from './lib/supabase';
 import { useAppStore } from './store/index';
@@ -59,31 +59,71 @@ function ProtectedRoute({ children, isAllowed }: { children: React.ReactNode; is
 
 type Category = 'places' | 'products' | 'books';
 
-// Error Boundary Component
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
+// Error Boundary Component with better authentication error handling
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode }, 
+  { hasError: boolean; errorMessage: string }
+> {
+  state = { hasError: false, errorMessage: '' };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, errorMessage: error.message };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('Error caught by boundary:', error, errorInfo);
+    
+    // Check if it's an authentication-related error
+    const isAuthError = error.message?.includes('auth') || 
+                       error.message?.includes('session') ||
+                       error.message?.includes('token') ||
+                       error.message?.includes('login');
+    
+    if (isAuthError) {
+      // Clear potentially corrupted auth data
+      localStorage.clear();
+      sessionStorage.clear();
+    }
   }
 
   render() {
     if (this.state.hasError) {
+      const isAuthError = this.state.errorMessage?.toLowerCase().includes('auth') || 
+                         this.state.errorMessage?.toLowerCase().includes('session') ||
+                         this.state.errorMessage?.toLowerCase().includes('token');
+      
       return (
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
-            <p className="text-gray-600 mb-4">Please try refreshing the page.</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              Refresh
-            </button>
+        <div className="min-h-screen flex items-center justify-center bg-background">
+          <div className="text-center max-w-md mx-auto p-6">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">
+              {isAuthError ? 'Authentication Error' : 'Something went wrong'}
+            </h1>
+            <p className="text-muted-foreground mb-6">
+              {isAuthError 
+                ? 'There was an issue with your session. Please sign in again.'
+                : 'An unexpected error occurred. Please try refreshing the page.'
+              }
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+              >
+                Refresh Page
+              </button>
+              {isAuthError && (
+                <button
+                  onClick={() => {
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/discover';
+                  }}
+                  className="w-full px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors"
+                >
+                  Clear Data & Continue
+                </button>
+              )}
+            </div>
           </div>
         </div>
       );
@@ -93,7 +133,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 function App() {
-  const { user, loading: authLoading, isAdmin } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [showLoginModal, setShowLoginModal] = React.useState(false);
   const [showSignupModal, setShowSignupModal] = React.useState(false);
   const [showProfileEditModal, setShowProfileEditModal] = React.useState(false);
@@ -113,6 +153,22 @@ function App() {
     fetchFeaturedCurators,
     fetchCurators
   } = useAppStore();
+
+  // Get isAdmin from userProfile
+  const isAdmin = (userProfile as any)?.is_admin === true;
+
+  // CRITICAL FIX: Show loading screen while authentication is initializing
+  // This prevents the app from breaking when users refresh the page
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <div className="text-sm text-muted-foreground">Loading...</div>
+        </div>
+      </div>
+    );
+  }
 
   // Load user data when user authenticates
   React.useEffect(() => {
@@ -454,7 +510,6 @@ return (
     userProfile={userProfile}
     picks={userPicks || []}
     isAdmin={isAdmin}
-    isAuthLoading={authLoading}
     loading={authLoading}
     onLogin={() => setShowLoginModal(true)}
     onSubmit={handleProfileSubmit}

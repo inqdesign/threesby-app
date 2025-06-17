@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext.tsx';
 import App from './App.tsx';
 // Import fonts first
 import './fonts.css';
@@ -21,7 +22,9 @@ const root = createRoot(container);
 root.render(
   <StrictMode>
     <BrowserRouter future={ROUTER_FUTURE_FLAGS}>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </BrowserRouter>
   </StrictMode>
 );
